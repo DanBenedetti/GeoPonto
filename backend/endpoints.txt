@@ -1,0 +1,29 @@
+**Autenticação:**
+
+*   `POST /login`: Para autenticar um usuário e obter um token de acesso.
+
+**Empresas:**
+
+*   `POST /empresas`: Criar uma nova empresa.
+*   `GET /empresas`: Listar todas as empresas.
+*   `GET /empresas/<id>`: Obter detalhes de uma empresa específica.
+*   `PUT /empresas/<id>`: Atualizar os dados de uma empresa.
+*   `DELETE /empresas/<id>`: Remover uma empresa.
+
+**Funcionários:**
+
+*   `POST /funcionarios`: Cadastrar um novo funcionário.
+*   `GET /funcionarios`: Listar todos os funcionários (provavelmente com filtros por empresa).
+*   `GET /funcionarios/<id>`: Obter detalhes de um funcionário específico.
+*   `PUT /funcionarios/<id>`: Atualizar os dados de um funcionário.
+*   `DELETE /funcionarios/<id>`: Desligar um funcionário.
+
+**Pontos (Registros de Ponto):**
+
+*   `POST /pontos`: Registrar um novo ponto (entrada, saída, etc.). A validação da geolocalização será feita aqui.
+*   `GET /pontos/funcionario/<id>`: Listar todos os registros de ponto de um funcionário.
+
+**Relatórios:**
+
+*   `GET /relatorios/horas-trabalhadas/funcionario/<id>`: Gerar relatório de horas de um funcionário.
+*   `GET /relatorios/faltas/funcionario/<id>`: Gerar relatório de faltas de um funcionário.
