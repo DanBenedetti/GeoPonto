@@ -1,0 +1,1 @@
+ /home/danilobenedetti/Documentos/Repositorio\ Oficial\ GeoPonto/GeoPonto/frontend/.dart_tool/flutter_build/acf3ffc354c62d3550ca3ac27bd5501b/dart_build_result.json: 
