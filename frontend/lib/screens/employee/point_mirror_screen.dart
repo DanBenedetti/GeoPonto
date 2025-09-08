@@ -22,7 +22,6 @@ class PointMirrorScreen extends StatelessWidget {
             absences: '08:25',
             extraHours: '00:00',
           ),
-          // Adicione mais resumos mensais aqui
         ],
       ),
     );

@@ -12,7 +12,6 @@ class _AdjustmentScreenState extends State<AdjustmentScreen> {
   final _justificationController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   
-  // Mock data - in a real app, this would be passed from the previous screen
   List<TimeOfDay> _records = [
     const TimeOfDay(hour: 8, minute: 1),
     const TimeOfDay(hour: 12, minute: 5),
@@ -170,7 +169,7 @@ class _AdjustmentScreenState extends State<AdjustmentScreen> {
                 child: ElevatedButton(
                   onPressed: () {
                     if (_formKey.currentState!.validate()) {
-                      // TODO: Submit adjustment request
+                      // TODO: lógica do Submit  do botão
                       Navigator.pop(context);
                     }
                   },
@@ -267,7 +266,7 @@ class _AdjustmentScreenState extends State<AdjustmentScreen> {
       icon: Icon(icon),
       label: Text(label),
       onPressed: () {
-        // TODO: Implement file/photo picking
+        // TODO: implementar funcionalidade de anexar arquivo ou foto
       },
       style: OutlinedButton.styleFrom(
         foregroundColor: Colors.black,

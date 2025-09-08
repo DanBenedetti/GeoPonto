@@ -121,10 +121,7 @@ mixin SearchMixin<T extends StatefulWidget> on State<T> {
                   
                   final currentRouteName = ModalRoute.of(context)?.settings.name;
                   if (currentRouteName != screen.name) {
-                    // Use pushReplacement if the screen is in the main navigation stack (like MyHR)
-                    // to avoid building up the stack.
-                    // Use push for others.
-                    // A simple heuristic:
+
                     bool isMainScreen = allScreens.any((s) => s.name == screen.name && (s.screenBuilder() is MyHrScreen || s.screenBuilder() is EmployeeHomeScreen));
 
                     if(isMainScreen && Navigator.canPop(context)){

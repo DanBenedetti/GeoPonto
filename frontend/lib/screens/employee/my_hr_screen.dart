@@ -58,13 +58,13 @@ class _MyHrScreenState extends State<MyHrScreen> with SearchMixin<MyHrScreen> {
     return ShortcutsWidget(
       selectedIndex: _selectedShortcutIndex,
       onIndexChanged: (index) {
-        if (index == 0) { // Tapped "Bater ponto"
+        if (index == 0) { // selecionado "Bater ponto"
           Navigator.pop(context);
-        } else if (index == 2) { // Tapped "Holerite"
+        } else if (index == 2) { // selecionado "Holerite"
             setState(() {
               _selectedShortcutIndex = 2;
             });
-            // TODO: Navigate to Holerite screen
+            // TODO: Tela e lógica do botão Holerite, no momento não serão implementadas
         } else {
           setState(() {
             _selectedShortcutIndex = index;

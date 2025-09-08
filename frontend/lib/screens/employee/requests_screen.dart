@@ -79,7 +79,6 @@ class RequestsScreen extends StatelessWidget {
           if (status == RequestStatus.rejected) {
             Navigator.push(context, MaterialPageRoute(builder: (context) => const AdjustmentScreen()));
           }
-          // TODO: Navigate to a read-only detail screen for other statuses if needed
         },
         contentPadding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 16.0),
       ),

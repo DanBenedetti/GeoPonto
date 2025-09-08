@@ -21,7 +21,6 @@ class AbsencesScreen extends StatelessWidget {
             date: '20/08/2025 | quarta-feira',
             reason: 'Nenhum registro',
           ),
-          // Adicione mais itens de falta aqui se necessário
         ],
       ),
     );

@@ -21,7 +21,6 @@ class OccurrencesScreen extends StatelessWidget {
             date: '21/08/2025 | quinta-feira',
             description: '2ª saída sem registro',
           ),
-          // Adicione mais itens de ocorrência aqui se necessário
         ],
       ),
     );
