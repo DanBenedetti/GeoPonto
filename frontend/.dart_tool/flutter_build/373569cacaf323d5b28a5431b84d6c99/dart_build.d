@@ -1,0 +1,1 @@
+ /home/danilobenedetti/Documentos/Git\ Geoponto/GeoPonto_fatec/frontend/.dart_tool/flutter_build/373569cacaf323d5b28a5431b84d6c99/dart_build_result.json: 

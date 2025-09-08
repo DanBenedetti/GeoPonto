@@ -1,0 +1,11 @@
+# Framework web para a API
+Flask==3.0.3
+
+# Driver para conexão com o PostgreSQL
+psycopg2-binary==2.9.9
+
+# Gerenciador de variáveis de ambiente
+python-dotenv==1.0.1
+
+# Ferramenta para rodar testes
+pytest==8.2.2
