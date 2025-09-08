@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:geoponto/mixins/search_mixin.dart';
 import 'package:geoponto/screens/employee/my_hr_screen.dart';
+import 'package:geoponto/widgets/app_bottom_nav_bar.dart';
+import 'package:geoponto/widgets/shortcuts_widget.dart';
 
 class EmployeeHomeScreen extends StatefulWidget {
   const EmployeeHomeScreen({super.key});
@@ -8,122 +11,70 @@ class EmployeeHomeScreen extends StatefulWidget {
   State<EmployeeHomeScreen> createState() => _EmployeeHomeScreenState();
 }
 
-class _EmployeeHomeScreenState extends State<EmployeeHomeScreen> {
+class _EmployeeHomeScreenState extends State<EmployeeHomeScreen> with SearchMixin<EmployeeHomeScreen> {
   int _selectedIndex = 1; // Home is selected by default
   int _selectedShortcutIndex = 0; // 0: Bater Ponto, 1: Meu RH, 2: Holerite
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: _buildAppBar(),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildShortcuts(),
-              const SizedBox(height: 24),
-              _buildWelcomeCard(),
-              const SizedBox(height: 24),
-              const Text('Últimos registros', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-              const SizedBox(height: 16),
-              _buildRecentRecords(),
-              const SizedBox(height: 24),
-              _buildClockInCard(),
-            ],
+      appBar: buildSearchAppBar(context),
+      body: buildSearchableBody(
+        context,
+        SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildShortcuts(),
+                const SizedBox(height: 24),
+                _buildWelcomeCard(),
+                const SizedBox(height: 24),
+                const Text('Últimos registros', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                const SizedBox(height: 16),
+                _buildRecentRecords(),
+                const SizedBox(height: 24),
+                _buildClockInCard(),
+              ],
+            ),
           ),
         ),
       ),
-      bottomNavigationBar: _buildBottomNavBar(),
-    );
-  }
-
-  PreferredSizeWidget _buildAppBar() {
-    return AppBar(
-      backgroundColor: Theme.of(context).primaryColor,
-      title: TextField(
-        decoration: InputDecoration(
-          hintText: 'Pesquisar...', 
-          hintStyle: TextStyle(color: Colors.white70),
-          prefixIcon: Icon(Icons.search, color: Colors.white),
-          border: InputBorder.none,
-        ),
+      bottomNavigationBar: AppBottomNavBar(
+        selectedIndex: _selectedIndex,
+        onItemSelected: (index) => setState(() => _selectedIndex = index),
       ),
-      actions: [
-        IconButton(
-          icon: const Icon(Icons.person_outline, color: Colors.white),
-          onPressed: () {},
-        ),
-      ],
     );
   }
 
   Widget _buildShortcuts() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceAround,
-      children: [
-        _buildShortcutItem(
-          icon: Icons.touch_app_outlined,
-          label: 'Bater ponto',
-          isSelected: _selectedShortcutIndex == 0,
-          onTap: () async {
-            setState(() {
-              _selectedShortcutIndex = 0;
-            });
-            // TODO: Navegar para a tela de Bater Ponto (se for uma tela separada)
-            // await Navigator.push(context, MaterialPageRoute(builder: (context) => const BaterPontoScreen()));
-            // setState(() { _selectedShortcutIndex = 0; }); // Reset if needed
-          },
-        ),
-        _buildShortcutItem(
-          icon: Icons.work_outline,
-          label: 'Meu RH',
-          isSelected: _selectedShortcutIndex == 1,
-          onTap: () async {
-            setState(() {
-              _selectedShortcutIndex = 1;
-            });
-            await Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const MyHrScreen()),
-            );
-            setState(() {
-              _selectedShortcutIndex = 0; // Reset to 'Bater Ponto' when returning
-            });
-          },
-        ),
-        _buildShortcutItem(
-          icon: Icons.receipt_long_outlined,
-          label: 'Holerite',
-          isSelected: _selectedShortcutIndex == 2,
-          onTap: () async {
+    return ShortcutsWidget(
+      selectedIndex: _selectedShortcutIndex,
+      onIndexChanged: (index) async {
+        if (index == 1) { // Tapped "Meu RH"
+          setState(() {
+            _selectedShortcutIndex = 1;
+          });
+          await Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const MyHrScreen()),
+          );
+          // When we come back, reset the index
+          setState(() {
+            _selectedShortcutIndex = 0;
+          });
+        } else if (index == 2) { // Tapped "Holerite"
             setState(() {
               _selectedShortcutIndex = 2;
             });
-            // TODO: Navegar para a tela de Holerite
-            // await Navigator.push(context, MaterialPageRoute(builder: (context) => const HoleriteScreen()));
-            // setState(() { _selectedShortcutIndex = 0; }); // Reset if needed
-          },
-        ),
-      ],
-    );
-  }
-
-  Widget _buildShortcutItem({required IconData icon, required String label, required VoidCallback onTap, required bool isSelected}) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Column(
-        children: [
-          CircleAvatar(
-            radius: 30,
-            backgroundColor: isSelected ? Theme.of(context).primaryColor.withOpacity(0.7) : const Color(0xFFE0E0E0),
-            child: Icon(icon, size: 30, color: isSelected ? Colors.white : Colors.black87),
-          ),
-          const SizedBox(height: 8),
-          Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
-        ],
-      ),
+            // TODO: Navigate to Holerite screen
+        } else {
+          setState(() {
+            _selectedShortcutIndex = index;
+          });
+        }
+      },
     );
   }
 
@@ -204,27 +155,6 @@ class _EmployeeHomeScreenState extends State<EmployeeHomeScreen> {
           )
         ],
       ),
-    );
-  }
-
-  Widget _buildBottomNavBar() {
-    return BottomNavigationBar(
-      currentIndex: _selectedIndex,
-      onTap: (index) => setState(() => _selectedIndex = index),
-      items: const [
-        BottomNavigationBarItem(
-          icon: Icon(Icons.menu),
-          label: 'Menu',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.home),
-          label: 'Início',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.settings_outlined),
-          label: 'Ajustes',
-        ),
-      ],
     );
   }
 }

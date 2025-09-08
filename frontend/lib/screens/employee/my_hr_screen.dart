@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:geoponto/mixins/search_mixin.dart';
 import 'package:geoponto/screens/employee/absences_screen.dart';
 import 'package:geoponto/screens/employee/my_point_screen.dart';
 import 'package:geoponto/screens/employee/occurrences_screen.dart';
 import 'package:geoponto/screens/employee/point_mirror_screen.dart';
 import 'package:geoponto/screens/employee/requests_screen.dart';
+import 'package:geoponto/widgets/app_bottom_nav_bar.dart';
+import 'package:geoponto/widgets/shortcuts_widget.dart';
 
 class MyHrScreen extends StatefulWidget {
   const MyHrScreen({super.key});
@@ -12,105 +15,62 @@ class MyHrScreen extends StatefulWidget {
   State<MyHrScreen> createState() => _MyHrScreenState();
 }
 
-class _MyHrScreenState extends State<MyHrScreen> {
+class _MyHrScreenState extends State<MyHrScreen> with SearchMixin<MyHrScreen> {
   int _selectedIndex = 1; // 0: Menu, 1: Início, 2: Ajustes
   int _selectedShortcutIndex = 1; // 0: Bater Ponto, 1: Meu RH, 2: Holerite
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: _buildAppBar(),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildShortcuts(),
-              const SizedBox(height: 32),
-              _buildPendenciasSection(),
-              const SizedBox(height: 32),
-              _buildControlePontoSection(),
-            ],
+      appBar: buildSearchAppBar(context, automaticallyImplyLeading: false),
+      body: buildSearchableBody(
+        context,
+        SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildShortcuts(),
+                const SizedBox(height: 32),
+                _buildPendenciasSection(),
+                const SizedBox(height: 32),
+                _buildControlePontoSection(),
+              ],
+            ),
           ),
         ),
       ),
-      bottomNavigationBar: _buildBottomNavBar(),
-    );
-  }
-
-  PreferredSizeWidget _buildAppBar() {
-    return AppBar(
-      backgroundColor: Theme.of(context).primaryColor,
-      automaticallyImplyLeading: false, // Remove the back button
-      title: TextField(
-        decoration: InputDecoration(
-          hintText: 'Pesquisar...',
-          hintStyle: TextStyle(color: Colors.white70),
-          prefixIcon: Icon(Icons.search, color: Colors.white),
-          border: InputBorder.none,
-        ),
+      bottomNavigationBar: AppBottomNavBar(
+        selectedIndex: _selectedIndex,
+        onItemSelected: (index) {
+          if (index == 1 && _selectedIndex != 1) {
+            Navigator.pop(context);
+          } else {
+            setState(() => _selectedIndex = index);
+          }
+        },
       ),
-      actions: [
-        IconButton(
-          icon: const Icon(Icons.person_outline, color: Colors.white),
-          onPressed: () {
-            // TODO: Navigate to profile screen
-          },
-        ),
-      ],
     );
   }
 
   Widget _buildShortcuts() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceAround,
-      children: [
-        _buildShortcutItem(
-          icon: Icons.touch_app_outlined,
-          label: 'Bater ponto',
-          isSelected: _selectedShortcutIndex == 0,
-          onTap: () {
-            if (_selectedShortcutIndex != 0) {
-              // Pop current screen to go back to Home
-              Navigator.pop(context);
-            }
-          },
-        ),
-        _buildShortcutItem(
-          icon: Icons.work_outline,
-          label: 'Meu RH',
-          isSelected: _selectedShortcutIndex == 1,
-          onTap: () {
-            // Already on this screen, do nothing
-          },
-        ),
-        _buildShortcutItem(
-          icon: Icons.receipt_long_outlined,
-          label: 'Holerite',
-          isSelected: _selectedShortcutIndex == 2,
-          onTap: () {
+    return ShortcutsWidget(
+      selectedIndex: _selectedShortcutIndex,
+      onIndexChanged: (index) {
+        if (index == 0) { // Tapped "Bater ponto"
+          Navigator.pop(context);
+        } else if (index == 2) { // Tapped "Holerite"
+            setState(() {
+              _selectedShortcutIndex = 2;
+            });
             // TODO: Navigate to Holerite screen
-          },
-        ),
-      ],
-    );
-  }
-
-  Widget _buildShortcutItem({required IconData icon, required String label, required VoidCallback onTap, required bool isSelected}) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Column(
-        children: [
-          CircleAvatar(
-            radius: 30,
-            backgroundColor: isSelected ? Theme.of(context).primaryColor.withOpacity(0.7) : const Color(0xFFE0E0E0),
-            child: Icon(icon, size: 30, color: isSelected ? Colors.white : Colors.black87),
-          ),
-          const SizedBox(height: 8),
-          Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
-        ],
-      ),
+        } else {
+          setState(() {
+            _selectedShortcutIndex = index;
+          });
+        }
+      },
     );
   }
 
@@ -234,35 +194,6 @@ class _MyHrScreenState extends State<MyHrScreen> {
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildBottomNavBar() {
-    return BottomNavigationBar(
-      currentIndex: _selectedIndex,
-      onTap: (index) {
-        if (index == 1 && _selectedIndex != 1) {
-           // If trying to go to Home, pop this screen
-           Navigator.pop(context);
-        } else {
-          setState(() => _selectedIndex = index);
-          // TODO: Handle navigation for other items if necessary
-        }
-      },
-      items: const [
-        BottomNavigationBarItem(
-          icon: Icon(Icons.menu),
-          label: 'Menu',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.home),
-          label: 'Início',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.settings_outlined),
-          label: 'Ajustes',
-        ),
-      ],
     );
   }
 }
