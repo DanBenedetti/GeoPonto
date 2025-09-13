@@ -8,7 +8,6 @@
 *   `GET /empresas`: Listar todas as empresas.
 *   `GET /empresas/<id>`: Obter detalhes de uma empresa específica.
 *   `PUT /empresas/<id>`: Atualizar os dados de uma empresa.
-*   `DELETE /empresas/<id>`: Remover uma empresa.
 
 **Funcionários:**
 
@@ -20,8 +19,10 @@
 
 **Pontos (Registros de Ponto):**
 
-*   `POST /pontos`: Registrar um novo ponto (entrada, saída, etc.). A validação da geolocalização será feita aqui.
-*   `GET /pontos/funcionario/<id>`: Listar todos os registros de ponto de um funcionário.
+*   `POST /ponto/<id>`: Registrar um novo ponto (entrada, saída, etc.). A validação da geolocalização será feita aqui.
+*   `GET /ponto/funcionario/<id>`: Listar todos os registros de ponto de um funcionário.
+*   `PUT /ponto/funcionario/<id>`:
+*   `DELETE /ponto/funcionario/<id>`:
 
 **Relatórios:**
 

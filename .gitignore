@@ -3,3 +3,4 @@ venv/
 postgres_data/
 *.swp
 .env
+GEMINI_CONTEXT.md
