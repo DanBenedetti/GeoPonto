@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:geoponto/screens/employee/adjustment_screen.dart';
-import 'package:geoponto/screens/employee/adjustment_screen.dart';
 
 class PointDetailsScreen extends StatelessWidget {
   // In a real app, you'd pass the specific date or record ID
