@@ -4,3 +4,6 @@ postgres_data/
 *.swp
 .env
 GEMINI_CONTEXT.md
+
+# Ignore Flutter/Dart generated files
+frontend/.dart_tool/

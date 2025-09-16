@@ -55,13 +55,13 @@ O banco de dados é gerenciado via Docker Compose para facilitar a configuraçã
 
 ## ▶️ Como Rodar a Aplicação
 
-Após configurar o ambiente e o banco de dados, inicie o servidor Flask com o comando:
-
+A forma recomendada de rodar todo o ambiente (backend + banco de dados) é com Docker Compose, a partir da raiz do projeto:
 ```bash
-python main.py
+docker-compose up --build -d
 ```
+A API estará disponível em **`http://localhost:5001`**.
 
-A API estará disponível em `http://localhost:5000`.
+**Nota:** A porta `5001` está configurada no arquivo `docker-compose.yml`. Se você rodar o `main.py` manualmente (`python main.py`), a API estará na porta `5000`.
 
 ---
 
