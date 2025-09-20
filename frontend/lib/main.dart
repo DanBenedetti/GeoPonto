@@ -14,6 +14,7 @@ class MyApp extends StatelessWidget {
       title: 'GeoPonto',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
+        useMaterial3: true,
         scaffoldBackgroundColor: const Color(0xFFF0F0F0),
         primaryColor: const Color(0xFF16D04D),
         fontFamily: 'sans-serif',
@@ -26,6 +27,14 @@ class MyApp extends StatelessWidget {
           onSecondary: Colors.black,
           onBackground: Colors.black,
           onSurface: Colors.black,
+        ),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Color(0xFF16D04D),
+          foregroundColor: Colors.white,
+        ),
+        floatingActionButtonTheme: const FloatingActionButtonThemeData(
+          backgroundColor: Color(0xFF16D04D),
+          foregroundColor: Colors.white,
         ),
         textTheme: const TextTheme(
           headlineLarge: TextStyle(
