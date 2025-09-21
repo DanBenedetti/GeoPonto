@@ -13,7 +13,6 @@ class Colaborador {
   final String horarioSaidaIntervalo;
   final String horarioRetornoIntervalo;
   final String horarioSaida;
-  final int empresaId;
 
   Colaborador({
     required this.nome,
@@ -30,7 +29,6 @@ class Colaborador {
     required this.horarioSaidaIntervalo,
     required this.horarioRetornoIntervalo,
     required this.horarioSaida,
-    required this.empresaId,
   });
 
   Map<String, dynamic> toJson() => {
@@ -48,6 +46,5 @@ class Colaborador {
         'horario_saida_intervalo': horarioSaidaIntervalo,
         'horario_retorno_intervalo': horarioRetornoIntervalo,
         'horario_saida': horarioSaida,
-        'empresa_id': empresaId,
       };
 }

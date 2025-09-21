@@ -1,38 +1,22 @@
 import 'package:flutter/material.dart';
-import 'package:geoponto/screens/employer/employee_registration_screen.dart';
+import 'package:geoponto/models/colaborador.dart';
 
 class EmployeeListScreen extends StatefulWidget {
-  const EmployeeListScreen({super.key});
+  final List<Colaborador> employees;
+
+  const EmployeeListScreen({super.key, required this.employees});
 
   @override
   State<EmployeeListScreen> createState() => _EmployeeListScreenState();
 }
 
 class _EmployeeListScreenState extends State<EmployeeListScreen> {
-  // Mock data moved to a state variable to allow modification
-  final List<Map<String, String>> _employees = [
-    {'name': 'Fabiana Oliveira', 'position': 'Desenvolvedora Frontend'},
-    {'name': 'Carlos Souza', 'position': 'Designer UX/UI'},
-    {'name': 'Beatriz Lima', 'position': 'Gerente de Projetos'},
-    {'name': 'Ricardo Alves', 'position': 'Desenvolvedor Backend'},
-  ];
+  late List<Colaborador> _employees;
 
-  void _navigateAndRefresh() async {
-    // Navigate to the registration screen and wait for it to pop
-    final result = await Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const EmployeeRegistrationScreen()),
-    );
-
-    // When the registration screen pops, we simulate a refresh
-    // by adding a new employee to the list and rebuilding the widget.
-    // In a real app, you would refetch the list from the API.
-    if (result != null || true) { // Assuming a successful registration, refresh
-      setState(() {
-        // Add a new mock employee to demonstrate the refresh
-        _employees.add({'name': 'Novo Colaborador', 'position': 'Cargo Definido'});
-      });
-    }
+  @override
+  void initState() {
+    super.initState();
+    _employees = List.from(widget.employees); 
   }
 
   @override
@@ -51,10 +35,10 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             child: ListTile(
               leading: CircleAvatar(
-                child: Text(employee['name']![0]), // First letter of the name
+                child: Text(employee.nome[0]), // First letter of the name
               ),
-              title: Text(employee['name']!, style: const TextStyle(fontWeight: FontWeight.bold)),
-              subtitle: Text(employee['position']!),
+              title: Text(employee.nome, style: const TextStyle(fontWeight: FontWeight.bold)),
+              subtitle: Text(employee.cargo),
               trailing: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -75,10 +59,6 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
             ),
           );
         },
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _navigateAndRefresh,
-        child: const Icon(Icons.add),
       ),
     );
   }

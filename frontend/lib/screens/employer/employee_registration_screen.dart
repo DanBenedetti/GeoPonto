@@ -1,10 +1,7 @@
 import 'package:geoponto/components/editor.dart';
 import 'package:geoponto/components/time_editor.dart';
 import 'package:geoponto/models/colaborador.dart';
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:geoponto/config/api_config.dart';
-import 'package:http/http.dart' as http;
 
 class EmployeeRegistrationScreen extends StatefulWidget {
   const EmployeeRegistrationScreen({super.key});
@@ -16,7 +13,6 @@ class EmployeeRegistrationScreen extends StatefulWidget {
 
 class _EmployeeRegistrationScreenState extends State<EmployeeRegistrationScreen> {
   final _formKey = GlobalKey<FormState>();
-  bool _isLoading = false;
 
   // Controllers for each text field
   final _nameController = TextEditingController();
@@ -54,60 +50,25 @@ class _EmployeeRegistrationScreenState extends State<EmployeeRegistrationScreen>
     super.dispose();
   }
 
-  Future<void> _registerEmployee() async {
-    if (!_formKey.currentState!.validate()) {
-      return;
-    }
-
-    setState(() {
-      _isLoading = true;
-    });
-
-    final colaborador = Colaborador(
-      nome: _nameController.text,
-      cpf: _cpfController.text,
-      rua: _streetController.text,
-      numero: _numberController.text,
-      bairro: _neighborhoodController.text,
-      cidade: _cityController.text,
-      cep: _cepController.text,
-      email: _emailController.text,
-      telefone: _phoneController.text,
-      cargo: _positionController.text,
-      horarioEntrada: _entryTimeController.text,
-      horarioSaidaIntervalo: _startIntervalController.text,
-      horarioRetornoIntervalo: _endIntervalController.text,
-      horarioSaida: _exitTimeController.text,
-      empresaId: 1, // Assuming the API requires empresa_id. Adjust as needed.
-    );
-
-    try {
-      final response = await http.post(
-        Uri.parse('${ApiConfig.baseUrl}/funcionarios'),
-        headers: <String, String>{
-          'Content-Type': 'application/json; charset=UTF-8',
-        },
-        body: jsonEncode(colaborador.toJson()),
+  void _registerEmployee() {
+    if (_formKey.currentState!.validate()) {
+      final colaborador = Colaborador(
+        nome: _nameController.text,
+        cpf: _cpfController.text,
+        rua: _streetController.text,
+        numero: _numberController.text,
+        bairro: _neighborhoodController.text,
+        cidade: _cityController.text,
+        cep: _cepController.text,
+        email: _emailController.text,
+        telefone: _phoneController.text,
+        cargo: _positionController.text,
+        horarioEntrada: _entryTimeController.text,
+        horarioSaidaIntervalo: _startIntervalController.text,
+        horarioRetornoIntervalo: _endIntervalController.text,
+        horarioSaida: _exitTimeController.text,
       );
-
-      if (response.statusCode == 201) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Funcionário cadastrado com sucesso!')),
-        );
-        Navigator.of(context).pop();
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erro ao cadastrar funcionário: ${response.body}')),
-        );
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erro de conexão: $e')),
-      );
-    } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      Navigator.of(context).pop(colaborador);
     }
   }
 
@@ -149,13 +110,11 @@ class _EmployeeRegistrationScreenState extends State<EmployeeRegistrationScreen>
                 TimeEditor(controller: _exitTimeController, hintText: 'Saída (HH:MM)'),
                 const SizedBox(height: 24.0),
                 ElevatedButton(
-                  onPressed: _isLoading ? null : _registerEmployee,
+                  onPressed: _registerEmployee,
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 16),
                   ),
-                  child: _isLoading
-                      ? const CircularProgressIndicator(color: Colors.white)
-                      : const Text('Cadastrar Funcionário'),
+                  child: const Text('Cadastrar Funcionário'),
                 ),
               ],
             ),
@@ -164,6 +123,4 @@ class _EmployeeRegistrationScreenState extends State<EmployeeRegistrationScreen>
       ),
     );
   }
-
-
 }
