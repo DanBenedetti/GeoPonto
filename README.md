@@ -1,6 +1,6 @@
 # GeoPonto - Sistema de Controle de Ponto por Geolocalização
 
-Sistema de controle de ponto para funcionários, que utiliza geolocalização para registro e acompanhamento de jornada de trabalho. Este projeto está sendo desenvolvido como Trabalho de Conclusão de Curso (TCC) para a graduação de Desenvolvimento de Softwares Multiplataforma (DSM) da FATEC Franca.
+Sistema de controle de ponto para funcionários, que utiliza geolocalização para registro e acompanhamento de jornada de trabalho. Este projeto está sendo desenvolvido como parte do curso de Laboratório Web para a graduação de Desenvolvimento de Softwares Multiplataforma (DSM) da FATEC Franca.
 
 ## 💻 Tecnologias
 
