@@ -1,16 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:geoponto/navigation/app_routes.dart';
-import 'package:geoponto/screens/employee/home_screen.dart';
-import 'package:geoponto/screens/employee/my_hr_screen.dart';
 
 mixin SearchMixin<T extends StatefulWidget> on State<T> {
   final TextEditingController searchController = TextEditingController();
   final FocusNode searchFocusNode = FocusNode();
-  List<AppScreen> searchResults = [];
+  List<SearchableScreen> searchResults = [];
   bool showSearchResults = false;
 
-  List<AppScreen> get allScreens => AppRoutes.all;
-  List<AppScreen> get suggestionScreens => AppRoutes.suggestions;
+  List<SearchableScreen> get allScreens => AppRoutes.allScreens;
+  List<SearchableScreen> get suggestionScreens => AppRoutes.suggestions;
 
   @override
   void initState() {
@@ -56,7 +54,7 @@ mixin SearchMixin<T extends StatefulWidget> on State<T> {
     }
 
     final results = allScreens.where((screen) {
-      return screen.name.toLowerCase().contains(query);
+      return screen.displayName.toLowerCase().contains(query);
     }).toList();
 
     if (mounted) {
@@ -114,32 +112,17 @@ mixin SearchMixin<T extends StatefulWidget> on State<T> {
             itemBuilder: (context, index) {
               final screen = searchResults[index];
               return ListTile(
-                title: Text(screen.name),
+                title: Text(screen.displayName),
                 onTap: () {
                   searchFocusNode.unfocus();
                   searchController.clear();
                   
                   final currentRouteName = ModalRoute.of(context)?.settings.name;
-                  if (currentRouteName != screen.name) {
-
-                    bool isMainScreen = allScreens.any((s) => s.name == screen.name && (s.screenBuilder() is MyHrScreen || s.screenBuilder() is EmployeeHomeScreen));
-
-                    if(isMainScreen && Navigator.canPop(context)){
-                       Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => screen.screenBuilder(),
-                          settings: RouteSettings(name: screen.name),
-                        ),
-                      );
+                  if (currentRouteName != screen.routeName) {
+                    if (screen.isMainScreen && Navigator.canPop(context)) {
+                      Navigator.pushReplacementNamed(context, screen.routeName);
                     } else {
-                       Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => screen.screenBuilder(),
-                          settings: RouteSettings(name: screen.name),
-                        ),
-                      );
+                      Navigator.pushNamed(context, screen.routeName);
                     }
                   }
                 },

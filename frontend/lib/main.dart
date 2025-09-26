@@ -1,12 +1,40 @@
 import 'package:flutter/material.dart';
-import 'package:geoponto/screens/loading_screen.dart';
+import 'package:geoponto/navigation/app_routes.dart';
+import 'package:geoponto/navigation/metrics_navigation_observer.dart';
+import 'package:geoponto/services/metrics_service.dart';
 
 void main() {
   runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    if (state == AppLifecycleState.paused) {
+      // When the app goes to the background, send the collected metrics.
+      MetricsService().sendMetrics();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -61,7 +89,9 @@ class MyApp extends StatelessWidget {
           ),
         ),
       ),
-      home: const LoadingScreen(),
+      initialRoute: AppRouteNames.loading,
+      routes: AppRoutes.generateRoutes(),
+      navigatorObservers: [MetricsNavigatorObserver()],
     );
   }
 }

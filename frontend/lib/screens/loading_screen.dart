@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:geoponto/screens/login_screen.dart';
+import 'package:geoponto/navigation/app_routes.dart';
 
 class LoadingScreen extends StatefulWidget {
   const LoadingScreen({super.key});
@@ -16,9 +16,7 @@ class _LoadingScreenState extends State<LoadingScreen> {
     super.initState();
     Timer(
       const Duration(seconds: 3),
-      () => Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => const LoginScreen()),
-      ),
+      () => Navigator.of(context).pushReplacementNamed(AppRouteNames.login),
     );
   }
 

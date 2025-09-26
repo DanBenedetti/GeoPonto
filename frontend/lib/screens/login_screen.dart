@@ -3,6 +3,8 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:geoponto/screens/employer/dashboard_screen.dart';
 import 'package:geoponto/screens/employer/employer_registration_screen.dart';
 import 'package:geoponto/screens/employee/home_screen.dart';
+import 'package:geoponto/services/metrics_service.dart';
+import 'package:geoponto/navigation/app_routes.dart';
 
 enum LoginType { collaborator, employer }
 
@@ -19,13 +21,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
   void _handleLogin() {
     if (_loginType == LoginType.collaborator) {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => const EmployeeHomeScreen()),
-      );
+      Navigator.of(context).pushReplacementNamed(AppRouteNames.employeeHome);
     } else {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => const EmployerDashboardScreen()),
-      );
+      Navigator.of(context).pushReplacementNamed(AppRouteNames.employerDashboard);
     }
   }
 
@@ -75,7 +73,10 @@ class _LoginScreenState extends State<LoginScreen> {
         children: [
           Expanded(
             child: GestureDetector(
-              onTap: () => setState(() => _loginType = LoginType.collaborator),
+              onTap: () {
+                MetricsService().trackButtonClick('collaborator_login_type_selected');
+                setState(() => _loginType = LoginType.collaborator);
+              },
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 decoration: BoxDecoration(
@@ -94,7 +95,10 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
           Expanded(
             child: GestureDetector(
-              onTap: () => setState(() => _loginType = LoginType.employer),
+              onTap: () {
+                MetricsService().trackButtonClick('employer_login_type_selected');
+                setState(() => _loginType = LoginType.employer);
+              },
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 decoration: BoxDecoration(
@@ -157,7 +161,9 @@ class _LoginScreenState extends State<LoginScreen> {
                 ],
               ),
               TextButton(
-                onPressed: () {},
+                onPressed: () {
+                  MetricsService().trackButtonClick('forgot_password_click');
+                },
                 child: const Text(
                   'Esqueci a senha',
                   style: TextStyle(color: Colors.black54, decoration: TextDecoration.underline),
@@ -167,7 +173,10 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
           const SizedBox(height: 24),
           ElevatedButton(
-            onPressed: _handleLogin, // Updated this line
+            onPressed: () {
+              MetricsService().trackButtonClick('login_button_click');
+              _handleLogin();
+            },
             child: const Text('Entrar'),
           ),
           if (_loginType == LoginType.employer)
@@ -175,11 +184,8 @@ class _LoginScreenState extends State<LoginScreen> {
               padding: const EdgeInsets.only(top: 16.0),
               child: ElevatedButton(
                 onPressed: () {
-                   Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) => const EmployerRegistrationScreen(),
-                      ),
-                    );
+                  MetricsService().trackButtonClick('register_button_click');
+                  Navigator.of(context).pushNamed(AppRouteNames.employerRegistration);
                 },
                 child: const Text('Cadastrar'),
               ),
