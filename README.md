@@ -10,6 +10,9 @@ Sistema de controle de ponto para funcionários, que utiliza geolocalização pa
 * **Contêiner:** Docker
 * **Controle de Versão:** Git e GitHub
 
+## 🎨 Design 
+[Figma](https://www.figma.com/design/PQE2Dk9cWi9V3rwjqzMBWr/GeoPonto?node-id=0-1&p=f) 
+
 ## 🚀 Funcionalidades
 
 * Registro de ponto com base na geolocalização do usuário.
