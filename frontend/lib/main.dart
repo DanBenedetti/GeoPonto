@@ -16,67 +16,13 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
-        scaffoldBackgroundColor: const Color(0xFFF0F0F0),
-        primaryColor: const Color(0xFF16D04D),
-        fontFamily: 'sans-serif',
-        colorScheme: const ColorScheme.light(
-          primary: Color(0xFF16D04D),
-          secondary: Color(0xFF16D04D),
-          background: Color(0xFFF0F0F0),
-          surface: Colors.white,
-          onPrimary: Colors.white,
-          onSecondary: Colors.black,
-          onBackground: Colors.black,
-          onSurface: Colors.black,
-        ),
-        appBarTheme: const AppBarTheme(
-          backgroundColor: Color(0xFF16D04D),
-          foregroundColor: Colors.white,
-        ),
-        floatingActionButtonTheme: const FloatingActionButtonThemeData(
-          backgroundColor: Color(0xFF16D04D),
-          foregroundColor: Colors.white,
-        ),
-        textTheme: const TextTheme(
-          headlineLarge: TextStyle(
-            color: Colors.black,
-            fontWeight: FontWeight.bold,
-            fontSize: 28,
-          ),
-          bodyLarge: TextStyle(color: Colors.black87),
-          bodyMedium: TextStyle(color: Colors.black54),
-        ),
-        inputDecorationTheme: InputDecorationTheme(
-          filled: true,
-          fillColor: Colors.white,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.all(Radius.circular(30.0)),
-            borderSide: BorderSide.none,
-          ),
-          hintStyle: const TextStyle(color: Colors.grey),
-        ),
-        elevatedButtonTheme: ElevatedButtonThemeData(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFFE0E0E0),
-            foregroundColor: Colors.black,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(30.0),
-            ),
-            padding: const EdgeInsets.symmetric(vertical: 16.0),
-            textStyle: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            )
-          ),
-        ),
       ),
       home: const ABTestDecider(),
     );
   }
 }
 
-// Tela que decide e registra a variante
+// Tela inicial com botão para iniciar teste A/B
 class ABTestDecider extends StatefulWidget {
   const ABTestDecider({super.key});
 
@@ -85,48 +31,68 @@ class ABTestDecider extends StatefulWidget {
 }
 
 class _ABTestDeciderState extends State<ABTestDecider> {
-  Future<Widget> _decideVariant() async {
-    final prefs = await SharedPreferences.getInstance();
-    String? variant = prefs.getString('ab_variant');
-
-    // Se não houver variante salva, sorteia e salva
-    if (variant == null) {
-      variant = Random().nextBool() ? 'A' : 'B';
-      await prefs.setString('ab_variant', variant);
-    }
-
-    // Atualiza métrica local
-    String metricKey = 'ab_metric_$variant';
-    int count = prefs.getInt(metricKey) ?? 0;
-    await prefs.setInt(metricKey, count + 1);
-
-    // Retorna a tela correspondente
-    if (variant == 'A') {
-      return const VariantAScreen();
-    } else {
-      return const VariantBScreen();
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<Widget>(
-      future: _decideVariant(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.done && snapshot.hasData) {
-          return snapshot.data!;
-        }
-        return const Scaffold(
-          body: Center(child: CircularProgressIndicator()),
-        );
-      },
+    return Scaffold(
+      appBar: AppBar(title: const Text('Teste A/B - GeoPonto')),
+      body: Center(
+        child: ElevatedButton(
+          onPressed: () async {
+            final start = DateTime.now();
+            final prefs = await SharedPreferences.getInstance();
+            String? variant = prefs.getString('ab_variant');
+
+            // Sorteia variante se não existir
+            if (variant == null) {
+              variant = Random().nextBool() ? 'A' : 'B';
+              await prefs.setString('ab_variant', variant);
+            }
+
+            // Atualiza métrica de exibição
+            String metricKey = 'ab_metric_$variant';
+            int count = prefs.getInt(metricKey) ?? 0;
+            await prefs.setInt(metricKey, count + 1);
+
+            // Mede tempo de carregamento simulando delay (remova se não quiser delay)
+            await Future.delayed(const Duration(milliseconds: 500));
+            final end = DateTime.now();
+            final loadTime = end.difference(start).inMilliseconds;
+
+            // Salva tempo de carregamento
+            String timeKey = 'ab_time_${variant}_ms';
+            int totalTime = prefs.getInt(timeKey) ?? 0;
+            int totalLoads = prefs.getInt('ab_loads_$variant') ?? 0;
+            await prefs.setInt(timeKey, totalTime + loadTime);
+            await prefs.setInt('ab_loads_$variant', totalLoads + 1);
+
+            // Navega para variante e passa tempo de carregamento
+            if (variant == 'A') {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => VariantAScreen(loadTime: loadTime),
+                ),
+              );
+            } else {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => VariantBScreen(loadTime: loadTime),
+                ),
+              );
+            }
+          },
+          child: const Text('Iniciar Teste A/B'),
+        ),
+      ),
     );
   }
 }
 
 // Variante A
 class VariantAScreen extends StatelessWidget {
-  const VariantAScreen({super.key});
+  final int loadTime;
+  const VariantAScreen({super.key, required this.loadTime});
 
   @override
   Widget build(BuildContext context) {
@@ -140,8 +106,10 @@ class VariantAScreen extends StatelessWidget {
               'Bem-vindo à Variante A!',
               style: TextStyle(fontSize: 24),
             ),
+            const SizedBox(height: 16),
+            Text('Tempo de carregamento: ${loadTime} ms'),
             const SizedBox(height: 32),
-            MetricsWidget(variant: 'A'),
+            const MetricsWidget(variant: 'A'),
           ],
         ),
       ),
@@ -151,7 +119,8 @@ class VariantAScreen extends StatelessWidget {
 
 // Variante B
 class VariantBScreen extends StatelessWidget {
-  const VariantBScreen({super.key});
+  final int loadTime;
+  const VariantBScreen({super.key, required this.loadTime});
 
   @override
   Widget build(BuildContext context) {
@@ -165,8 +134,10 @@ class VariantBScreen extends StatelessWidget {
               'Bem-vindo à Variante B!',
               style: TextStyle(fontSize: 24, color: Colors.blue),
             ),
+            const SizedBox(height: 16),
+            Text('Tempo de carregamento: ${loadTime} ms'),
             const SizedBox(height: 32),
-            MetricsWidget(variant: 'B'),
+            const MetricsWidget(variant: 'B'),
           ],
         ),
       ),
@@ -186,6 +157,8 @@ class MetricsWidget extends StatefulWidget {
 class _MetricsWidgetState extends State<MetricsWidget> {
   int? countA;
   int? countB;
+  double? avgTimeA;
+  double? avgTimeB;
 
   @override
   void initState() {
@@ -198,6 +171,14 @@ class _MetricsWidgetState extends State<MetricsWidget> {
     setState(() {
       countA = prefs.getInt('ab_metric_A') ?? 0;
       countB = prefs.getInt('ab_metric_B') ?? 0;
+
+      int totalTimeA = prefs.getInt('ab_time_A_ms') ?? 0;
+      int loadsA = prefs.getInt('ab_loads_A') ?? 0;
+      avgTimeA = loadsA > 0 ? totalTimeA / loadsA : null;
+
+      int totalTimeB = prefs.getInt('ab_time_B_ms') ?? 0;
+      int loadsB = prefs.getInt('ab_loads_B') ?? 0;
+      avgTimeB = loadsB > 0 ? totalTimeB / loadsB : null;
     });
   }
 
@@ -207,6 +188,9 @@ class _MetricsWidgetState extends State<MetricsWidget> {
       children: [
         Text('Exibições Variante A: ${countA ?? "..."}'),
         Text('Exibições Variante B: ${countB ?? "..."}'),
+        const SizedBox(height: 16),
+        Text('Tempo médio Variante A: ${avgTimeA?.toStringAsFixed(2) ?? "..."} ms'),
+        Text('Tempo médio Variante B: ${avgTimeB?.toStringAsFixed(2) ?? "..."} ms'),
       ],
     );
   }
