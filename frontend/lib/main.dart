@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:geoponto/screens/loading_screen.dart';
+import 'package:geoponto/ab_test_service.dart';
 import 'dart:math';
 
 void main() {
@@ -16,182 +17,128 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
-      ),
-      home: const ABTestDecider(),
-    );
-  }
-}
-
-// Tela inicial com botão para iniciar teste A/B
-class ABTestDecider extends StatefulWidget {
-  const ABTestDecider({super.key});
-
-  @override
-  State<ABTestDecider> createState() => _ABTestDeciderState();
-}
-
-class _ABTestDeciderState extends State<ABTestDecider> {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Teste A/B - GeoPonto')),
-      body: Center(
-        child: ElevatedButton(
-          onPressed: () async {
-            final start = DateTime.now();
-            final prefs = await SharedPreferences.getInstance();
-            String? variant = prefs.getString('ab_variant');
-
-            // Sorteia variante se não existir
-            if (variant == null) {
-              variant = Random().nextBool() ? 'A' : 'B';
-              await prefs.setString('ab_variant', variant);
-            }
-
-            // Atualiza métrica de exibição
-            String metricKey = 'ab_metric_$variant';
-            int count = prefs.getInt(metricKey) ?? 0;
-            await prefs.setInt(metricKey, count + 1);
-
-            // Mede tempo de carregamento simulando delay (remova se não quiser delay)
-            await Future.delayed(const Duration(milliseconds: 500));
-            final end = DateTime.now();
-            final loadTime = end.difference(start).inMilliseconds;
-
-            // Salva tempo de carregamento
-            String timeKey = 'ab_time_${variant}_ms';
-            int totalTime = prefs.getInt(timeKey) ?? 0;
-            int totalLoads = prefs.getInt('ab_loads_$variant') ?? 0;
-            await prefs.setInt(timeKey, totalTime + loadTime);
-            await prefs.setInt('ab_loads_$variant', totalLoads + 1);
-
-            // Navega para variante e passa tempo de carregamento
-            if (variant == 'A') {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => VariantAScreen(loadTime: loadTime),
-                ),
-              );
-            } else {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => VariantBScreen(loadTime: loadTime),
-                ),
-              );
-            }
-          },
-          child: const Text('Iniciar Teste A/B'),
+        scaffoldBackgroundColor: const Color(0xFFF0F0F0),
+        primaryColor: const Color(0xFF16D04D),
+        fontFamily: 'sans-serif',
+        colorScheme: const ColorScheme.light(
+          primary: Color(0xFF16D04D),
+          secondary: Color(0xFF16D04D),
+          background: Color(0xFFF0F0F0),
+          surface: Colors.white,
+          onPrimary: Colors.white,
+          onSecondary: Colors.black,
+          onBackground: Colors.black,
+          onSurface: Colors.black,
         ),
-      ),
-    );
-  }
-}
-
-// Variante A
-class VariantAScreen extends StatelessWidget {
-  final int loadTime;
-  const VariantAScreen({super.key, required this.loadTime});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Variante A')),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Text(
-              'Bem-vindo à Variante A!',
-              style: TextStyle(fontSize: 24),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Color(0xFF16D04D),
+          foregroundColor: Colors.white,
+        ),
+        floatingActionButtonTheme: const FloatingActionButtonThemeData(
+          backgroundColor: Color(0xFF16D04D),
+          foregroundColor: Colors.white,
+        ),
+        textTheme: const TextTheme(
+          headlineLarge: TextStyle(
+            color: Colors.black,
+            fontWeight: FontWeight.bold,
+            fontSize: 28,
+          ),
+          bodyLarge: TextStyle(color: Colors.black87),
+          bodyMedium: TextStyle(color: Colors.black54),
+        ),
+        inputDecorationTheme: InputDecorationTheme(
+          filled: true,
+          fillColor: Colors.white,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(30.0),
+            borderSide: BorderSide.none,
+          ),
+          hintStyle: const TextStyle(color: Colors.grey),
+        ),
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFFE0E0E0),
+            foregroundColor: Colors.black,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(30.0),
             ),
-            const SizedBox(height: 16),
-            Text('Tempo de carregamento: ${loadTime} ms'),
-            const SizedBox(height: 32),
-            const MetricsWidget(variant: 'A'),
-          ],
+            padding: const EdgeInsets.symmetric(vertical: 16.0),
+            textStyle: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            )
+          ),
         ),
       ),
+      home: const ABTestScreen(),
     );
   }
 }
 
-// Variante B
-class VariantBScreen extends StatelessWidget {
-  final int loadTime;
-  const VariantBScreen({super.key, required this.loadTime});
+// Tela de Teste A/B
+class ABTestScreen extends StatefulWidget {
+  const ABTestScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Variante B')),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Text(
-              'Bem-vindo à Variante B!',
-              style: TextStyle(fontSize: 24, color: Colors.blue),
-            ),
-            const SizedBox(height: 16),
-            Text('Tempo de carregamento: ${loadTime} ms'),
-            const SizedBox(height: 32),
-            const MetricsWidget(variant: 'B'),
-          ],
-        ),
-      ),
-    );
-  }
+  State<ABTestScreen> createState() => _ABTestScreenState();
 }
 
-// Widget para mostrar métricas locais
-class MetricsWidget extends StatefulWidget {
-  final String variant;
-  const MetricsWidget({super.key, required this.variant});
+class _ABTestScreenState extends State<ABTestScreen> {
+  String? variant;
+  int? loadTimeMs;
+  bool loading = false;
 
-  @override
-  State<MetricsWidget> createState() => _MetricsWidgetState();
-}
-
-class _MetricsWidgetState extends State<MetricsWidget> {
-  int? countA;
-  int? countB;
-  double? avgTimeA;
-  double? avgTimeB;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadMetrics();
-  }
-
-  Future<void> _loadMetrics() async {
-    final prefs = await SharedPreferences.getInstance();
+  Future<void> runABTest() async {
     setState(() {
-      countA = prefs.getInt('ab_metric_A') ?? 0;
-      countB = prefs.getInt('ab_metric_B') ?? 0;
+      loading = true;
+    });
 
-      int totalTimeA = prefs.getInt('ab_time_A_ms') ?? 0;
-      int loadsA = prefs.getInt('ab_loads_A') ?? 0;
-      avgTimeA = loadsA > 0 ? totalTimeA / loadsA : null;
+    final start = DateTime.now();
+    variant ??= Random().nextBool() ? 'A' : 'B';
 
-      int totalTimeB = prefs.getInt('ab_time_B_ms') ?? 0;
-      int loadsB = prefs.getInt('ab_loads_B') ?? 0;
-      avgTimeB = loadsB > 0 ? totalTimeB / loadsB : null;
+    // Simula carregamento
+    await Future.delayed(const Duration(milliseconds: 500));
+    final end = DateTime.now();
+    loadTimeMs = end.difference(start).inMilliseconds;
+
+    // Envia métrica para backend
+    await ABTestService.sendMetric(
+      variant: variant!,
+      loadTimeMs: loadTimeMs!,
+      action: 'page_load',
+    );
+
+    setState(() {
+      loading = false;
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Text('Exibições Variante A: ${countA ?? "..."}'),
-        Text('Exibições Variante B: ${countB ?? "..."}'),
-        const SizedBox(height: 16),
-        Text('Tempo médio Variante A: ${avgTimeA?.toStringAsFixed(2) ?? "..."} ms'),
-        Text('Tempo médio Variante B: ${avgTimeB?.toStringAsFixed(2) ?? "..."} ms'),
-      ],
+    return Scaffold(
+      appBar: AppBar(title: const Text('Teste A/B - GeoPonto')),
+      body: Center(
+        child: loading
+            ? const CircularProgressIndicator()
+            : Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  ElevatedButton(
+                    onPressed: runABTest,
+                    child: const Text('Executar Teste A/B'),
+                  ),
+                  if (variant != null && loadTimeMs != null) ...[
+                    const SizedBox(height: 24),
+                    Text('Variante: $variant'),
+                    Text('Tempo de carregamento: ${loadTimeMs} ms'),
+                    const SizedBox(height: 24),
+                    const Text('Métrica enviada ao backend!'),
+                  ],
+                ],
+              ),
+      ),
     );
   }
 }

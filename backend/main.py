@@ -215,5 +215,52 @@ def get_relatorio_faltas(id):
     # TODO: Implementar a lógica para gerar o relatório de faltas
     return jsonify({'message': 'Relatório de faltas a ser implementado'})
 
+# --- Endpoints de Métricas A/B ---
+@app.route('/ab-metric', methods=['POST'])
+def ab_metric():
+    data = request.get_json()
+    variant = data.get('variant')
+    load_time_ms = data.get('load_time_ms')
+    action = data.get('action')
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute(
+        'INSERT INTO ab_metrics (variant, load_time_ms, action) VALUES (%s, %s, %s)',
+        (variant, load_time_ms, action)
+    )
+    conn.commit()
+    cur.close()
+    conn.close()
+    return jsonify({'message': 'Metric received'}), 201
+
+@app.route('/ab-metric', methods=['GET'])
+def get_ab_metrics():
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute('SELECT variant, AVG(load_time_ms), COUNT(*) FROM ab_metrics GROUP BY variant')
+    results = cur.fetchall()
+    cur.close()
+    conn.close()
+    metrics = [
+        {'variant': r[0], 'avg_load_time_ms': float(r[1]), 'count': r[2]}
+        for r in results
+    ]
+    return jsonify({'metrics': metrics})
+
+@app.route('/ab-dashboard')
+def ab_dashboard():
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute('SELECT variant, AVG(load_time_ms), COUNT(*) FROM ab_metrics GROUP BY variant')
+    results = cur.fetchall()
+    cur.close()
+    conn.close()
+    html = "<h1>Dashboard A/B</h1><table border='1'><tr><th>Variante</th><th>Média Tempo (ms)</th><th>Exibições</th></tr>"
+    for r in results:
+        html += f"<tr><td>{r[0]}</td><td>{r[1]:.2f}</td><td>{r[2]}</td></tr>"
+    html += "</table>"
+    return html
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

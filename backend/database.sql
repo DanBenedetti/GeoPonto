@@ -69,3 +69,11 @@ CREATE TABLE Localizacoes (
     atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (id_empresa) REFERENCES Empresas(id_empresa)
 );
+
+CREATE TABLE ab_metrics (
+    id SERIAL PRIMARY KEY,
+    variant VARCHAR(10) NOT NULL,
+    load_time_ms INT,
+    action VARCHAR(50),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
