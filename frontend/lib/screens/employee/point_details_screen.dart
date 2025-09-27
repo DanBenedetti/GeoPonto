@@ -113,29 +113,32 @@ class PointDetailsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildAdjustmentSection(BuildContext context) {
-    return Column(
-      children: [
-        const Text('Solicitação', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-        const SizedBox(height: 8),
-        const Text('Deseja realizar alguma solicitação de ajuste ao seu gestor?', textAlign: TextAlign.center, style: TextStyle(color: Colors.grey)),
-        const SizedBox(height: 16),
-        ElevatedButton(
-          onPressed: () {
-            Navigator.push(context, MaterialPageRoute(builder: (context) => const AdjustmentScreen()));
-          },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.grey[300],
-            foregroundColor: Colors.black,
-            elevation: 0,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20.0),
+    Widget _buildAdjustmentSection(BuildContext context) {
+    return Center( // <-- Adicione este widget
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          const Text('Solicitação', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, )),
+          const SizedBox(height: 8),
+          const Text('Deseja realizar alguma solicitação de ajuste ao seu gestor?', textAlign: TextAlign.center, style: TextStyle(color: Colors.grey)),
+          const SizedBox(height: 16),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.push(context, MaterialPageRoute(builder: (context) => const AdjustmentScreen()));
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.grey[300],
+              foregroundColor: Colors.black,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20.0),
+              ),
+              minimumSize: const Size(150, 50),
             ),
-            minimumSize: const Size(150, 50),
+            child: const Text('Ajuste'),
           ),
-          child: const Text('Ajuste'),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
