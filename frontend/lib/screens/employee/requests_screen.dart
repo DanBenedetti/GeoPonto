@@ -8,7 +8,6 @@ class RequestsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Mock data for demonstration
     final List<Map<String, dynamic>> requests = [
       {'date': '22/08/2025 | sexta-feira', 'status': RequestStatus.pending},
       {'date': '19/08/2025 | terça-feira', 'status': RequestStatus.approved},

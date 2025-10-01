@@ -35,7 +35,7 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             child: ListTile(
               leading: CircleAvatar(
-                child: Text(employee.nome[0]), // First letter of the name
+                child: Text(employee.nome[0]),
               ),
               title: Text(employee.nome, style: const TextStyle(fontWeight: FontWeight.bold)),
               subtitle: Text(employee.cargo),
@@ -45,13 +45,11 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
                   IconButton(
                     icon: const Icon(Icons.edit_outlined, color: Colors.blueAccent),
                     onPressed: () {
-                      // Logic to edit employee data would go here
                     },
                   ),
                   IconButton(
                     icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
                     onPressed: () {
-                      // Logic to delete employee would go here
                     },
                   ),
                 ],

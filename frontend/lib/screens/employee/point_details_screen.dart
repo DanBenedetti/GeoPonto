@@ -2,15 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:geoponto/screens/employee/adjustment_screen.dart';
 
 class PointDetailsScreen extends StatelessWidget {
-  // In a real app, you'd pass the specific date or record ID
+ 
   const PointDetailsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // Example data based on the image
+
     const String date = '20/08/2025 | quarta-feira';
     const String shift = '08:00 às 12:00 | 13:00 às 17:30';
-    const bool hasRecords = false; // Toggle this to see different states
+    const bool hasRecords = false; 
 
     return Scaffold(
       appBar: AppBar(
@@ -77,11 +77,9 @@ class PointDetailsScreen extends StatelessWidget {
   }
 
   Widget _buildRecordsList() {
-    // This would be built from a list of records in a real app
     return const Column(
       children: [
         Text('Aqui iriam os registros de ponto do dia'),
-        // Example: ListTile(leading: Icon(Icons.timer), title: Text('08:00'), subtitle: Text('Entrada'))
       ],
     );
   }

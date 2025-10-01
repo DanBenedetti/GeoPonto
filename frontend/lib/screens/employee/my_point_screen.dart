@@ -16,7 +16,6 @@ class MyPointScreen extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.filter_list),
             onPressed: () {
-              // TODO: Implement filter functionality
             },
           ),
         ],

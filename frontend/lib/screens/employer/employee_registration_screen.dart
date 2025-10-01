@@ -14,7 +14,6 @@ class EmployeeRegistrationScreen extends StatefulWidget {
 class _EmployeeRegistrationScreenState extends State<EmployeeRegistrationScreen> {
   final _formKey = GlobalKey<FormState>();
 
-  // Controllers for each text field
   final _nameController = TextEditingController();
   final _cpfController = TextEditingController();
   final _streetController = TextEditingController();
@@ -32,7 +31,6 @@ class _EmployeeRegistrationScreenState extends State<EmployeeRegistrationScreen>
 
   @override
   void dispose() {
-    // Dispose controllers to free up resources
     _nameController.dispose();
     _cpfController.dispose();
     _streetController.dispose();

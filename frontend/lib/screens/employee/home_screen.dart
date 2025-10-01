@@ -68,7 +68,7 @@ class _EmployeeHomeScreenState extends State<EmployeeHomeScreen> with SearchMixi
             setState(() {
               _selectedShortcutIndex = 2;
             });
-            // TODO: Navigate to Holerite screen
+            // TODO: tela Holerite
         } else {
           setState(() {
             _selectedShortcutIndex = index;

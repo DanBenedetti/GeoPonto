@@ -42,7 +42,6 @@ class PointMirrorScreen extends StatelessWidget {
       ),
       child: InkWell(
         onTap: () {
-          // TODO: Navigate to month details
         },
         borderRadius: BorderRadius.circular(10.0),
         child: Padding(
