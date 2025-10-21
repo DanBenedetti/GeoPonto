@@ -99,8 +99,9 @@ def create_funcionario():
     conn = get_db_connection()
     cur = conn.cursor()
     cur.execute(
-        'INSERT INTO Funcionarios (id_empresa, nome, sobrenome, cpf, email, senha, cargo, departamento, carga_horaria_semanal) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)',
-        (data['id_empresa'], data['nome'], data['sobrenome'], data['cpf'], data['email'], data['senha'], data['cargo'], data['departamento'], data['carga_horaria_semanal'])
+        '''INSERT INTO Funcionarios (id_empresa, nome_completo, cpf, rua, numero, bairro, cidade, cep, email, telefone, cargo, senha, horario_entrada, horario_saida_intervalo, horario_retorno_intervalo, horario_saida)
+           VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''',
+        (data['id_empresa'], data['nome_completo'], data['cpf'], data['rua'], data['numero'], data['bairro'], data['cidade'], data['cep'], data['email'], data['telefone'], data['cargo'], data['senha'], data['horario_entrada'], data['horario_saida_intervalo'], data['horario_retorno_intervalo'], data['horario_saida'])
     )
     conn.commit()
     cur.close()
