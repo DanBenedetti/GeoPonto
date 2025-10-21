@@ -28,6 +28,8 @@ class _EmployeeRegistrationScreenState extends State<EmployeeRegistrationScreen>
   final _startIntervalController = TextEditingController();
   final _endIntervalController = TextEditingController();
   final _exitTimeController = TextEditingController();
+  final _senhaController = TextEditingController();
+  final _confirmarSenhaController = TextEditingController();
 
   @override
   void dispose() {
@@ -45,6 +47,8 @@ class _EmployeeRegistrationScreenState extends State<EmployeeRegistrationScreen>
     _startIntervalController.dispose();
     _endIntervalController.dispose();
     _exitTimeController.dispose();
+    _senhaController.dispose();
+    _confirmarSenhaController.dispose();
     super.dispose();
   }
 
@@ -66,6 +70,7 @@ class _EmployeeRegistrationScreenState extends State<EmployeeRegistrationScreen>
         horarioRetornoIntervalo: _endIntervalController.text,
         horarioSaida: _exitTimeController.text,
       );
+      // TODO: Implementar a chamada para a API para registrar o funcionário
       Navigator.of(context).pop(colaborador);
     }
   }
@@ -102,6 +107,25 @@ class _EmployeeRegistrationScreenState extends State<EmployeeRegistrationScreen>
                   keyboardType: TextInputType.phone,
                 ),
                 Editor(controller: _positionController, hintText: 'Cargo'),
+                Editor(
+                  controller: _senhaController,
+                  hintText: 'Senha',
+                  obscureText: true,
+                ),
+                Editor(
+                  controller: _confirmarSenhaController,
+                  hintText: 'Confirmar Senha',
+                  obscureText: true,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Campo obrigatório';
+                    }
+                    if (value != _senhaController.text) {
+                      return 'As senhas não coincidem';
+                    }
+                    return null;
+                  },
+                ),
                 TimeEditor(controller: _entryTimeController, hintText: 'Entrada (HH:MM)'),
                 TimeEditor(controller: _startIntervalController, hintText: 'Saída para o Intervalo (HH:MM)'),
                 TimeEditor(controller: _endIntervalController, hintText: 'Retorno do Intervalo (HH:MM)'),
