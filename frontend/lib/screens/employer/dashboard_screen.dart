@@ -4,15 +4,15 @@ import 'package:geoponto/screens/employer/employee_list_screen.dart';
 import 'package:geoponto/screens/employer/employee_registration_screen.dart';
 
 class EmployerDashboardScreen extends StatefulWidget {
-  const EmployerDashboardScreen({super.key});
+  final int idEmpresa;
+
+  const EmployerDashboardScreen({super.key, required this.idEmpresa});
 
   @override
   State<EmployerDashboardScreen> createState() => _EmployerDashboardScreenState();
 }
 
 class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
-  final List<Colaborador> _employees = [];
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -30,15 +30,10 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
               context,
               icon: Icons.person_add_alt_1_outlined,
               title: 'Cadastrar Novo Funcionário',
-              onTap: () async {
-                final newEmployee = await Navigator.of(context).push(
-                  MaterialPageRoute(builder: (context) => const EmployeeRegistrationScreen()),
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (context) => EmployeeRegistrationScreen(idEmpresa: widget.idEmpresa)),
                 );
-                if (newEmployee != null && newEmployee is Colaborador) {
-                  setState(() {
-                    _employees.add(newEmployee);
-                  });
-                }
               },
             ),
             const SizedBox(height: 16),
@@ -48,7 +43,7 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
               title: 'Visualizar / Editar Funcionários',
               onTap: () {
                  Navigator.of(context).push(
-                  MaterialPageRoute(builder: (context) => EmployeeListScreen(employees: _employees)),
+                  MaterialPageRoute(builder: (context) => EmployeeListScreen(idEmpresa: widget.idEmpresa)),
                 );
               },
             ),

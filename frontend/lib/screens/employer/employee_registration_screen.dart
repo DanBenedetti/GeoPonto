@@ -1,10 +1,20 @@
+import 'dart:convert';
+import 'package:flutter/material.dart';
 import 'package:geoponto/components/editor.dart';
 import 'package:geoponto/components/time_editor.dart';
+import 'package:geoponto/config/api_config.dart';
 import 'package:geoponto/models/colaborador.dart';
-import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 
 class EmployeeRegistrationScreen extends StatefulWidget {
-  const EmployeeRegistrationScreen({super.key});
+  final int idEmpresa;
+  final Colaborador? colaborador;
+
+  const EmployeeRegistrationScreen({
+    super.key,
+    required this.idEmpresa,
+    this.colaborador,
+  });
 
   @override
   State<EmployeeRegistrationScreen> createState() =>
@@ -13,6 +23,8 @@ class EmployeeRegistrationScreen extends StatefulWidget {
 
 class _EmployeeRegistrationScreenState extends State<EmployeeRegistrationScreen> {
   final _formKey = GlobalKey<FormState>();
+  bool get _isEditMode => widget.colaborador != null;
+  bool _isLoading = false;
 
   final _nameController = TextEditingController();
   final _cpfController = TextEditingController();
@@ -30,6 +42,39 @@ class _EmployeeRegistrationScreenState extends State<EmployeeRegistrationScreen>
   final _exitTimeController = TextEditingController();
   final _senhaController = TextEditingController();
   final _confirmarSenhaController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    if (_isEditMode) {
+      _populateFields();
+    }
+  }
+
+  String _formatTime(String? timeInHHMMSS) {
+    if (timeInHHMMSS == null || timeInHHMMSS.length < 5) {
+      return '';
+    }
+    return timeInHHMMSS.substring(0, 5);
+  }
+
+  void _populateFields() {
+    final c = widget.colaborador!;
+    _nameController.text = c.nome_completo;
+    _cpfController.text = c.cpf;
+    _streetController.text = c.rua;
+    _numberController.text = c.numero;
+    _neighborhoodController.text = c.bairro;
+    _cityController.text = c.cidade;
+    _cepController.text = c.cep;
+    _emailController.text = c.email;
+    _phoneController.text = c.telefone;
+    _positionController.text = c.cargo;
+    _entryTimeController.text = _formatTime(c.horarioEntrada);
+    _startIntervalController.text = _formatTime(c.horarioSaidaIntervalo);
+    _endIntervalController.text = _formatTime(c.horarioRetornoIntervalo);
+    _exitTimeController.text = _formatTime(c.horarioSaida);
+  }
 
   @override
   void dispose() {
@@ -52,34 +97,115 @@ class _EmployeeRegistrationScreenState extends State<EmployeeRegistrationScreen>
     super.dispose();
   }
 
-  void _registerEmployee() {
+  Future<void> _submitForm() async {
     if (_formKey.currentState!.validate()) {
-      final colaborador = Colaborador(
-        nome: _nameController.text,
-        cpf: _cpfController.text,
-        rua: _streetController.text,
-        numero: _numberController.text,
-        bairro: _neighborhoodController.text,
-        cidade: _cityController.text,
-        cep: _cepController.text,
-        email: _emailController.text,
-        telefone: _phoneController.text,
-        cargo: _positionController.text,
-        horarioEntrada: _entryTimeController.text,
-        horarioSaidaIntervalo: _startIntervalController.text,
-        horarioRetornoIntervalo: _endIntervalController.text,
-        horarioSaida: _exitTimeController.text,
-      );
-      // TODO: Implementar a chamada para a API para registrar o funcionário
-      Navigator.of(context).pop(colaborador);
+      setState(() {
+        _isLoading = true;
+      });
+
+      if (_isEditMode) {
+        await _updateEmployee();
+      } else {
+        await _createEmployee();
+      }
+
+      setState(() {
+        _isLoading = false;
+      });
     }
+  }
+
+  Map<String, dynamic> _buildJsonPayload() {
+    final payload = {
+      'id_empresa': widget.idEmpresa,
+      'nome_completo': _nameController.text,
+      'cpf': _cpfController.text,
+      'rua': _streetController.text,
+      'numero': _numberController.text,
+      'bairro': _neighborhoodController.text,
+      'cidade': _cityController.text,
+      'cep': _cepController.text,
+      'email': _emailController.text,
+      'telefone': _phoneController.text,
+      'cargo': _positionController.text,
+      'horario_entrada': _entryTimeController.text,
+      'horario_saida_intervalo': _startIntervalController.text,
+      'horario_retorno_intervalo': _endIntervalController.text,
+      'horario_saida': _exitTimeController.text,
+    };
+
+    // Only include password if it's not empty
+    if (_senhaController.text.isNotEmpty) {
+      payload['senha'] = _senhaController.text;
+    }
+
+    return payload;
+  }
+
+  Future<void> _createEmployee() async {
+    try {
+      final response = await http.post(
+        Uri.parse('${ApiConfig.baseUrl}/funcionarios'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(_buildJsonPayload()),
+      );
+      _handleResponse(response, isCreating: true);
+    } catch (e) {
+      _handleError(e);
+    }
+  }
+
+  Future<void> _updateEmployee() async {
+    try {
+      final response = await http.put(
+        Uri.parse('${ApiConfig.baseUrl}/funcionarios/${widget.colaborador!.id_funcionario}'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(_buildJsonPayload()),
+      );
+      _handleResponse(response, isCreating: false);
+    } catch (e) {
+      _handleError(e);
+    }
+  }
+
+  void _handleResponse(http.Response response, {required bool isCreating}) {
+    final successMessage = isCreating 
+        ? 'Funcionário cadastrado com sucesso!' 
+        : 'Funcionário atualizado com sucesso!';
+    final failureMessage = isCreating 
+        ? 'Falha ao cadastrar funcionário' 
+        : 'Falha ao atualizar funcionário';
+
+    if (response.statusCode == 201 || response.statusCode == 200) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(successMessage)),
+      );
+      Navigator.of(context).pop();
+    } else {
+      try {
+        final errorData = jsonDecode(response.body);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('$failureMessage: ${errorData['message']}')),
+        );
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('$failureMessage: ${response.body}')),
+        );
+      }
+    }
+  }
+
+  void _handleError(Object e) {
+     ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erro de conexão: $e')),
+      );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Cadastrar Funcionário'),
+        title: Text(_isEditMode ? 'Editar Funcionário' : 'Cadastrar Funcionário'),
       ),
       body: SingleChildScrollView(
         child: Padding(
@@ -109,19 +235,26 @@ class _EmployeeRegistrationScreenState extends State<EmployeeRegistrationScreen>
                 Editor(controller: _positionController, hintText: 'Cargo'),
                 Editor(
                   controller: _senhaController,
-                  hintText: 'Senha',
+                  hintText: _isEditMode ? 'Nova Senha (deixe em branco para não alterar)' : 'Senha',
                   obscureText: true,
+                  validator: (value) {
+                    if (!_isEditMode && (value == null || value.isEmpty)) {
+                      return 'O campo Senha é obrigatório';
+                    }
+                    return null;
+                  },
                 ),
                 Editor(
                   controller: _confirmarSenhaController,
                   hintText: 'Confirmar Senha',
                   obscureText: true,
                   validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Campo obrigatório';
-                    }
-                    if (value != _senhaController.text) {
+                    if (_senhaController.text.isNotEmpty && value != _senhaController.text) {
                       return 'As senhas não coincidem';
+                    }
+                    // Only required in create mode
+                    if (!_isEditMode && (value == null || value.isEmpty)) {
+                      return 'O campo Confirmar Senha é obrigatório';
                     }
                     return null;
                   },
@@ -132,11 +265,13 @@ class _EmployeeRegistrationScreenState extends State<EmployeeRegistrationScreen>
                 TimeEditor(controller: _exitTimeController, hintText: 'Saída (HH:MM)'),
                 const SizedBox(height: 24.0),
                 ElevatedButton(
-                  onPressed: _registerEmployee,
+                  onPressed: _isLoading ? null : _submitForm,
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 16),
                   ),
-                  child: const Text('Cadastrar Funcionário'),
+                  child: _isLoading 
+                      ? const CircularProgressIndicator(color: Colors.white) 
+                      : Text(_isEditMode ? 'Salvar Alterações' : 'Cadastrar Funcionário'),
                 ),
               ],
             ),

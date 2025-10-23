@@ -1,8 +1,11 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:geoponto/config/api_config.dart';
 import 'package:geoponto/screens/employer/dashboard_screen.dart';
 import 'package:geoponto/screens/employer/employer_registration_screen.dart';
 import 'package:geoponto/screens/employee/home_screen.dart';
+import 'package:http/http.dart' as http;
 
 enum LoginType { collaborator, employer }
 
@@ -14,19 +17,100 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  final _formKey = GlobalKey<FormState>();
   LoginType _loginType = LoginType.collaborator;
   bool _rememberMe = false;
+  bool _isLoading = false;
 
-  void _handleLogin() {
-    if (_loginType == LoginType.collaborator) {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => const EmployeeHomeScreen()),
+  final _userController = TextEditingController();
+  final _passwordController = TextEditingController();
+
+  @override
+  void dispose() {
+    _userController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _handleLogin() async {
+    if (_userController.text.isEmpty || _passwordController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Por favor, preencha todos os campos.')),
       );
-    } else {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => const EmployerDashboardScreen()),
-      );
+      return;
     }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    if (_loginType == LoginType.collaborator) {
+      try {
+        final response = await http.post(
+          Uri.parse('${ApiConfig.baseUrl}/login/funcionario'),
+          headers: <String, String>{
+            'Content-Type': 'application/json; charset=UTF-8',
+          },
+          body: jsonEncode(<String, String>{
+            'email': _userController.text,
+            'senha': _passwordController.text,
+          }),
+        );
+
+        if (response.statusCode == 200) {
+          final responseBody = jsonDecode(response.body);
+          final int idFuncionario = responseBody['id_funcionario'];
+          final int idEmpresa = responseBody['id_empresa'];
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (context) => EmployeeHomeScreen(idFuncionario: idFuncionario, idEmpresa: idEmpresa)),
+          );
+        } else {
+          final responseBody = jsonDecode(response.body);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(responseBody['message'] ?? 'Erro desconhecido ao tentar fazer login.')),
+          );
+        }
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erro de conexão: $e')),
+        );
+      }
+    } else {
+      // Employer Login Logic
+      try {
+        final response = await http.post(
+          Uri.parse('${ApiConfig.baseUrl}/login/empresa'),
+          headers: <String, String>{
+            'Content-Type': 'application/json; charset=UTF-8',
+          },
+          body: jsonEncode(<String, String>{
+            'username': _userController.text,
+            'senha': _passwordController.text,
+          }),
+        );
+
+        if (response.statusCode == 200) {
+          final responseBody = jsonDecode(response.body);
+          final int idEmpresa = responseBody['id_empresa'];
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (context) => EmployerDashboardScreen(idEmpresa: idEmpresa)),
+          );
+        } else {
+          final responseBody = jsonDecode(response.body);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(responseBody['message'] ?? 'Erro desconhecido ao tentar fazer login.')),
+          );
+        }
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erro de conexão: $e')),
+        );
+      }
+    }
+
+    setState(() {
+      _isLoading = false;
+    });
   }
 
   @override
@@ -50,8 +134,8 @@ class _LoginScreenState extends State<LoginScreen> {
                   'GeoPonto',
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+                        fontWeight: FontWeight.bold,
+                      ),
                 ),
                 const SizedBox(height: 40),
                 _buildLoginTypeSelector(),
@@ -123,68 +207,82 @@ class _LoginScreenState extends State<LoginScreen> {
         color: const Color(0xFFE0E0E0),
         borderRadius: BorderRadius.circular(20.0),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const TextField(
-            decoration: InputDecoration(
-              hintText: 'E-mail ou CPF',
-            ),
-          ),
-          const SizedBox(height: 16),
-          const TextField(
-            obscureText: true,
-            decoration: InputDecoration(
-              hintText: 'Senha',
-            ),
-          ),
-          const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  Checkbox(
-                    value: _rememberMe,
-                    onChanged: (value) {
-                      setState(() {
-                        _rememberMe = value ?? false;
-                      });
-                    },
-                    activeColor: Theme.of(context).primaryColor,
-                  ),
-                  const Text('Manter logado'),
-                ],
+      child: Form(
+        key: _formKey,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            TextFormField(
+              controller: _userController,
+              decoration: InputDecoration(
+                hintText: _loginType == LoginType.employer ? 'Usuário' : 'E-mail ou CPF',
               ),
-              TextButton(
-                onPressed: () {},
-                child: const Text(
-                  'Esqueci a senha',
-                  style: TextStyle(color: Colors.black54, decoration: TextDecoration.underline),
+              keyboardType: _loginType == LoginType.employer
+                  ? TextInputType.text
+                  : TextInputType.emailAddress,
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: _passwordController,
+              obscureText: true,
+              decoration: const InputDecoration(
+                hintText: 'Senha',
+              ),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Checkbox(
+                      value: _rememberMe,
+                      onChanged: (value) {
+                        setState(() {
+                          _rememberMe = value ?? false;
+                        });
+                      },
+                      activeColor: Theme.of(context).primaryColor,
+                    ),
+                    const Text('Manter logado'),
+                  ],
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          ElevatedButton(
-            onPressed: _handleLogin, // Updated this line
-            child: const Text('Entrar'),
-          ),
-          if (_loginType == LoginType.employer)
-            Padding(
-              padding: const EdgeInsets.only(top: 16.0),
-              child: ElevatedButton(
-                onPressed: () {
-                   Navigator.of(context).push(
+                TextButton(
+                  onPressed: () {},
+                  child: const Text(
+                    'Esqueci a senha',
+                    style: TextStyle(color: Colors.black54, decoration: TextDecoration.underline),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton(
+              onPressed: _isLoading ? null : _handleLogin,
+              child: _isLoading
+                  ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(color: Colors.white, strokeWidth: 3),
+                    )
+                  : const Text('Entrar'),
+            ),
+            if (_loginType == LoginType.employer)
+              Padding(
+                padding: const EdgeInsets.only(top: 16.0),
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.of(context).push(
                       MaterialPageRoute(
                         builder: (context) => const EmployerRegistrationScreen(),
                       ),
                     );
-                },
-                child: const Text('Cadastrar'),
+                  },
+                  child: const Text('Cadastrar'),
+                ),
               ),
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }

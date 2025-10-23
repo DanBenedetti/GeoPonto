@@ -67,8 +67,7 @@ class _EmployerRegistrationScreenState extends State<EmployerRegistrationScreen>
           'razao_social': _razaoSocialController.text,
           'nome_fantasia': _nomeFantasiaController.text,
           'cnpj': _cnpjController.text,
-          'username': _usernameController.text,
-          'password': _senhaController.text,
+          'senha': _senhaController.text,
           'logradouro': _logradouroController.text,
           'numero': _numeroController.text,
           'bairro': _bairroController.text,
@@ -76,6 +75,7 @@ class _EmployerRegistrationScreenState extends State<EmployerRegistrationScreen>
           'estado': _ufController.text,
           'cep': _cepController.text,
           'pais': _paisController.text,
+          'username': _usernameController.text,
         }),
       );
 

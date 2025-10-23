@@ -18,7 +18,6 @@ class AppScreen {
 
 class AppRoutes {
   static final List<AppScreen> all = [
-    const AppScreen(name: 'Bater Ponto', screenBuilder: EmployeeHomeScreen.new),
     const AppScreen(name: 'Meu RH', screenBuilder: MyHrScreen.new),
     const AppScreen(name: 'Minhas Faltas', screenBuilder: AbsencesScreen.new),
     const AppScreen(name: 'Ocorrências de Ponto', screenBuilder: OccurrencesScreen.new),

@@ -5,7 +5,14 @@ import 'package:geoponto/widgets/app_bottom_nav_bar.dart';
 import 'package:geoponto/widgets/shortcuts_widget.dart';
 
 class EmployeeHomeScreen extends StatefulWidget {
-  const EmployeeHomeScreen({super.key});
+  final int idFuncionario;
+  final int idEmpresa;
+
+  const EmployeeHomeScreen({
+    super.key,
+    required this.idFuncionario,
+    required this.idEmpresa,
+  });
 
   @override
   State<EmployeeHomeScreen> createState() => _EmployeeHomeScreenState();

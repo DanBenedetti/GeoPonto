@@ -4,6 +4,7 @@ CREATE TABLE Empresas (
     nome_fantasia VARCHAR(255) NOT NULL,
     razao_social VARCHAR(255) NOT NULL,
     cnpj VARCHAR(18) NOT NULL UNIQUE,
+    senha VARCHAR(255) NOT NULL,
     cep VARCHAR(10),
     logradouro VARCHAR(255),
     numero VARCHAR(20),
@@ -19,7 +20,7 @@ CREATE TABLE Empresas (
 -- Tabela de Funcionários
 CREATE TABLE Funcionarios (
     id_funcionario SERIAL PRIMARY KEY,
-    id_empresa INT NOT NULL,
+    id_empresa INT,
     nome_completo VARCHAR(255) NOT NULL,
     cpf VARCHAR(14) NOT NULL UNIQUE,
     rua VARCHAR(255),
@@ -37,8 +38,7 @@ CREATE TABLE Funcionarios (
     horario_saida TIME,
     status BOOLEAN DEFAULT TRUE,
     criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (id_empresa) REFERENCES Empresas(id_empresa)
+    atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Tabela de Pontos
