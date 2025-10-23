@@ -179,10 +179,24 @@ def get_funcionario(id):
     conn = get_db_connection()
     cur = conn.cursor()
     cur.execute('SELECT * FROM Funcionarios WHERE id_funcionario = %s', (id,))
-    funcionario = cur.fetchone()
+    
+    # Get column names from the cursor description
+    columns = [desc[0] for desc in cur.description]
+    
+    # Fetch one row and create a dictionary
+    funcionario_data = cur.fetchone()
     cur.close()
     conn.close()
-    return jsonify({'funcionario': funcionario})
+
+    if funcionario_data:
+        funcionario = dict(zip(columns, funcionario_data))
+        # Convert TIME objects to strings
+        for key, value in funcionario.items():
+            if isinstance(value, datetime.time):
+                funcionario[key] = value.strftime('%H:%M:%S')
+        return jsonify(funcionario)
+    else:
+        return jsonify({'message': 'Funcionário não encontrado'}), 404
 
 @app.route('/funcionarios/<int:id>', methods=['PUT'])
 def update_funcionario(id):

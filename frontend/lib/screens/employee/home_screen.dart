@@ -1,8 +1,14 @@
+import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:geoponto/config/api_config.dart';
 import 'package:geoponto/mixins/search_mixin.dart';
+import 'package:geoponto/models/colaborador.dart';
 import 'package:geoponto/screens/employee/my_hr_screen.dart';
 import 'package:geoponto/widgets/app_bottom_nav_bar.dart';
 import 'package:geoponto/widgets/shortcuts_widget.dart';
+import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
 
 class EmployeeHomeScreen extends StatefulWidget {
   final int idFuncionario;
@@ -19,34 +25,82 @@ class EmployeeHomeScreen extends StatefulWidget {
 }
 
 class _EmployeeHomeScreenState extends State<EmployeeHomeScreen> with SearchMixin<EmployeeHomeScreen> {
+  late Future<Colaborador> _funcionarioFuture;
+  late String _currentTime;
+  late Timer _timer;
   int _selectedIndex = 1; // Home is selected by default
   int _selectedShortcutIndex = 0; // 0: Bater Ponto, 1: Meu RH, 2: Holerite
+
+  @override
+  void initState() {
+    super.initState();
+    _funcionarioFuture = _fetchFuncionario();
+    _updateTime(); // Set initial time
+    _timer = Timer.periodic(const Duration(minutes: 1), (Timer t) => _updateTime());
+  }
+
+  @override
+  void dispose() {
+    _timer.cancel(); // Cancel the timer to prevent memory leaks
+    super.dispose();
+  }
+
+  void _updateTime() {
+    final now = DateTime.now();
+    setState(() {
+      _currentTime = DateFormat('HH:mm | dd \'de\' MMMM \'de\' yyyy', 'pt_BR').format(now);
+    });
+  }
+
+  Future<Colaborador> _fetchFuncionario() async {
+    final response = await http.get(Uri.parse('${ApiConfig.baseUrl}/funcionarios/${widget.idFuncionario}'));
+
+    if (response.statusCode == 200) {
+      return Colaborador.fromJson(jsonDecode(response.body));
+    } else {
+      throw Exception('Falha ao carregar os dados do funcionário.');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: buildSearchAppBar(context),
-      body: buildSearchableBody(
-        context,
-        SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildShortcuts(),
-                const SizedBox(height: 24),
-                _buildWelcomeCard(),
-                const SizedBox(height: 24),
-                const Text('Últimos registros', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-                const SizedBox(height: 16),
-                _buildRecentRecords(),
-                const SizedBox(height: 24),
-                _buildClockInCard(),
-              ],
-            ),
-          ),
-        ),
+      body: FutureBuilder<Colaborador>(
+        future: _funcionarioFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasError) {
+            return Center(child: Text('${snapshot.error}'));
+          } else if (snapshot.hasData) {
+            final funcionario = snapshot.data!;
+            return buildSearchableBody(
+              context,
+              SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildShortcuts(),
+                      const SizedBox(height: 24),
+                      _buildWelcomeCard(funcionario),
+                      const SizedBox(height: 24),
+                      const Text('Últimos registros', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                      const SizedBox(height: 16),
+                      _buildRecentRecords(),
+                      const SizedBox(height: 24),
+                      _buildClockInCard(),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          } else {
+            return const Center(child: Text('Nenhum dado encontrado.'));
+          }
+        },
       ),
       bottomNavigationBar: AppBottomNavBar(
         selectedIndex: _selectedIndex,
@@ -85,18 +139,18 @@ class _EmployeeHomeScreenState extends State<EmployeeHomeScreen> with SearchMixi
     );
   }
 
-  Widget _buildWelcomeCard() {
+  Widget _buildWelcomeCard(Colaborador funcionario) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(15.0),
       ),
-      child: const Center(
+      child: Center(
         child: Text(
-          'Olá, Fabiana. \nVocê possui pendências de ponto.',
+          'Olá, ${funcionario.nome_completo}.\nVocê possui pendências de ponto.',
           textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
       ),
     );
@@ -141,7 +195,7 @@ class _EmployeeHomeScreenState extends State<EmployeeHomeScreen> with SearchMixi
       ),
       child: Column(
         children: [
-          const Text('12:01 | 25 agosto, 2025', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          Text(_currentTime, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           const SizedBox(height: 16),
           ElevatedButton(
             onPressed: () {},
