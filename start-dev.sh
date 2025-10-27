@@ -33,12 +33,11 @@ echo "Endereço IP do Host detectado: $HOST_IP"
 echo "=================================================="
 
 echo ""
-echo "-> Iniciando o backend localmente..."
-# Inicia o backend em background e salva o PID
-/home/danilo/Documentos/GeoPonto/backend/venv/bin/python /home/danilo/Documentos/GeoPonto/backend/main.py &
-BACKEND_PID=$!
-echo $BACKEND_PID > backend.pid
-echo "-> Backend iniciado com sucesso com o PID: $BACKEND_PID"
+echo "-> Iniciando contêineres do backend com Docker Compose..."
+# Sobe os contêineres em modo detached (background) e força o rebuild se necessário
+docker-compose up -d --build
+
+echo "-> Backend iniciado com sucesso."
 echo ""
 
 echo "-> Iniciando aplicativo Flutter (aguarde, isso pode levar um momento)..."
@@ -50,3 +49,9 @@ API_URL="http://$HOST_IP:5000"
 # passando a URL da API como uma variável de ambiente para o Dart.
 cd frontend
 flutter run --dart-define="API_BASE_URL=$API_URL"
+
+echo ""
+echo "=================================================="
+echo "Para parar os serviços do backend, execute:"
+echo "docker-compose down"
+echo "=================================================="
