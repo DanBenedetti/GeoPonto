@@ -9,6 +9,8 @@ import 'package:geoponto/widgets/app_bottom_nav_bar.dart';
 import 'package:geoponto/widgets/shortcuts_widget.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
+import 'package:geolocator/geolocator.dart';
+import 'dart:convert';
 
 class EmployeeHomeScreen extends StatefulWidget {
   final int idFuncionario;
@@ -198,7 +200,7 @@ class _EmployeeHomeScreenState extends State<EmployeeHomeScreen> with SearchMixi
           Text(_currentTime, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           const SizedBox(height: 16),
           ElevatedButton(
-            onPressed: () {},
+            onPressed: _handleClockIn,
             style: ElevatedButton.styleFrom(
               backgroundColor: Theme.of(context).primaryColor,
               foregroundColor: Colors.white,
@@ -216,6 +218,136 @@ class _EmployeeHomeScreenState extends State<EmployeeHomeScreen> with SearchMixi
           )
         ],
       ),
+    );
+  }
+
+  Future<void> _handleClockIn() async {
+    print("Iniciando processo de bater ponto...");
+    bool serviceEnabled;
+    LocationPermission permission;
+
+    // Test if location services are enabled.
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      // Location services are not enabled don't continue
+      // accessing the position and request users of the 
+      // App to enable the location services.
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Serviço de localização desabilitado.')));
+      }
+      print("Serviço de localização desabilitado.");
+      return;
+    }
+
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      print("Permissão de localização negada, solicitando...");
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Permissão de localização negada.')),
+          );
+        }
+        print("Permissão de localização negada pelo usuário.");
+        return;
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Permissão negada permanentemente. Habilite nas configurações.')),
+        );
+      }
+      print("Permissão de localização negada permanentemente.");
+      return;
+    }
+
+    print("Permissão concedida. Obtendo localização...");
+    try {
+      final Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+      print("Localização obtida: Lat: ${position.latitude}, Lon: ${position.longitude}");
+
+      if (!mounted) return;
+
+      final String? tipoPonto = await _showPointTypeDialog();
+
+      if (tipoPonto != null) {
+        print("Tipo de ponto selecionado: $tipoPonto. Enviando para o backend...");
+        final response = await http.post(
+          Uri.parse('${ApiConfig.baseUrl}/ponto/${widget.idFuncionario}'),
+          headers: {'Content-Type': 'application/json; charset=UTF-8'},
+          body: jsonEncode(<String, dynamic>{
+            'latitude': position.latitude,
+            'longitude': position.longitude,
+            'tipo_ponto': tipoPonto,
+          }),
+        );
+
+        print("Resposta do backend: ${response.statusCode}");
+
+        if (mounted) {
+            if (response.statusCode == 201) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Ponto registrado com sucesso!')),
+                );
+            } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Falha ao registrar o ponto: ${response.body}')),
+                );
+            }
+        }
+      } else {
+        print("Seleção de tipo de ponto cancelada pelo usuário.");
+        if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Registro de ponto cancelado.')),
+            );
+        }
+      }
+    } catch (e) {
+      print("Erro durante o processo de bater ponto: $e");
+      if(mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erro ao obter localização: $e')),
+        );
+      }
+    }
+  }
+
+  Future<String?> _showPointTypeDialog() {
+    return showDialog<String>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Selecione o tipo de ponto'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                title: const Text('Entrada'),
+                onTap: () => Navigator.of(context).pop('entrada'),
+              ),
+              ListTile(
+                title: const Text('Saída Almoço'),
+                onTap: () => Navigator.of(context).pop('saida_almoco'),
+              ),
+              ListTile(
+                title: const Text('Volta Almoço'),
+                onTap: () => Navigator.of(context).pop('volta_almoco'),
+              ),
+              ListTile(
+                title: const Text('Saída'),
+                onTap: () => Navigator.of(context).pop('saida'),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
