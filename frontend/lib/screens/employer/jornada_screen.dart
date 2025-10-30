@@ -462,28 +462,34 @@ class _JornadaScreenState extends State<JornadaScreen> {
         const SizedBox(height: 8),
         Editor(controller: _raioController, hintText: 'Raio em metros', keyboardType: TextInputType.number),
         const SizedBox(height: 16),
-        ElevatedButton.icon(
-          icon: const Icon(Icons.map_outlined),
-          label: const Text('Selecionar no Mapa'),
-          onPressed: () async {
-            final selectedPosition = await Navigator.of(context).push<LatLng>(
-              MaterialPageRoute(
-                builder: (context) => MapPickerScreen(
-                  initialPosition: LatLng(
-                    double.tryParse(_latitudeController.text) ?? -20.5937, // Default to a central location in Brazil
-                    double.tryParse(_longitudeController.text) ?? -47.3969,
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton.icon(
+            icon: const Icon(Icons.map_outlined),
+            label: const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16.0),
+              child: Text('Selecionar no Mapa'),
+            ),
+            onPressed: () async {
+              final selectedPosition = await Navigator.of(context).push<LatLng>(
+                MaterialPageRoute(
+                  builder: (context) => MapPickerScreen(
+                    initialPosition: LatLng(
+                      double.tryParse(_latitudeController.text) ?? -20.5937, // Default to a central location in Brazil
+                      double.tryParse(_longitudeController.text) ?? -47.3969,
+                    ),
                   ),
                 ),
-              ),
-            );
+              );
 
-            if (selectedPosition != null) {
-              setState(() {
-                _latitudeController.text = selectedPosition.latitude.toString();
-                _longitudeController.text = selectedPosition.longitude.toString();
-              });
-            }
-          },
+              if (selectedPosition != null) {
+                setState(() {
+                  _latitudeController.text = selectedPosition.latitude.toString();
+                  _longitudeController.text = selectedPosition.longitude.toString();
+                });
+              }
+            },
+          ),
         ),
       ],
     );

@@ -23,6 +23,7 @@ class Editor extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: TextFormField(
+        textAlign: TextAlign.center,
         controller: controller,
         keyboardType: keyboardType,
         obscureText: obscureText,

@@ -4,13 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:geoponto/config/api_config.dart';
 import 'package:geoponto/mixins/search_mixin.dart';
 import 'package:geoponto/models/colaborador.dart';
+import 'package:geoponto/models/localizacao.dart';
 import 'package:geoponto/screens/employee/my_hr_screen.dart';
 import 'package:geoponto/widgets/app_bottom_nav_bar.dart';
 import 'package:geoponto/widgets/shortcuts_widget.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:geolocator/geolocator.dart';
-import 'dart:convert';
 
 class EmployeeHomeScreen extends StatefulWidget {
   final int idFuncionario;
@@ -223,58 +223,81 @@ class _EmployeeHomeScreenState extends State<EmployeeHomeScreen> with SearchMixi
 
   Future<void> _handleClockIn() async {
     print("Iniciando processo de bater ponto...");
-    bool serviceEnabled;
-    LocationPermission permission;
 
-    // Test if location services are enabled.
-    serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      // Location services are not enabled don't continue
-      // accessing the position and request users of the 
-      // App to enable the location services.
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Serviço de localização desabilitado.')));
+    try {
+      // Fetch allowed location
+      final localizacaoResponse = await http.get(Uri.parse('${ApiConfig.baseUrl}/localizacoes/funcionario/${widget.idFuncionario}'));
+
+      Localizacao? localizacao;
+      if (localizacaoResponse.statusCode == 200) {
+        final data = jsonDecode(localizacaoResponse.body);
+        if (data['localizacao'] != null) {
+          localizacao = Localizacao.fromJson(data['localizacao']);
+        }
       }
-      print("Serviço de localização desabilitado.");
-      return;
-    }
 
-    permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      print("Permissão de localização negada, solicitando...");
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) {
+      // Get current location
+      bool serviceEnabled;
+      LocationPermission permission;
+
+      serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Permissão de localização negada.')),
+            const SnackBar(content: Text('Serviço de localização desabilitado.')),
           );
         }
-        print("Permissão de localização negada pelo usuário.");
         return;
       }
-    }
 
-    if (permission == LocationPermission.deniedForever) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Permissão negada permanentemente. Habilite nas configurações.')),
-        );
+      permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Permissão de localização negada.')),
+            );
+          }
+          return;
+        }
       }
-      print("Permissão de localização negada permanentemente.");
-      return;
-    }
 
-    print("Permissão concedida. Obtendo localização...");
-    try {
+      if (permission == LocationPermission.deniedForever) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Permissão negada permanentemente. Habilite nas configurações.')),
+          );
+        }
+        return;
+      }
+
       final Position position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high,
       );
-      print("Localização obtida: Lat: ${position.latitude}, Lon: ${position.longitude}");
 
+      // Check distance if location is restricted
+      if (localizacao != null) {
+        final double distance = Geolocator.distanceBetween(
+          localizacao.latitude,
+          localizacao.longitude,
+          position.latitude,
+          position.longitude,
+        );
+
+        if (distance > localizacao.raio_permitido) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Local de registro diverge do local esperado. Entre em contato com o seu empregador.')),
+            );
+          }
+          return;
+        }
+      }
+
+      // Proceed with clock-in
       if (!mounted) return;
 
-      print("Enviando para o backend...");
       final response = await http.post(
         Uri.parse('${ApiConfig.baseUrl}/ponto/${widget.idFuncionario}'),
         headers: {'Content-Type': 'application/json; charset=UTF-8'},
@@ -284,24 +307,21 @@ class _EmployeeHomeScreenState extends State<EmployeeHomeScreen> with SearchMixi
         }),
       );
 
-      print("Resposta do backend: ${response.statusCode}");
-
       if (mounted) {
-          if (response.statusCode == 201) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Ponto registrado com sucesso!')),
-              );
-          } else {
-              ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Falha ao registrar o ponto: ${response.body}')),
-              );
-          }
+        if (response.statusCode == 201) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Ponto registrado com sucesso!')),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Falha ao registrar o ponto: ${response.body}')),
+          );
+        }
       }
     } catch (e) {
-      print("Erro durante o processo de bater ponto: $e");
-      if(mounted) {
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erro ao obter localização: $e')),
+          SnackBar(content: Text('Erro ao registrar o ponto: $e')),
         );
       }
     }

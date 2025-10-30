@@ -17,6 +17,7 @@ class TimeEditor extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: TextFormField(
+        textAlign: TextAlign.center,
         controller: controller,
         decoration: InputDecoration(
           labelText: hintText,
