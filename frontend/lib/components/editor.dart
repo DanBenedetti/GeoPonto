@@ -6,6 +6,7 @@ class Editor extends StatelessWidget {
   final TextInputType? keyboardType;
   final bool obscureText;
   final String? Function(String?)? validator;
+  final bool enabled;
 
   const Editor({
     super.key,
@@ -14,6 +15,7 @@ class Editor extends StatelessWidget {
     this.keyboardType,
     this.obscureText = false,
     this.validator,
+    this.enabled = true,
   });
 
   @override
@@ -24,11 +26,12 @@ class Editor extends StatelessWidget {
         controller: controller,
         keyboardType: keyboardType,
         obscureText: obscureText,
+        readOnly: !enabled,
         decoration: InputDecoration(
           labelText: hintText,
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
           filled: true,
-          fillColor: Colors.white,
+          fillColor: enabled ? Colors.white : Colors.grey[200],
         ),
         validator: validator ?? (value) {
           if (value == null || value.isEmpty) {

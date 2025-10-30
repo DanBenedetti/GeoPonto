@@ -27,6 +27,7 @@ class _EmployeeRegistrationScreenState extends State<EmployeeRegistrationScreen>
   bool _isLoading = false;
 
   final _nameController = TextEditingController();
+  final _sobrenomeController = TextEditingController();
   final _cpfController = TextEditingController();
   final _streetController = TextEditingController();
   final _numberController = TextEditingController();
@@ -36,10 +37,6 @@ class _EmployeeRegistrationScreenState extends State<EmployeeRegistrationScreen>
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
   final _positionController = TextEditingController();
-  final _entryTimeController = TextEditingController();
-  final _startIntervalController = TextEditingController();
-  final _endIntervalController = TextEditingController();
-  final _exitTimeController = TextEditingController();
   final _senhaController = TextEditingController();
   final _confirmarSenhaController = TextEditingController();
 
@@ -51,34 +48,25 @@ class _EmployeeRegistrationScreenState extends State<EmployeeRegistrationScreen>
     }
   }
 
-  String _formatTime(String? timeInHHMMSS) {
-    if (timeInHHMMSS == null || timeInHHMMSS.length < 5) {
-      return '';
-    }
-    return timeInHHMMSS.substring(0, 5);
-  }
-
   void _populateFields() {
     final c = widget.colaborador!;
-    _nameController.text = c.nome_completo;
+    _nameController.text = c.nome;
+    _sobrenomeController.text = c.sobrenome ?? '';
     _cpfController.text = c.cpf;
-    _streetController.text = c.rua;
-    _numberController.text = c.numero;
-    _neighborhoodController.text = c.bairro;
-    _cityController.text = c.cidade;
-    _cepController.text = c.cep;
+    _streetController.text = c.rua ?? '';
+    _numberController.text = c.numero ?? '';
+    _neighborhoodController.text = c.bairro ?? '';
+    _cityController.text = c.cidade ?? '';
+    _cepController.text = c.cep ?? '';
     _emailController.text = c.email;
-    _phoneController.text = c.telefone;
-    _positionController.text = c.cargo;
-    _entryTimeController.text = _formatTime(c.horarioEntrada);
-    _startIntervalController.text = _formatTime(c.horarioSaidaIntervalo);
-    _endIntervalController.text = _formatTime(c.horarioRetornoIntervalo);
-    _exitTimeController.text = _formatTime(c.horarioSaida);
+    _phoneController.text = c.telefone ?? '';
+    _positionController.text = c.cargo ?? '';
   }
 
   @override
   void dispose() {
     _nameController.dispose();
+    _sobrenomeController.dispose();
     _cpfController.dispose();
     _streetController.dispose();
     _numberController.dispose();
@@ -88,10 +76,6 @@ class _EmployeeRegistrationScreenState extends State<EmployeeRegistrationScreen>
     _emailController.dispose();
     _phoneController.dispose();
     _positionController.dispose();
-    _entryTimeController.dispose();
-    _startIntervalController.dispose();
-    _endIntervalController.dispose();
-    _exitTimeController.dispose();
     _senhaController.dispose();
     _confirmarSenhaController.dispose();
     super.dispose();
@@ -118,7 +102,8 @@ class _EmployeeRegistrationScreenState extends State<EmployeeRegistrationScreen>
   Map<String, dynamic> _buildJsonPayload() {
     final payload = {
       'id_empresa': widget.idEmpresa,
-      'nome_completo': _nameController.text,
+      'nome': _nameController.text,
+      'sobrenome': _sobrenomeController.text,
       'cpf': _cpfController.text,
       'rua': _streetController.text,
       'numero': _numberController.text,
@@ -128,10 +113,6 @@ class _EmployeeRegistrationScreenState extends State<EmployeeRegistrationScreen>
       'email': _emailController.text,
       'telefone': _phoneController.text,
       'cargo': _positionController.text,
-      'horario_entrada': _entryTimeController.text,
-      'horario_saida_intervalo': _startIntervalController.text,
-      'horario_retorno_intervalo': _endIntervalController.text,
-      'horario_saida': _exitTimeController.text,
     };
 
     // Only include password if it's not empty
@@ -215,7 +196,8 @@ class _EmployeeRegistrationScreenState extends State<EmployeeRegistrationScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: <Widget>[
-                Editor(controller: _nameController, hintText: 'Nome Completo'),
+                Editor(controller: _nameController, hintText: 'Nome'),
+                Editor(controller: _sobrenomeController, hintText: 'Sobrenome'),
                 Editor(controller: _cpfController, hintText: 'CPF'),
                 Editor(controller: _streetController, hintText: 'Rua'),
                 Editor(controller: _numberController, hintText: 'Número'),
@@ -259,10 +241,6 @@ class _EmployeeRegistrationScreenState extends State<EmployeeRegistrationScreen>
                     return null;
                   },
                 ),
-                TimeEditor(controller: _entryTimeController, hintText: 'Entrada (HH:MM)'),
-                TimeEditor(controller: _startIntervalController, hintText: 'Saída para o Intervalo (HH:MM)'),
-                TimeEditor(controller: _endIntervalController, hintText: 'Retorno do Intervalo (HH:MM)'),
-                TimeEditor(controller: _exitTimeController, hintText: 'Saída (HH:MM)'),
                 const SizedBox(height: 24.0),
                 ElevatedButton(
                   onPressed: _isLoading ? null : _submitForm,

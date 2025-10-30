@@ -3,11 +3,13 @@ import 'package:flutter/material.dart';
 class TimeEditor extends StatelessWidget {
   final TextEditingController controller;
   final String hintText;
+  final bool isRequired;
 
   const TimeEditor({
     super.key,
     required this.controller,
     required this.hintText,
+    this.isRequired = true,
   });
 
   @override
@@ -22,12 +24,13 @@ class TimeEditor extends StatelessWidget {
         ),
         keyboardType: TextInputType.datetime,
         validator: (value) {
-          if (value == null || value.isEmpty) {
+          if (isRequired && (value == null || value.isEmpty)) {
             return 'Campo obrigatório';
           }
-          // Basic time format validation (HH:MM)
-          if (!RegExp(r'^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$').hasMatch(value)) {
-            return 'Formato inválido. Use HH:MM';
+          if (value != null && value.isNotEmpty) {
+            if (!RegExp(r'^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$').hasMatch(value)) {
+              return 'Formato inválido. Use HH:MM';
+            }
           }
           return null;
         },

@@ -21,7 +21,8 @@ CREATE TABLE Empresas (
 CREATE TABLE Funcionarios (
     id_funcionario SERIAL PRIMARY KEY,
     id_empresa INT,
-    nome_completo VARCHAR(255) NOT NULL,
+    nome VARCHAR(255) NOT NULL,
+    sobrenome VARCHAR(255) NOT NULL,
     cpf VARCHAR(14) NOT NULL UNIQUE,
     rua VARCHAR(255),
     numero VARCHAR(20),
@@ -32,10 +33,6 @@ CREATE TABLE Funcionarios (
     telefone VARCHAR(20),
     cargo VARCHAR(100),
     senha VARCHAR(255) NOT NULL,
-    horario_entrada TIME,
-    horario_saida_intervalo TIME,
-    horario_retorno_intervalo TIME,
-    horario_saida TIME,
     status BOOLEAN DEFAULT TRUE,
     criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -47,7 +44,6 @@ CREATE TABLE Pontos (
     id_funcionario INT NOT NULL,
     latitude DECIMAL(10, 8) NOT NULL,
     longitude DECIMAL(11, 8) NOT NULL,
-    tipo_ponto VARCHAR(20) NOT NULL, -- (entrada, saida_almoco, volta_almoco, saida)
     criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (id_funcionario) REFERENCES Funcionarios(id_funcionario)
@@ -58,8 +54,12 @@ CREATE TABLE Jornadas (
     id_jornada SERIAL PRIMARY KEY,
     id_funcionario INT NOT NULL,
     dia_semana INT NOT NULL, -- (0: Domingo, 1: Segunda, ..., 6: Sábado)
-    hora_inicio TIME NOT NULL,
-    hora_fim TIME NOT NULL,
+    horario_entrada TIME,
+    horario_saida_intervalo TIME,
+    horario_retorno_intervalo TIME,
+    horario_saida TIME,
+    ocorrencia TEXT,
+    falta BOOLEAN,
     criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (id_funcionario) REFERENCES Funcionarios(id_funcionario)
@@ -68,11 +68,11 @@ CREATE TABLE Jornadas (
 -- Tabela de Localizações
 CREATE TABLE Localizacoes (
     id_localizacao SERIAL PRIMARY KEY,
-    id_empresa INT NOT NULL,
+    id_funcionario INT NOT NULL,
     latitude DECIMAL(10, 8) NOT NULL,
     longitude DECIMAL(11, 8) NOT NULL,
     raio_permitido INT NOT NULL, -- em metros
     criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (id_empresa) REFERENCES Empresas(id_empresa)
+    FOREIGN KEY (id_funcionario) REFERENCES Funcionarios(id_funcionario)
 );

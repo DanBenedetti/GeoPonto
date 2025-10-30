@@ -150,7 +150,7 @@ class _EmployeeHomeScreenState extends State<EmployeeHomeScreen> with SearchMixi
       ),
       child: Center(
         child: Text(
-          'Olá, ${funcionario.nome_completo}.\nVocê possui pendências de ponto.',
+          'Olá, ${funcionario.nome}.\nVocê possui pendências de ponto.',
           textAlign: TextAlign.center,
           style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
@@ -274,40 +274,28 @@ class _EmployeeHomeScreenState extends State<EmployeeHomeScreen> with SearchMixi
 
       if (!mounted) return;
 
-      final String? tipoPonto = await _showPointTypeDialog();
+      print("Enviando para o backend...");
+      final response = await http.post(
+        Uri.parse('${ApiConfig.baseUrl}/ponto/${widget.idFuncionario}'),
+        headers: {'Content-Type': 'application/json; charset=UTF-8'},
+        body: jsonEncode(<String, dynamic>{
+          'latitude': position.latitude,
+          'longitude': position.longitude,
+        }),
+      );
 
-      if (tipoPonto != null) {
-        print("Tipo de ponto selecionado: $tipoPonto. Enviando para o backend...");
-        final response = await http.post(
-          Uri.parse('${ApiConfig.baseUrl}/ponto/${widget.idFuncionario}'),
-          headers: {'Content-Type': 'application/json; charset=UTF-8'},
-          body: jsonEncode(<String, dynamic>{
-            'latitude': position.latitude,
-            'longitude': position.longitude,
-            'tipo_ponto': tipoPonto,
-          }),
-        );
+      print("Resposta do backend: ${response.statusCode}");
 
-        print("Resposta do backend: ${response.statusCode}");
-
-        if (mounted) {
-            if (response.statusCode == 201) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Ponto registrado com sucesso!')),
-                );
-            } else {
-                ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Falha ao registrar o ponto: ${response.body}')),
-                );
-            }
-        }
-      } else {
-        print("Seleção de tipo de ponto cancelada pelo usuário.");
-        if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Registro de ponto cancelado.')),
-            );
-        }
+      if (mounted) {
+          if (response.statusCode == 201) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Ponto registrado com sucesso!')),
+              );
+          } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Falha ao registrar o ponto: ${response.body}')),
+              );
+          }
       }
     } catch (e) {
       print("Erro durante o processo de bater ponto: $e");
@@ -319,35 +307,5 @@ class _EmployeeHomeScreenState extends State<EmployeeHomeScreen> with SearchMixi
     }
   }
 
-  Future<String?> _showPointTypeDialog() {
-    return showDialog<String>(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Selecione o tipo de ponto'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ListTile(
-                title: const Text('Entrada'),
-                onTap: () => Navigator.of(context).pop('entrada'),
-              ),
-              ListTile(
-                title: const Text('Saída Almoço'),
-                onTap: () => Navigator.of(context).pop('saida_almoco'),
-              ),
-              ListTile(
-                title: const Text('Volta Almoço'),
-                onTap: () => Navigator.of(context).pop('volta_almoco'),
-              ),
-              ListTile(
-                title: const Text('Saída'),
-                onTap: () => Navigator.of(context).pop('saida'),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
+
 }

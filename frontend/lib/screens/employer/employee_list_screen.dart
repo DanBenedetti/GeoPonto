@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:geoponto/config/api_config.dart';
 import 'package:geoponto/models/colaborador.dart';
 import 'package:geoponto/screens/employer/employee_registration_screen.dart';
+import 'package:geoponto/screens/employer/jornada_screen.dart';
 import 'package:http/http.dart' as http;
 
 class EmployeeListScreen extends StatefulWidget {
@@ -71,7 +72,7 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text('Confirmar Exclusão'),
-          content: Text('Você tem certeza que deseja excluir o funcionário ${employee.nome_completo}?'),
+          content: Text('Você tem certeza que deseja excluir o funcionário ${employee.nome} ${employee.sobrenome ?? ''}?'),
           actions: <Widget>[
             TextButton(
               child: const Text('Cancelar'),
@@ -119,13 +120,25 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                   child: ListTile(
                     leading: CircleAvatar(
-                      child: Text(employee.nome_completo.isNotEmpty ? employee.nome_completo[0] : ' '),
+                      child: Text(employee.nome.isNotEmpty ? employee.nome[0] : ' '),
                     ),
-                    title: Text(employee.nome_completo, style: const TextStyle(fontWeight: FontWeight.bold)),
-                    subtitle: Text(employee.cargo),
+                    title: Text('${employee.nome} ${employee.sobrenome ?? ''}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                    subtitle: Text(employee.cargo ?? ''),
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
+                        IconButton(
+                          icon: const Icon(Icons.calendar_today_outlined, color: Colors.greenAccent),
+                          onPressed: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) => JornadaScreen(
+                                  colaborador: employee,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
                         IconButton(
                           icon: const Icon(Icons.edit_outlined, color: Colors.blueAccent),
                           onPressed: () {

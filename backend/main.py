@@ -129,8 +129,8 @@ def create_funcionario():
         conn = get_db_connection()
         cur = conn.cursor()
         cur.execute(
-            'INSERT INTO Funcionarios (id_empresa, nome_completo, cpf, rua, numero, bairro, cidade, cep, email, telefone, cargo, senha, horario_entrada, horario_saida_intervalo, horario_retorno_intervalo, horario_saida) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)',
-            (data['id_empresa'], data['nome_completo'], data['cpf'], data['rua'], data['numero'], data['bairro'], data['cidade'], data['cep'], data['email'], data['telefone'], data['cargo'], data['senha'], data['horario_entrada'], data['horario_saida_intervalo'], data['horario_retorno_intervalo'], data['horario_saida'])
+            'INSERT INTO Funcionarios (id_empresa, nome, sobrenome, cpf, rua, numero, bairro, cidade, cep, email, telefone, cargo, senha) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)',
+            (data['id_empresa'], data['nome'], data['sobrenome'], data['cpf'], data['rua'], data['numero'], data['bairro'], data['cidade'], data['cep'], data['email'], data['telefone'], data['cargo'], data['senha'])
         )
         conn.commit()
         cur.close()
@@ -209,9 +209,8 @@ def update_funcionario(id):
     values = []
 
     fields = [
-        'nome_completo', 'cpf', 'rua', 'numero', 'bairro', 'cidade', 
-        'cep', 'email', 'telefone', 'cargo', 'horario_entrada', 
-        'horario_saida_intervalo', 'horario_retorno_intervalo', 'horario_saida'
+        'nome', 'sobrenome', 'cpf', 'rua', 'numero', 'bairro', 'cidade', 
+        'cep', 'email', 'telefone', 'cargo'
     ]
 
     for field in fields:
@@ -254,8 +253,8 @@ def create_ponto(id):
     conn = get_db_connection()
     cur = conn.cursor()
     cur.execute(
-        'INSERT INTO Pontos (id_funcionario, latitude, longitude, tipo_ponto) VALUES (%s, %s, %s, %s)',
-        (id, data['latitude'], data['longitude'], data['tipo_ponto'])
+        'INSERT INTO Pontos (id_funcionario, latitude, longitude) VALUES (%s, %s, %s)',
+        (id, data['latitude'], data['longitude'])
     )
     conn.commit()
     cur.close()
@@ -272,19 +271,7 @@ def get_pontos_funcionario(id):
     conn.close()
     return jsonify({'pontos': pontos})
 
-@app.route('/ponto/funcionario/<int:id>', methods=['PUT'])
-def update_ponto(id):
-    data = request.get_json()
-    conn = get_db_connection()
-    cur = conn.cursor()
-    cur.execute(
-        'UPDATE Pontos SET tipo_ponto = %s, latitude = %s, longitude = %s WHERE id_ponto = %s',
-        (data['tipo_ponto'], data['latitude'], data['longitude'], id)
-    )
-    conn.commit()
-    cur.close()
-    conn.close()
-    return jsonify({'message': 'Ponto updated successfully'})
+
 
 @app.route('/ponto/funcionario/<int:id>', methods=['DELETE'])
 def delete_ponto(id):
@@ -311,6 +298,175 @@ def get_relatorio_horas_trabalhadas(id):
 def get_relatorio_faltas(id):
     # TODO: Implementar a lógica para gerar o relatório de faltas
     return jsonify({'message': 'Relatório de faltas a ser implementado'})
+
+@app.route('/jornadas', methods=['POST'])
+def create_jornada():
+    data = request.get_json()
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    id_funcionario = data['id_funcionario']
+    
+    # Delete existing jornadas for the funcionario to avoid duplicates
+    cur.execute('DELETE FROM Jornadas WHERE id_funcionario = %s', (id_funcionario,))
+
+    if data.get('jornada_diferenciada'):
+        dias = data['dias']
+        for dia_info in dias:
+            cur.execute(
+                'INSERT INTO Jornadas (id_funcionario, dia_semana, horario_entrada, horario_saida_intervalo, horario_retorno_intervalo, horario_saida) VALUES (%s, %s, %s, %s, %s, %s)',
+                (id_funcionario, dia_info['dia_semana'], dia_info.get('horario_entrada'), dia_info.get('horario_saida_intervalo'), dia_info.get('horario_retorno_intervalo'), dia_info.get('horario_saida'))
+            )
+    else:
+        dias_semana = data['dias_semana']
+        horario_entrada = data.get('horario_entrada')
+        horario_saida_intervalo = data.get('horario_saida_intervalo')
+        horario_retorno_intervalo = data.get('horario_retorno_intervalo')
+        horario_saida = data.get('horario_saida')
+        for dia in dias_semana:
+            cur.execute(
+                'INSERT INTO Jornadas (id_funcionario, dia_semana, horario_entrada, horario_saida_intervalo, horario_retorno_intervalo, horario_saida) VALUES (%s, %s, %s, %s, %s, %s)',
+                (id_funcionario, dia, horario_entrada, horario_saida_intervalo, horario_retorno_intervalo, horario_saida)
+            )
+    
+    conn.commit()
+    cur.close()
+    conn.close()
+    return jsonify({'message': 'Jornadas created successfully'}), 201
+
+@app.route('/jornadas/funcionario/<int:id_funcionario>', methods=['GET'])
+def get_jornadas_funcionario(id_funcionario):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute('SELECT * FROM Jornadas WHERE id_funcionario = %s', (id_funcionario,))
+    
+    columns = [desc[0] for desc in cur.description]
+    jornadas_data = cur.fetchall()
+    jornadas = []
+    for row in jornadas_data:
+        jornadas.append(dict(zip(columns, row)))
+
+    cur.close()
+    conn.close()
+
+    for j in jornadas:
+        for key, value in j.items():
+            if isinstance(value, datetime.time):
+                j[key] = value.strftime('%H:%M:%S')
+
+    return jsonify({'jornadas': jornadas})
+
+@app.route('/jornadas/<int:id_jornada>', methods=['PUT'])
+def update_jornada(id_jornada):
+    data = request.get_json()
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    query_parts = []
+    values = []
+
+    fields = [
+        'dia_semana', 'horario_entrada', 'horario_saida_intervalo', 
+        'horario_retorno_intervalo', 'horario_saida', 'ocorrencia', 'falta'
+    ]
+
+    for field in fields:
+        if field in data:
+            query_parts.append(f"{field} = %s")
+            values.append(data[field])
+
+    if not query_parts:
+        return jsonify({'message': 'Nenhum dado para atualizar'}), 400
+
+    values.append(id_jornada)
+    
+    query = f"UPDATE Jornadas SET { ', '.join(query_parts) } WHERE id_jornada = %s"
+
+    cur.execute(query, tuple(values))
+    
+    conn.commit()
+    cur.close()
+    conn.close()
+    return jsonify({'message': 'Jornada atualizada com sucesso'})
+
+@app.route('/jornadas/<int:id_jornada>', methods=['DELETE'])
+def delete_jornada(id_jornada):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute('DELETE FROM Jornadas WHERE id_jornada = %s', (id_jornada,))
+    conn.commit()
+    cur.close()
+    conn.close()
+    return jsonify({'message': 'Jornada deleted successfully'})
+
+@app.route('/localizacoes', methods=['POST'])
+def create_localizacao():
+    data = request.get_json()
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute(
+        'INSERT INTO Localizacoes (id_funcionario, latitude, longitude, raio_permitido) VALUES (%s, %s, %s, %s)',
+        (data['id_funcionario'], data['latitude'], data['longitude'], data['raio_permitido'])
+    )
+    conn.commit()
+    cur.close()
+    conn.close()
+    return jsonify({'message': 'Localizacao created successfully'}), 201
+
+@app.route('/localizacoes/funcionario/<int:id_funcionario>', methods=['GET'])
+def get_localizacao_funcionario(id_funcionario):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute('SELECT * FROM Localizacoes WHERE id_funcionario = %s', (id_funcionario,))
+    
+    columns = [desc[0] for desc in cur.description]
+    localizacao_data = cur.fetchone()
+    
+    if localizacao_data:
+        localizacao = dict(zip(columns, localizacao_data))
+        return jsonify({'localizacao': localizacao})
+    else:
+        return jsonify({'localizacao': None})
+
+@app.route('/localizacoes/<int:id_localizacao>', methods=['PUT'])
+def update_localizacao(id_localizacao):
+    data = request.get_json()
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    query_parts = []
+    values = []
+
+    fields = ['latitude', 'longitude', 'raio_permitido']
+
+    for field in fields:
+        if field in data:
+            query_parts.append(f"{field} = %s")
+            values.append(data[field])
+
+    if not query_parts:
+        return jsonify({'message': 'Nenhum dado para atualizar'}), 400
+
+    values.append(id_localizacao)
+    
+    query = f"UPDATE Localizacoes SET { ', '.join(query_parts) } WHERE id_localizacao = %s"
+
+    cur.execute(query, tuple(values))
+    
+    conn.commit()
+    cur.close()
+    conn.close()
+    return jsonify({'message': 'Localizacao updated successfully'})
+
+@app.route('/localizacoes/<int:id_localizacao>', methods=['DELETE'])
+def delete_localizacao(id_localizacao):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute('DELETE FROM Localizacoes WHERE id_localizacao = %s', (id_localizacao,))
+    conn.commit()
+    cur.close()
+    conn.close()
+    return jsonify({'message': 'Localizacao deleted successfully'})
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
