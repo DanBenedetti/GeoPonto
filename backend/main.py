@@ -3,6 +3,7 @@ import psycopg2
 import os
 from dotenv import load_dotenv
 import datetime
+from decimal import Decimal
 
 load_dotenv()
 
@@ -263,13 +264,58 @@ def create_ponto(id):
 
 @app.route('/ponto/funcionario/<int:id>', methods=['GET'])
 def get_pontos_funcionario(id):
+    month = request.args.get('month', type=int)
+    year = request.args.get('year', type=int)
+
+    now = datetime.datetime.now()
+    if not month:
+        month = now.month
+    if not year:
+        year = now.year
+
     conn = get_db_connection()
     cur = conn.cursor()
-    cur.execute('SELECT * FROM Pontos WHERE id_funcionario = %s', (id,))
-    pontos = cur.fetchall()
+    cur.execute(
+        'SELECT * FROM Pontos WHERE id_funcionario = %s AND EXTRACT(MONTH FROM criado_em) = %s AND EXTRACT(YEAR FROM criado_em) = %s ORDER BY criado_em DESC',
+        (id, month, year)
+    )
+    
+    columns = [desc[0] for desc in cur.description]
+    pontos_data = cur.fetchall()
+    
+    pontos = []
+    for row in pontos_data:
+        pontos.append(dict(zip(columns, row)))
+
+    # Convert datetime and Decimal objects to string/float
+    for p in pontos:
+        for key, value in p.items():
+            if isinstance(value, datetime.datetime):
+                p[key] = value.isoformat()
+            elif isinstance(value, Decimal):
+                p[key] = float(value)
+
     cur.close()
     conn.close()
-    return jsonify({'pontos': pontos})
+    
+    # Now, group by date
+    pontos_by_date = {}
+    for ponto in pontos:
+        date_str = datetime.datetime.fromisoformat(ponto['criado_em']).strftime('%Y-%m-%d')
+        if date_str not in pontos_by_date:
+            pontos_by_date[date_str] = {
+                'data': date_str,
+                'registros': []
+            }
+        # just the time part of the timestamp
+        time_str = datetime.datetime.fromisoformat(ponto['criado_em']).strftime('%H:%M:%S')
+        pontos_by_date[date_str]['registros'].append({
+            'time': time_str,
+            'latitude': ponto['latitude'],
+            'longitude': ponto['longitude']
+        })
+        
+    return jsonify(list(pontos_by_date.values()))
 
 
 
@@ -424,6 +470,9 @@ def get_localizacao_funcionario(id_funcionario):
     
     if localizacao_data:
         localizacao = dict(zip(columns, localizacao_data))
+        for key, value in localizacao.items():
+            if isinstance(value, Decimal):
+                localizacao[key] = float(value)
         return jsonify({'localizacao': localizacao})
     else:
         return jsonify({'localizacao': None})

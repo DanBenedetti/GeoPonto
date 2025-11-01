@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:geoponto/config/api_config.dart';
@@ -11,6 +12,9 @@ import 'package:geoponto/widgets/shortcuts_widget.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:geolocator/geolocator.dart';
+
+import 'package:geoponto/screens/employer/employee_registration_screen.dart';
+import 'package:geoponto/screens/login_screen.dart';
 
 class EmployeeHomeScreen extends StatefulWidget {
   final int idFuncionario;
@@ -64,10 +68,54 @@ class _EmployeeHomeScreenState extends State<EmployeeHomeScreen> with SearchMixi
     }
   }
 
+  void _showLogoutConfirmationDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Confirmar Saída'),
+          content: const Text('Você tem certeza que deseja sair?'),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Cancelar'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: const Text('Sair', style: TextStyle(color: Colors.red)),
+              onPressed: () {
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(builder: (context) => const LoginScreen()),
+                  (Route<dynamic> route) => false,
+                );
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: buildSearchAppBar(context),
+      appBar: buildSearchAppBar(
+        context,
+        onMeuCadastro: () {
+          _funcionarioFuture.then((funcionario) {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (context) => EmployeeRegistrationScreen(
+                  idEmpresa: widget.idEmpresa,
+                  colaborador: funcionario,
+                ),
+              ),
+            );
+          });
+        },
+        onSair: _showLogoutConfirmationDialog,
+      ),
       body: FutureBuilder<Colaborador>(
         future: _funcionarioFuture,
         builder: (context, snapshot) {
@@ -236,45 +284,9 @@ class _EmployeeHomeScreenState extends State<EmployeeHomeScreen> with SearchMixi
         }
       }
 
-      // Get current location
-      bool serviceEnabled;
-      LocationPermission permission;
+      final Position position = await _determinePosition();
 
-      serviceEnabled = await Geolocator.isLocationServiceEnabled();
-      if (!serviceEnabled) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Serviço de localização desabilitado.')),
-          );
-        }
-        return;
-      }
-
-      permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
-        if (permission == LocationPermission.denied) {
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Permissão de localização negada.')),
-            );
-          }
-          return;
-        }
-      }
-
-      if (permission == LocationPermission.deniedForever) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Permissão negada permanentemente. Habilite nas configurações.')),
-          );
-        }
-        return;
-      }
-
-      final Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
-      );
+      print('Latitude: ${position.latitude}, Longitude: ${position.longitude}');
 
       // Check distance if location is restricted
       if (localizacao != null) {
@@ -327,5 +339,49 @@ class _EmployeeHomeScreenState extends State<EmployeeHomeScreen> with SearchMixi
     }
   }
 
+  Future<Position> _determinePosition() async {
+    bool serviceEnabled;
+    LocationPermission permission;
 
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      throw Exception('Serviço de localização desabilitado.');
+    }
+
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        throw Exception('Permissão de localização negada.');
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      throw Exception('Permissão negada permanentemente. Habilite nas configurações.');
+    }
+
+    final completer = Completer<Position>();
+    StreamSubscription<Position>? positionStream;
+
+    positionStream = Geolocator.getPositionStream(
+      locationSettings: const LocationSettings(
+        accuracy: LocationAccuracy.high,
+      ),
+    ).listen((Position newPosition) {
+      if (!completer.isCompleted) {
+        completer.complete(newPosition);
+        positionStream?.cancel();
+      }
+    });
+
+    // Timeout to avoid waiting forever
+    Future.delayed(const Duration(seconds: 10), () {
+      if (!completer.isCompleted) {
+        completer.completeError('Timeout para obter a localização.');
+        positionStream?.cancel();
+      }
+    });
+
+    return completer.future;
+  }
 }

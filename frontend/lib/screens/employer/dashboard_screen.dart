@@ -3,6 +3,8 @@ import 'package:geoponto/models/colaborador.dart';
 import 'package:geoponto/screens/employer/employee_list_screen.dart';
 import 'package:geoponto/screens/employer/employee_registration_screen.dart';
 
+import 'package:geoponto/screens/login_screen.dart';
+
 class EmployerDashboardScreen extends StatefulWidget {
   final int idEmpresa;
 
@@ -13,6 +15,35 @@ class EmployerDashboardScreen extends StatefulWidget {
 }
 
 class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
+  void _showLogoutConfirmationDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Confirmar Saída'),
+          content: const Text('Você tem certeza que deseja sair?'),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Cancelar'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: const Text('Sair', style: TextStyle(color: Colors.red)),
+              onPressed: () {
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(builder: (context) => const LoginScreen()),
+                  (Route<dynamic> route) => false,
+                );
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -20,6 +51,12 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
         title: const Text('Painel do Empregador'),
         backgroundColor: Theme.of(context).primaryColor,
         foregroundColor: Colors.white,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: _showLogoutConfirmationDialog,
+          ),
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),

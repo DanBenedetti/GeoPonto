@@ -41,6 +41,7 @@ dependencies:
   geolocator_linux: ^0.2.3
   flutter_map: ^8.2.2
   geocoding: ^4.0.0
+  month_picker_dialog: ^3.0.0
 
 dev_dependencies:
   flutter_test:

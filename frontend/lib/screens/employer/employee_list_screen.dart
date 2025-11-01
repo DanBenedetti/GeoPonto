@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:geoponto/config/api_config.dart';
 import 'package:geoponto/models/colaborador.dart';
+import 'package:geoponto/screens/employer/employee_point_screen.dart';
 import 'package:geoponto/screens/employer/employee_registration_screen.dart';
 import 'package:geoponto/screens/employer/jornada_screen.dart';
 import 'package:http/http.dart' as http;
@@ -124,46 +125,63 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
                     ),
                     title: Text('${employee.nome} ${employee.sobrenome ?? ''}', style: const TextStyle(fontWeight: FontWeight.bold)),
                     subtitle: Text(employee.cargo ?? ''),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.calendar_today_outlined, color: Colors.greenAccent),
-                          onPressed: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (context) => JornadaScreen(
-                                  colaborador: employee,
-                                ),
+                    trailing: PopupMenuButton<String>(
+                      onSelected: (value) {
+                        if (value == 'jornada') {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => JornadaScreen(
+                                colaborador: employee,
                               ),
-                            );
-                          },
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.edit_outlined, color: Colors.blueAccent),
-                          onPressed: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (context) => EmployeeRegistrationScreen(
-                                  idEmpresa: widget.idEmpresa,
-                                  colaborador: employee, // Pass the employee object
-                                ),
+                            ),
+                          );
+                        } else if (value == 'editar') {
+                          Navigator.of(context)
+                              .push(
+                            MaterialPageRoute(
+                              builder: (context) => EmployeeRegistrationScreen(
+                                idEmpresa: widget.idEmpresa,
+                                colaborador: employee,
                               ),
-                            ).then((_) {
-                              // Refresh the list after returning from the edit screen
-                              setState(() {
-                                _employeesFuture = _fetchEmployees();
-                              });
+                            ),
+                          )
+                              .then((_) {
+                            setState(() {
+                              _employeesFuture = _fetchEmployees();
                             });
-                          },
+                          });
+                        } else if (value == 'excluir') {
+                          _showDeleteConfirmationDialog(employee);
+                        } else if (value == 'ver_ponto') {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => EmployeePointScreen(
+                                colaborador: employee,
+                              ),
+                            ),
+                          );
+                        }
+                      },
+                      itemBuilder: (BuildContext context) =>
+                          <PopupMenuEntry<String>>[
+                        const PopupMenuItem<String>(
+                          value: 'jornada',
+                          child: Text('Jornada'),
                         ),
-                        IconButton(
-                          icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
-                          onPressed: () {
-                            _showDeleteConfirmationDialog(employee);
-                          },
+                        const PopupMenuItem<String>(
+                          value: 'editar',
+                          child: Text('Alterar Dados'),
+                        ),
+                        const PopupMenuItem<String>(
+                          value: 'ver_ponto',
+                          child: Text('Ver Ponto'),
+                        ),
+                        const PopupMenuItem<String>(
+                          value: 'excluir',
+                          child: Text('Excluir'),
                         ),
                       ],
+                      icon: const Icon(Icons.menu),
                     ),
                   ),
                 );

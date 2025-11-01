@@ -66,7 +66,7 @@ mixin SearchMixin<T extends StatefulWidget> on State<T> {
     }
   }
 
-  PreferredSizeWidget buildSearchAppBar(BuildContext context, {bool automaticallyImplyLeading = true}) {
+  PreferredSizeWidget buildSearchAppBar(BuildContext context, {bool automaticallyImplyLeading = true, VoidCallback? onMeuCadastro, VoidCallback? onSair}) {
     return AppBar(
       elevation: 0,
       backgroundColor: Theme.of(context).primaryColor,
@@ -91,9 +91,25 @@ mixin SearchMixin<T extends StatefulWidget> on State<T> {
         ),
       ),
       actions: [
-        IconButton(
+        PopupMenuButton<String>(
+          onSelected: (value) {
+            if (value == 'meu_cadastro') {
+              onMeuCadastro?.call();
+            } else if (value == 'sair') {
+              onSair?.call();
+            }
+          },
+          itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+            const PopupMenuItem<String>(
+              value: 'meu_cadastro',
+              child: Text('Meu Cadastro'),
+            ),
+            const PopupMenuItem<String>(
+              value: 'sair',
+              child: Text('Sair'),
+            ),
+          ],
           icon: const Icon(Icons.person_outline, color: Colors.white),
-          onPressed: () {},
         ),
       ],
     );
