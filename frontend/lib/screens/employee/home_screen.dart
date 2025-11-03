@@ -1,11 +1,12 @@
 import 'dart:async';
-import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:geoponto/config/api_config.dart';
 import 'package:geoponto/mixins/search_mixin.dart';
 import 'package:geoponto/models/colaborador.dart';
+import 'package:geoponto/models/jornada.dart';
 import 'package:geoponto/models/localizacao.dart';
+import 'package:geoponto/models/ponto.dart';
 import 'package:geoponto/screens/employee/my_hr_screen.dart';
 import 'package:geoponto/widgets/app_bottom_nav_bar.dart';
 import 'package:geoponto/widgets/shortcuts_widget.dart';
@@ -32,8 +33,14 @@ class EmployeeHomeScreen extends StatefulWidget {
 
 class _EmployeeHomeScreenState extends State<EmployeeHomeScreen> with SearchMixin<EmployeeHomeScreen> {
   late Future<Colaborador> _funcionarioFuture;
+  late Future<Jornada?> _jornadaFuture;
+  late Future<List<Ponto>> _pontosFuture;
   late String _currentTime;
-  late Timer _timer;
+  late Timer _clockTimer;
+  Timer? _countdownTimer;
+  Duration _tempoRestante = Duration.zero;
+  bool _trabalhando = false;
+
   int _selectedIndex = 1; // Home is selected by default
   int _selectedShortcutIndex = 0; // 0: Bater Ponto, 1: Meu RH, 2: Holerite
 
@@ -41,13 +48,21 @@ class _EmployeeHomeScreenState extends State<EmployeeHomeScreen> with SearchMixi
   void initState() {
     super.initState();
     _funcionarioFuture = _fetchFuncionario();
+    _jornadaFuture = _fetchJornada();
+    _pontosFuture = _fetchLastPontos();
     _updateTime(); // Set initial time
-    _timer = Timer.periodic(const Duration(minutes: 1), (Timer t) => _updateTime());
+    _clockTimer = Timer.periodic(const Duration(minutes: 1), (Timer t) => _updateTime());
+
+    Future.wait([_jornadaFuture, _pontosFuture]).then((_) {
+      _calcularTempoRestante();
+      _iniciarContador();
+    });
   }
 
   @override
   void dispose() {
-    _timer.cancel(); // Cancel the timer to prevent memory leaks
+    _clockTimer.cancel();
+    _countdownTimer?.cancel();
     super.dispose();
   }
 
@@ -67,6 +82,161 @@ class _EmployeeHomeScreenState extends State<EmployeeHomeScreen> with SearchMixi
       throw Exception('Falha ao carregar os dados do funcionário.');
     }
   }
+
+  Future<Jornada?> _fetchJornada() async {
+    final response = await http.get(Uri.parse('${ApiConfig.baseUrl}/jornadas/funcionario/${widget.idFuncionario}'));
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      final List<Jornada> jornadas = (data['jornadas'] as List).map((j) => Jornada.fromJson(j)).toList();
+      final today = DateTime.now().weekday % 7; // Convert to backend format (Sun=0, Mon=1, ...)
+      
+      Jornada? foundJornada;
+      for (var j in jornadas) {
+        if (j.dia_semana == today) {
+          foundJornada = j;
+          break;
+        }
+      }
+      return foundJornada;
+    }
+    return null;
+  }
+
+  Future<List<Ponto>> _fetchLastPontos() async {
+    List<Ponto> allPontos = [];
+    DateTime now = DateTime.now();
+    int month = now.month;
+    int year = now.year;
+    int recordsFound = 0;
+
+    // Go back a maximum of 3 months to find records
+    for (int i = 0; i < 3; i++) {
+      final response = await http.get(Uri.parse('${ApiConfig.baseUrl}/ponto/funcionario/${widget.idFuncionario}?year=$year&month=$month'));
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final List<Ponto> monthPontos = (data as List).map((p) => Ponto.fromJson(p)).toList();
+        allPontos.addAll(monthPontos);
+
+        // Count total records fetched
+        recordsFound = 0;
+        for (var p in allPontos) {
+          recordsFound += p.registros.length;
+        }
+
+        // If we have at least 4 records, we can stop.
+        if (recordsFound >= 4) {
+          break;
+        }
+      }
+
+      // Prepare to fetch for the previous month
+      if (month == 1) {
+        month = 12;
+        year -= 1;
+      } else {
+        month -= 1;
+      }
+    }
+    // The backend already sorts by date descending, but since we are fetching month by month, we need to re-sort the Ponto objects.
+    allPontos.sort((a, b) => b.data.compareTo(a.data));
+    return allPontos;
+  }
+
+  void _calcularTempoRestante() async {
+    final jornada = await _jornadaFuture;
+    final pontosDoMes = await _pontosFuture;
+    final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
+    final pontos = pontosDoMes.where((p) => p.data == today).toList();
+
+    if (jornada == null) {
+      setState(() {
+        _tempoRestante = Duration.zero;
+      });
+      return;
+    }
+
+    Duration totalJornada = _calcularTotalJornada(jornada);
+    Duration tempoTrabalhado = Duration.zero;
+    DateTime? ultimaEntrada;
+
+    if (pontos.isNotEmpty) {
+      // Backend sends descending, reverse to process chronologically.
+      final registros = pontos.first.registros.reversed.toList();
+      for (int i = 0; i < registros.length; i++) {
+        final registro = registros[i];
+        final parsedTime = DateFormat('HH:mm:ss').parse(registro['time']);
+        final now = DateTime.now();
+        final dateTimeRegistro = DateTime(now.year, now.month, now.day, parsedTime.hour, parsedTime.minute, parsedTime.second);
+
+        if (i % 2 == 0) { // Entrada
+          ultimaEntrada = dateTimeRegistro;
+        } else { // Saida
+          if (ultimaEntrada != null) {
+            tempoTrabalhado += dateTimeRegistro.difference(ultimaEntrada);
+            ultimaEntrada = null;
+          }
+        }
+      }
+    }
+
+    Duration restante = totalJornada - tempoTrabalhado;
+
+    if (ultimaEntrada != null) {
+      _trabalhando = true;
+      // Subtract time already passed in the current work session
+      restante -= DateTime.now().difference(ultimaEntrada);
+    } else {
+      _trabalhando = false;
+    }
+
+    setState(() {
+      _tempoRestante = restante.isNegative ? Duration.zero : restante;
+    });
+  }
+
+  Duration _calcularTotalJornada(Jornada jornada) {
+    Duration total = Duration.zero;
+    if (jornada.horario_entrada != null && jornada.horario_saida != null) {
+      final entrada = TimeOfDay.fromDateTime(DateFormat('HH:mm:ss').parse(jornada.horario_entrada!));
+      final saida = TimeOfDay.fromDateTime(DateFormat('HH:mm:ss').parse(jornada.horario_saida!));
+      final now = DateTime.now();
+      final entradaDT = DateTime(now.year, now.month, now.day, entrada.hour, entrada.minute);
+      final saidaDT = DateTime(now.year, now.month, now.day, saida.hour, saida.minute);
+      total += saidaDT.difference(entradaDT);
+    }
+    if (jornada.horario_saida_intervalo != null && jornada.horario_retorno_intervalo != null) {
+      final saidaIntervalo = TimeOfDay.fromDateTime(DateFormat('HH:mm:ss').parse(jornada.horario_saida_intervalo!));
+      final retornoIntervalo = TimeOfDay.fromDateTime(DateFormat('HH:mm:ss').parse(jornada.horario_retorno_intervalo!));
+      final now = DateTime.now();
+      final saidaIntervaloDT = DateTime(now.year, now.month, now.day, saidaIntervalo.hour, saidaIntervalo.minute);
+      final retornoIntervaloDT = DateTime(now.year, now.month, now.day, retornoIntervalo.hour, retornoIntervalo.minute);
+      total -= retornoIntervaloDT.difference(saidaIntervaloDT);
+    }
+    return total;
+  }
+
+  void _iniciarContador() {
+    _countdownTimer?.cancel();
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (_trabalhando && _tempoRestante > Duration.zero) {
+        setState(() {
+          _tempoRestante -= const Duration(seconds: 1);
+        });
+      } else if (_tempoRestante <= Duration.zero) {
+        timer.cancel();
+      }
+    });
+  }
+
+  String _formatarDuracao(Duration duration) {
+    String doisDigitos(int n) => n.toString().padLeft(2, '0');
+    String doisDigitosHoras = doisDigitos(duration.inHours);
+    String doisDigitosMinutos = doisDigitos(duration.inMinutes.remainder(60));
+    String doisDigitosSegundos = doisDigitos(duration.inSeconds.remainder(60));
+    return "$doisDigitosHoras:$doisDigitosMinutos:$doisDigitosSegundos";
+  }
+
 
   void _showLogoutConfirmationDialog() {
     showDialog(
@@ -133,7 +303,7 @@ class _EmployeeHomeScreenState extends State<EmployeeHomeScreen> with SearchMixi
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildShortcuts(),
+                      _buildShortcuts(funcionario),
                       const SizedBox(height: 24),
                       _buildWelcomeCard(funcionario),
                       const SizedBox(height: 24),
@@ -159,7 +329,7 @@ class _EmployeeHomeScreenState extends State<EmployeeHomeScreen> with SearchMixi
     );
   }
 
-  Widget _buildShortcuts() {
+  Widget _buildShortcuts(Colaborador funcionario) {
     return ShortcutsWidget(
       selectedIndex: _selectedShortcutIndex,
       onIndexChanged: (index) async {
@@ -169,7 +339,7 @@ class _EmployeeHomeScreenState extends State<EmployeeHomeScreen> with SearchMixi
           });
           await Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => const MyHrScreen()),
+            MaterialPageRoute(builder: (context) => MyHrScreen(colaborador: funcionario)),
           );
           // When we come back, reset the index
           setState(() {
@@ -207,15 +377,74 @@ class _EmployeeHomeScreenState extends State<EmployeeHomeScreen> with SearchMixi
   }
 
   Widget _buildRecentRecords() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        _buildRecordCard(time: '07:59', type: 'Entrada', day: 'Hoje'),
-        _buildRecordCard(time: '17:20', type: 'Saída', day: 'Ontem'),
-        _buildRecordCard(time: '12:30', type: 'Entrada', day: 'Ontem'),
-        _buildRecordCard(time: '12:00', type: 'Saída', day: 'Ontem'),
-      ],
+    return FutureBuilder<List<Ponto>>(
+      future: _pontosFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        } else if (snapshot.hasError) {
+          return const Center(child: Text('Erro ao carregar registros.'));
+        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          return const Center(child: Text('Nenhum registro encontrado.'));
+        }
+
+        final ultimosRegistros = _getUltimosRegistrosFormatados(snapshot.data!);
+
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: ultimosRegistros.map((registro) {
+            return _buildRecordCard(
+              time: registro['time']!,
+              type: registro['type']!,
+              day: registro['day']!,
+            );
+          }).toList(),
+        );
+      },
     );
+  }
+
+  List<Map<String, String>> _getUltimosRegistrosFormatados(List<Ponto> pontos) {
+    final List<Map<String, String>> formatados = [];
+
+    for (var ponto in pontos) { // Iterates from most recent day
+      final totalRegistrosNoDia = ponto.registros.length;
+
+      for (int i = 0; i < totalRegistrosNoDia; i++) { // Iterates from most recent record of the day
+        if (formatados.length >= 4) {
+          return formatados; // Stop when we have 4 records
+        }
+
+        final registro = ponto.registros[i];
+        final String dataStr = ponto.data;
+        final DateTime dataRegistro = DateFormat('yyyy-MM-dd').parse(dataStr);
+        final DateTime now = DateTime.now();
+        final DateTime today = DateTime(now.year, now.month, now.day);
+        final DateTime yesterday = today.subtract(const Duration(days: 1));
+
+        String diaFormatado;
+        if (dataRegistro.isAtSameMomentAs(today)) {
+          diaFormatado = 'Hoje';
+        } else if (dataRegistro.isAtSameMomentAs(yesterday)) {
+          diaFormatado = 'Ontem';
+        } else {
+          diaFormatado = DateFormat('dd/MM').format(dataRegistro);
+        }
+
+        // The type is based on chronological order (1st, 2nd, 3rd...)
+        // Since records are sorted descending, index `i` corresponds to the (total - i)-th record.
+        final ordemCronologica = totalRegistrosNoDia - i;
+        final tipo = ordemCronologica % 2 != 0 ? 'Entrada' : 'Saída';
+
+        formatados.add({
+          'time': DateFormat('HH:mm').format(DateFormat('HH:mm:ss').parse(registro['time'])),
+          'type': tipo,
+          'day': diaFormatado,
+        });
+      }
+    }
+
+    return formatados;
   }
 
   Widget _buildRecordCard({required String time, required String type, required String day}) {
@@ -257,11 +486,11 @@ class _EmployeeHomeScreenState extends State<EmployeeHomeScreen> with SearchMixi
             child: const Text('Bater ponto'),
           ),
           const SizedBox(height: 16),
-          const Row(
+          Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Contador de Jornada'),
-              Text('03:58h', style: TextStyle(fontWeight: FontWeight.bold)),
+              const Text('Contador de Jornada'),
+              Text(_formatarDuracao(_tempoRestante), style: const TextStyle(fontWeight: FontWeight.bold)),
             ],
           )
         ],
@@ -324,6 +553,13 @@ class _EmployeeHomeScreenState extends State<EmployeeHomeScreen> with SearchMixi
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Ponto registrado com sucesso!')),
           );
+          // Refresh data
+          setState(() {
+            _pontosFuture = _fetchLastPontos();
+          });
+          await _pontosFuture;
+          _calcularTempoRestante();
+          _iniciarContador();
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Falha ao registrar o ponto: ${response.body}')),

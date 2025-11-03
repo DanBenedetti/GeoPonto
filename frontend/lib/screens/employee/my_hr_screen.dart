@@ -1,15 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:geoponto/mixins/search_mixin.dart';
+import 'package:geoponto/models/colaborador.dart';
 import 'package:geoponto/screens/employee/absences_screen.dart';
-import 'package:geoponto/screens/employee/my_point_screen.dart';
+import 'package:geoponto/screens/employer/employee_point_screen.dart';
 import 'package:geoponto/screens/employee/occurrences_screen.dart';
-import 'package:geoponto/screens/employee/point_mirror_screen.dart';
-import 'package:geoponto/screens/employee/requests_screen.dart';
 import 'package:geoponto/widgets/app_bottom_nav_bar.dart';
 import 'package:geoponto/widgets/shortcuts_widget.dart';
+import 'package:geoponto/screens/employee/requests_screen.dart';
+import 'package:geoponto/screens/employee/point_mirror_screen.dart';
+
+import 'package:geoponto/screens/employer/employee_registration_screen.dart';
+import 'package:geoponto/screens/login_screen.dart';
 
 class MyHrScreen extends StatefulWidget {
-  const MyHrScreen({super.key});
+  final Colaborador colaborador;
+
+  const MyHrScreen({super.key, required this.colaborador});
 
   @override
   State<MyHrScreen> createState() => _MyHrScreenState();
@@ -19,10 +25,53 @@ class _MyHrScreenState extends State<MyHrScreen> with SearchMixin<MyHrScreen> {
   int _selectedIndex = 1; // 0: Menu, 1: Início, 2: Ajustes
   int _selectedShortcutIndex = 1; // 0: Bater Ponto, 1: Meu RH, 2: Holerite
 
+  void _showLogoutConfirmationDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Confirmar Saída'),
+          content: const Text('Você tem certeza que deseja sair?'),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Cancelar'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: const Text('Sair', style: TextStyle(color: Colors.red)),
+              onPressed: () {
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(builder: (context) => const LoginScreen()),
+                  (Route<dynamic> route) => false,
+                );
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: buildSearchAppBar(context, automaticallyImplyLeading: false),
+      appBar: buildSearchAppBar(
+        context,
+        automaticallyImplyLeading: false,
+        onMeuCadastro: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => EmployeeRegistrationScreen(
+                idEmpresa: widget.colaborador.id_empresa!,
+                colaborador: widget.colaborador,
+              ),
+            ),
+          );
+        },
+        onSair: _showLogoutConfirmationDialog,
+      ),
       body: buildSearchableBody(
         context,
         SingleChildScrollView(
@@ -151,21 +200,21 @@ class _MyHrScreenState extends State<MyHrScreen> with SearchMixin<MyHrScreen> {
               icon: Icons.timer_outlined, 
               label: 'Meu ponto',
               onTap: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => const MyPointScreen()));
+                Navigator.push(context, MaterialPageRoute(builder: (context) => EmployeePointScreen(colaborador: widget.colaborador)));
               }
             ),
             _buildControlePontoItem(
               icon: Icons.chat_bubble_outline, 
               label: 'Solicitações',
               onTap: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => const RequestsScreen()));
+                Navigator.push(context, MaterialPageRoute(builder: (context) => RequestsScreen()));
               }
             ),
             _buildControlePontoItem(
               icon: Icons.file_copy_outlined, 
               label: 'Espelho ponto',
               onTap: () {
-                 Navigator.push(context, MaterialPageRoute(builder: (context) => const PointMirrorScreen()));
+                 Navigator.push(context, MaterialPageRoute(builder: (context) => PointMirrorScreen()));
               }
             ),
           ],

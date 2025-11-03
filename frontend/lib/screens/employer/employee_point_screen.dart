@@ -148,7 +148,7 @@ class _EmployeePointScreenState extends State<EmployeePointScreen> {
           Navigator.push(
               context,
               MaterialPageRoute(
-                  builder: (context) => EmployerPointDetailsScreen(ponto: ponto)));
+                  builder: (context) => EmployerPointDetailsScreen(ponto: ponto, idFuncionario: widget.colaborador.id_funcionario!,)));
         },
         shape: Border(bottom: BorderSide(color: Colors.grey[200]!)),
       ),

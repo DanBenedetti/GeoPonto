@@ -18,7 +18,6 @@ class AppScreen {
 
 class AppRoutes {
   static final List<AppScreen> all = [
-    const AppScreen(name: 'Meu RH', screenBuilder: MyHrScreen.new),
     const AppScreen(name: 'Minhas Faltas', screenBuilder: AbsencesScreen.new),
     const AppScreen(name: 'Ocorrências de Ponto', screenBuilder: OccurrencesScreen.new),
     const AppScreen(name: 'Meu Ponto', screenBuilder: MyPointScreen.new),
@@ -30,7 +29,6 @@ class AppRoutes {
 
   static final List<AppScreen> suggestions = [
     all.firstWhere((s) => s.name == 'Meu Ponto'),
-    all.firstWhere((s) => s.name == 'Meu RH'),
     all.firstWhere((s) => s.name == 'Ocorrências de Ponto'),
     all.firstWhere((s) => s.name == 'Minhas Faltas'),
     all.firstWhere((s) => s.name == 'Solicitações'),

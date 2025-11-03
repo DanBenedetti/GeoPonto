@@ -382,9 +382,14 @@ def create_jornada():
 
 @app.route('/jornadas/funcionario/<int:id_funcionario>', methods=['GET'])
 def get_jornadas_funcionario(id_funcionario):
+    day_of_week = request.args.get('day_of_week', type=int)
+
     conn = get_db_connection()
     cur = conn.cursor()
-    cur.execute('SELECT * FROM Jornadas WHERE id_funcionario = %s', (id_funcionario,))
+    if day_of_week is not None:
+        cur.execute('SELECT * FROM Jornadas WHERE id_funcionario = %s AND dia_semana = %s', (id_funcionario, day_of_week))
+    else:
+        cur.execute('SELECT * FROM Jornadas WHERE id_funcionario = %s', (id_funcionario,))
     
     columns = [desc[0] for desc in cur.description]
     jornadas_data = cur.fetchall()
