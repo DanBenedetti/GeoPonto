@@ -32,6 +32,7 @@ CREATE TABLE Funcionarios (
     email VARCHAR(255) NOT NULL UNIQUE,
     telefone VARCHAR(20),
     cargo VARCHAR(100),
+    data_admissao DATE,
     senha VARCHAR(255) NOT NULL,
     status BOOLEAN DEFAULT TRUE,
     criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

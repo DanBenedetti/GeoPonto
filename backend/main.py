@@ -130,8 +130,8 @@ def create_funcionario():
         conn = get_db_connection()
         cur = conn.cursor()
         cur.execute(
-            'INSERT INTO Funcionarios (id_empresa, nome, sobrenome, cpf, rua, numero, bairro, cidade, cep, email, telefone, cargo, senha) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)',
-            (data['id_empresa'], data['nome'], data['sobrenome'], data['cpf'], data['rua'], data['numero'], data['bairro'], data['cidade'], data['cep'], data['email'], data['telefone'], data['cargo'], data['senha'])
+            'INSERT INTO Funcionarios (id_empresa, nome, sobrenome, cpf, rua, numero, bairro, cidade, cep, email, telefone, cargo, senha, data_admissao) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)',
+            (data['id_empresa'], data['nome'], data['sobrenome'], data['cpf'], data['rua'], data['numero'], data['bairro'], data['cidade'], data['cep'], data['email'], data['telefone'], data['cargo'], data['senha'], data.get('data_admissao'))
         )
         conn.commit()
         cur.close()
@@ -167,11 +167,11 @@ def get_funcionarios():
     cur.close()
     conn.close()
     
-    # Convert TIME objects to strings
+    # Convert date/time objects to strings
     for f in funcionarios:
         for key, value in f.items():
-            if isinstance(value, datetime.time):
-                f[key] = value.strftime('%H:%M:%S')
+            if isinstance(value, (datetime.datetime, datetime.date)):
+                f[key] = value.isoformat()
 
     return jsonify({'funcionarios': funcionarios})
 
@@ -191,10 +191,10 @@ def get_funcionario(id):
 
     if funcionario_data:
         funcionario = dict(zip(columns, funcionario_data))
-        # Convert TIME objects to strings
+        # Convert date/time objects to strings
         for key, value in funcionario.items():
-            if isinstance(value, datetime.time):
-                funcionario[key] = value.strftime('%H:%M:%S')
+            if isinstance(value, (datetime.datetime, datetime.date)):
+                funcionario[key] = value.isoformat()
         return jsonify(funcionario)
     else:
         return jsonify({'message': 'Funcionário não encontrado'}), 404
@@ -211,7 +211,7 @@ def update_funcionario(id):
 
     fields = [
         'nome', 'sobrenome', 'cpf', 'rua', 'numero', 'bairro', 'cidade', 
-        'cep', 'email', 'telefone', 'cargo'
+        'cep', 'email', 'telefone', 'cargo', 'data_admissao'
     ]
 
     for field in fields:
@@ -521,6 +521,112 @@ def delete_localizacao(id_localizacao):
     cur.close()
     conn.close()
     return jsonify({'message': 'Localizacao deleted successfully'})
+
+@app.route('/funcionarios/<int:id_funcionario>/faltas', methods=['GET'])
+def get_faltas_funcionario(id_funcionario):
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    # 1. Get employee's admission date
+    cur.execute('SELECT data_admissao FROM Funcionarios WHERE id_funcionario = %s', (id_funcionario,))
+    data_admissao = cur.fetchone()[0]
+
+    # 2. Get employee's work schedule
+    cur.execute('SELECT dia_semana FROM Jornadas WHERE id_funcionario = %s', (id_funcionario,))
+    dias_de_trabalho = {row[0] for row in cur.fetchall()}
+
+    # 3. Get all time punches for the last 40 days
+    end_date = datetime.date.today()
+    start_date = end_date - datetime.timedelta(days=40)
+
+    cur.execute(
+        'SELECT DISTINCT CAST(criado_em AS DATE) FROM Pontos WHERE id_funcionario = %s AND criado_em >= %s',
+        (id_funcionario, start_date)
+    )
+    dias_com_ponto = {row[0] for row in cur.fetchall()}
+
+    cur.close()
+    conn.close()
+
+    # 4. Determine absences
+    faltas = []
+    # If data_admissao is more recent than start_date, begin from data_admissao
+    current_date = max(start_date, data_admissao)
+
+    while current_date <= end_date:
+        # weekday() -> Monday is 0 and Sunday is 6
+        # dia_semana in Jornadas -> 0: Domingo, 1: Segunda, ..., 6: Sábado
+        # We need to map Python's weekday to the database's dia_semana
+        dia_semana_db = (current_date.weekday() + 1) % 7 
+
+        if dia_semana_db in dias_de_trabalho and current_date not in dias_com_ponto:
+            faltas.append(current_date.isoformat())
+        
+        current_date += datetime.timedelta(days=1)
+
+    return jsonify({'faltas': faltas})
+
+
+@app.route('/db-status')
+def db_status():
+    conn = None
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+
+        # Get list of tables
+        cur.execute("""
+            SELECT tablename
+            FROM pg_catalog.pg_tables
+            WHERE schemaname != 'pg_catalog' AND schemaname != 'information_schema';
+        """)
+        tables = [row[0] for row in cur.fetchall()]
+
+        table_counts = []
+        for table in tables:
+            cur.execute(f'SELECT COUNT(*) FROM {table}')
+            count = cur.fetchone()[0]
+            table_counts.append({'table_name': table, 'record_count': count})
+
+        # Example DDL and DML from your project
+        ddl_example = """
+-- Tabela de Funcionários
+CREATE TABLE Funcionarios (
+    id_funcionario SERIAL PRIMARY KEY,
+    id_empresa INT,
+    nome VARCHAR(255) NOT NULL,
+    sobrenome VARCHAR(255) NOT NULL,
+    cpf VARCHAR(14) NOT NULL UNIQUE,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    senha VARCHAR(255) NOT NULL,
+    status BOOLEAN DEFAULT TRUE,
+    ...
+);
+        """.strip()
+
+        dml_example = """
+-- Inserir um novo funcionário
+INSERT INTO Funcionarios (id_empresa, nome, sobrenome, cpf, email, senha) 
+VALUES (1, 'João', 'Silva', '123.456.789-00', 'joao.silva@example.com', 'senha123');
+        """.strip()
+
+        db_info = {
+            'database_name': os.environ.get("POSTGRES_DB"),
+            'status': 'connected',
+            'tables': table_counts,
+            'ddl_example': ddl_example,
+            'dml_example': dml_example
+        }
+
+        cur.close()
+        return jsonify(db_info)
+
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+    finally:
+        if conn:
+            conn.close()
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
