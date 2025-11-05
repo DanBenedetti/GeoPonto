@@ -14,6 +14,7 @@ class Colaborador {
   final String? cargo;
   final String? senha;
   final bool? status;
+  final String? data_admissao;
 
   Colaborador({
     this.id_funcionario,
@@ -31,6 +32,7 @@ class Colaborador {
     this.cargo,
     this.senha,
     this.status,
+    this.data_admissao,
   });
 
   factory Colaborador.fromJson(Map<String, dynamic> json) {
@@ -49,6 +51,7 @@ class Colaborador {
       telefone: json['telefone'],
       cargo: json['cargo'],
       status: json['status'],
+      data_admissao: json['data_admissao'],
     );
   }
 
@@ -66,5 +69,6 @@ class Colaborador {
         'telefone': telefone,
         'cargo': cargo,
         'senha': senha,
+        'data_admissao': data_admissao,
       };
 }

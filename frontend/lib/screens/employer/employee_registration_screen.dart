@@ -1,10 +1,11 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:geoponto/components/editor.dart';
-import 'package:geoponto/components/time_editor.dart';
+import 'package:geoponto/components/date_editor.dart';
 import 'package:geoponto/config/api_config.dart';
 import 'package:geoponto/models/colaborador.dart';
 import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
 
 class EmployeeRegistrationScreen extends StatefulWidget {
   final int idEmpresa;
@@ -39,6 +40,7 @@ class _EmployeeRegistrationScreenState extends State<EmployeeRegistrationScreen>
   final _positionController = TextEditingController();
   final _senhaController = TextEditingController();
   final _confirmarSenhaController = TextEditingController();
+  final _dataAdmissaoController = TextEditingController();
 
   @override
   void initState() {
@@ -61,6 +63,15 @@ class _EmployeeRegistrationScreenState extends State<EmployeeRegistrationScreen>
     _emailController.text = c.email;
     _phoneController.text = c.telefone ?? '';
     _positionController.text = c.cargo ?? '';
+    if (c.data_admissao != null) {
+      try {
+        final date = DateTime.parse(c.data_admissao!);
+        _dataAdmissaoController.text = DateFormat('dd/MM/yyyy').format(date);
+      } catch (e) {
+        // Handle case where date is not in YYYY-MM-DD format
+        _dataAdmissaoController.text = c.data_admissao!;
+      }
+    }
   }
 
   @override
@@ -78,6 +89,7 @@ class _EmployeeRegistrationScreenState extends State<EmployeeRegistrationScreen>
     _positionController.dispose();
     _senhaController.dispose();
     _confirmarSenhaController.dispose();
+    _dataAdmissaoController.dispose();
     super.dispose();
   }
 
@@ -114,6 +126,16 @@ class _EmployeeRegistrationScreenState extends State<EmployeeRegistrationScreen>
       'telefone': _phoneController.text,
       'cargo': _positionController.text,
     };
+
+    if (_dataAdmissaoController.text.isNotEmpty) {
+      try {
+        final date = DateFormat('dd/MM/yyyy').parse(_dataAdmissaoController.text);
+        payload['data_admissao'] = DateFormat('yyyy-MM-dd').format(date);
+      } catch (e) {
+        // If parsing fails, send the raw text and let the backend handle it
+        payload['data_admissao'] = _dataAdmissaoController.text;
+      }
+    }
 
     // Only include password if it's not empty
     if (_senhaController.text.isNotEmpty) {
@@ -215,6 +237,10 @@ class _EmployeeRegistrationScreenState extends State<EmployeeRegistrationScreen>
                   keyboardType: TextInputType.phone,
                 ),
                 Editor(controller: _positionController, hintText: 'Cargo'),
+                DateEditor(
+                  controller: _dataAdmissaoController,
+                  hintText: 'Data de Admissão',
+                ),
                 Editor(
                   controller: _senhaController,
                   hintText: _isEditMode ? 'Nova Senha (deixe em branco para não alterar)' : 'Senha',

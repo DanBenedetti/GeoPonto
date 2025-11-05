@@ -80,7 +80,7 @@ class MyPointScreen extends StatelessWidget {
             : null,
         trailing: const Icon(Icons.arrow_forward_ios, size: 16),
         onTap: () {
-          Navigator.push(context, MaterialPageRoute(builder: (context) => const PointDetailsScreen()));
+          // TODO: Implementar a navegação para a tela de detalhes do ponto, passando o id do funcionário e a data.
         },
         shape: Border(bottom: BorderSide(color: Colors.grey[200]!)),
       ),

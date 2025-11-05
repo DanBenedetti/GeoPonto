@@ -1,0 +1,1 @@
+UPDATE Funcionarios SET data_admissao = '2025-10-01' WHERE id_funcionario IN (1, 2);

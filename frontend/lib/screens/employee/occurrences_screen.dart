@@ -38,7 +38,7 @@ class OccurrencesScreen extends StatelessWidget {
         subtitle: Text(description),
         trailing: const Icon(Icons.arrow_forward_ios, size: 16),
         onTap: () {
-          Navigator.push(context, MaterialPageRoute(builder: (context) => const PointDetailsScreen()));
+          // TODO: Implementar a navegação para a tela de detalhes do ponto, passando o id do funcionário e a data.
         },
         contentPadding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 16.0),
       ),

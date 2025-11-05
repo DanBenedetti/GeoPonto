@@ -8,14 +8,15 @@ import 'package:geoponto/models/jornada.dart';
 import 'package:geoponto/models/localizacao.dart';
 import 'package:geoponto/models/ponto.dart';
 import 'package:geoponto/screens/employee/my_hr_screen.dart';
-import 'package:geoponto/widgets/app_bottom_nav_bar.dart';
-import 'package:geoponto/widgets/shortcuts_widget.dart';
+import 'package:geoponto/components/app_bottom_nav_bar.dart';
+import 'package:geoponto/components/shortcuts_widget.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:geolocator/geolocator.dart';
 
 import 'package:geoponto/screens/employer/employee_registration_screen.dart';
 import 'package:geoponto/screens/login_screen.dart';
+import 'package:geoponto/screens/status_database/status.dart';
 
 class EmployeeHomeScreen extends StatefulWidget {
   final int idFuncionario;
@@ -285,6 +286,11 @@ class _EmployeeHomeScreenState extends State<EmployeeHomeScreen> with SearchMixi
           });
         },
         onSair: _showLogoutConfirmationDialog,
+        onDbStatus: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(builder: (context) => const DatabaseStatusScreen()),
+          );
+        },
       ),
       body: FutureBuilder<Colaborador>(
         future: _funcionarioFuture,
@@ -448,19 +454,24 @@ class _EmployeeHomeScreenState extends State<EmployeeHomeScreen> with SearchMixi
   }
 
   Widget _buildRecordCard({required String time, required String type, required String day}) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(10.0),
-      ),
-      child: Column(
-        children: [
-          Text(time, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-          Text(type),
-          const SizedBox(height: 4),
-          Text(day, style: const TextStyle(color: Colors.grey)),
-        ],
+    return Card(
+      elevation: 2.0, // Add some elevation for the card effect
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)), // Match the border radius
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          // Remove color and borderRadius from Container as Card will handle it
+          // color: Colors.white,
+          // borderRadius: BorderRadius.circular(10.0),
+        ),
+        child: Column(
+          children: [
+            Text(time, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+            Text(type),
+            const SizedBox(height: 4),
+            Text(day, style: const TextStyle(color: Colors.grey)),
+          ],
+        ),
       ),
     );
   }

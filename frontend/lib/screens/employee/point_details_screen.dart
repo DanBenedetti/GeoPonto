@@ -1,15 +1,74 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:geoponto/config/api_config.dart';
+import 'package:geoponto/models/jornada.dart';
 import 'package:geoponto/screens/employee/adjustment_screen.dart';
+import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
 
-class PointDetailsScreen extends StatelessWidget {
- 
-  const PointDetailsScreen({super.key});
+class PointDetailsScreen extends StatefulWidget {
+  final int idFuncionario;
+  final DateTime absenceDate;
+
+  const PointDetailsScreen({
+    super.key,
+    required this.idFuncionario,
+    required this.absenceDate,
+  });
+
+  @override
+  State<PointDetailsScreen> createState() => _PointDetailsScreenState();
+}
+
+class _PointDetailsScreenState extends State<PointDetailsScreen> {
+  Jornada? _jornada;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchJornada();
+  }
+
+  Future<void> _fetchJornada() async {
+    // dia_semana in Jornadas -> 0: Domingo, 1: Segunda, ..., 6: Sábado
+    // Python's weekday() -> Monday is 0 and Sunday is 6
+    final dayOfWeek = (widget.absenceDate.weekday + 1) % 7;
+
+    try {
+      final response = await http.get(
+        Uri.parse('${ApiConfig.baseUrl}/jornadas/funcionario/${widget.idFuncionario}?day_of_week=$dayOfWeek'),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['jornadas'].isNotEmpty) {
+          setState(() {
+            _jornada = Jornada.fromJson(data['jornadas'][0]);
+            _isLoading = false;
+          });
+        }
+      } else {
+        // Handle error
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      // Handle error
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
 
   @override
   Widget build(BuildContext context) {
-
-    const String date = '20/08/2025 | quarta-feira';
-    const String shift = '08:00 às 12:00 | 13:00 às 17:30';
+    final formattedDate = DateFormat('dd/MM/yyyy | EEEE', 'pt_BR').format(widget.absenceDate);
+    final shift = _jornada != null 
+        ? '${_jornada!.horario_entrada} às ${_jornada!.horario_saida_intervalo} | ${_jornada!.horario_retorno_intervalo} às ${_jornada!.horario_saida}'
+        : 'Nenhuma jornada cadastrada para este dia';
     const bool hasRecords = false; 
 
     return Scaffold(
@@ -19,28 +78,30 @@ class PointDetailsScreen extends StatelessWidget {
         elevation: 0,
         foregroundColor: Colors.black,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildInfo('Data:', date),
-            const SizedBox(height: 8),
-            _buildInfo('Turno:', shift),
-            const SizedBox(height: 24),
-            if (!hasRecords)
-              _buildNoRecordsWarning(),
-            const SizedBox(height: 24),
-            const Text('Registros do dia', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-            const SizedBox(height: 16),
-            hasRecords ? _buildRecordsList() : const Text('Nenhum registro'),
-            const SizedBox(height: 32),
-            _buildHoursSummary(),
-            const SizedBox(height: 32),
-            _buildAdjustmentSection(context),
-          ],
-        ),
-      ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildInfo('Data:', formattedDate),
+                  const SizedBox(height: 8),
+                  _buildInfo('Turno:', shift),
+                  const SizedBox(height: 24),
+                  if (!hasRecords)
+                    _buildNoRecordsWarning(),
+                  const SizedBox(height: 24),
+                  const Text('Registros do dia', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                  const SizedBox(height: 16),
+                  hasRecords ? _buildRecordsList() : const Text('Nenhum registro'),
+                  const SizedBox(height: 32),
+                  _buildHoursSummary(),
+                  const SizedBox(height: 32),
+                  _buildAdjustmentSection(context),
+                ],
+              ),
+            ),
     );
   }
 

@@ -77,7 +77,7 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
             _buildDashboardCard(
               context,
               icon: Icons.people_outline,
-              title: 'Visualizar / Editar Funcionários',
+              title: 'Gerir Funcionários',
               onTap: () {
                  Navigator.of(context).push(
                   MaterialPageRoute(builder: (context) => EmployeeListScreen(idEmpresa: widget.idEmpresa)),

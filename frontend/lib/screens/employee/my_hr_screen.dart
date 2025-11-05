@@ -1,16 +1,20 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:geoponto/mixins/search_mixin.dart';
 import 'package:geoponto/models/colaborador.dart';
 import 'package:geoponto/screens/employee/absences_screen.dart';
 import 'package:geoponto/screens/employer/employee_point_screen.dart';
 import 'package:geoponto/screens/employee/occurrences_screen.dart';
-import 'package:geoponto/widgets/app_bottom_nav_bar.dart';
-import 'package:geoponto/widgets/shortcuts_widget.dart';
+import 'package:geoponto/components/app_bottom_nav_bar.dart';
+import 'package:geoponto/components/shortcuts_widget.dart';
 import 'package:geoponto/screens/employee/requests_screen.dart';
 import 'package:geoponto/screens/employee/point_mirror_screen.dart';
+import 'package:geoponto/config/api_config.dart';
+import 'package:http/http.dart' as http;
 
 import 'package:geoponto/screens/employer/employee_registration_screen.dart';
 import 'package:geoponto/screens/login_screen.dart';
+import 'package:geoponto/screens/status_database/status.dart';
 
 class MyHrScreen extends StatefulWidget {
   final Colaborador colaborador;
@@ -24,6 +28,32 @@ class MyHrScreen extends StatefulWidget {
 class _MyHrScreenState extends State<MyHrScreen> with SearchMixin<MyHrScreen> {
   int _selectedIndex = 1; // 0: Menu, 1: Início, 2: Ajustes
   int _selectedShortcutIndex = 1; // 0: Bater Ponto, 1: Meu RH, 2: Holerite
+  int _absenceCount = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchAbsenceCount();
+  }
+
+  Future<void> _fetchAbsenceCount() async {
+    try {
+      final response = await http.get(
+        Uri.parse('${ApiConfig.baseUrl}/funcionarios/${widget.colaborador.id_funcionario}/faltas'),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        setState(() {
+          _absenceCount = List<String>.from(data['faltas']).length;
+        });
+      } else {
+        // Handle error, maybe show a toast or a default value
+      }
+    } catch (e) {
+      // Handle error
+    }
+  }
 
   void _showLogoutConfirmationDialog() {
     showDialog(
@@ -71,6 +101,11 @@ class _MyHrScreenState extends State<MyHrScreen> with SearchMixin<MyHrScreen> {
           );
         },
         onSair: _showLogoutConfirmationDialog,
+        onDbStatus: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(builder: (context) => const DatabaseStatusScreen()),
+          );
+        },
       ),
       body: buildSearchableBody(
         context,
@@ -137,9 +172,9 @@ class _MyHrScreenState extends State<MyHrScreen> with SearchMixin<MyHrScreen> {
         const SizedBox(height: 16),
         _buildPendenciaItem(
           title: 'Faltas', 
-          count: '01',
+          count: _absenceCount.toString().padLeft(2, '0'),
           onTap: () {
-            Navigator.push(context, MaterialPageRoute(builder: (context) => const AbsencesScreen()));
+            Navigator.push(context, MaterialPageRoute(builder: (context) => AbsencesScreen(idFuncionario: widget.colaborador.id_funcionario!)));
           }
         ),
         const SizedBox(height: 12),
