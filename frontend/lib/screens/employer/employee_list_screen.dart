@@ -6,6 +6,7 @@ import 'package:geoponto/screens/employer/employee_point_screen.dart';
 import 'package:geoponto/screens/employer/employee_registration_screen.dart';
 import 'package:geoponto/screens/employer/jornada_screen.dart';
 import 'package:http/http.dart' as http;
+import 'package:geoponto/services/analytics_service.dart';
 
 class EmployeeListScreen extends StatefulWidget {
   final int idEmpresa;
@@ -78,12 +79,14 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
             TextButton(
               child: const Text('Cancelar'),
               onPressed: () {
+                AnalyticsService.recordButtonClick('delete_employee_cancel', pageName: '/employer/employee-list');
                 Navigator.of(context).pop();
               },
             ),
             TextButton(
               child: const Text('Excluir', style: TextStyle(color: Colors.red)),
               onPressed: () {
+                AnalyticsService.recordButtonClick('delete_employee_confirm', pageName: '/employer/employee-list');
                 Navigator.of(context).pop();
                 _deleteEmployee(employee.id_funcionario!);
               },
@@ -128,14 +131,17 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
                     trailing: PopupMenuButton<String>(
                       onSelected: (value) {
                         if (value == 'jornada') {
+                          AnalyticsService.recordButtonClick('view_journey_button', pageName: '/employer/employee-list');
                           Navigator.of(context).push(
                             MaterialPageRoute(
                               builder: (context) => JornadaScreen(
                                 colaborador: employee,
                               ),
+                              settings: const RouteSettings(name: '/employer/journey'),
                             ),
                           );
                         } else if (value == 'editar') {
+                          AnalyticsService.recordButtonClick('edit_employee_button', pageName: '/employer/employee-list');
                           Navigator.of(context)
                               .push(
                             MaterialPageRoute(
@@ -143,6 +149,7 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
                                 idEmpresa: widget.idEmpresa,
                                 colaborador: employee,
                               ),
+                              settings: const RouteSettings(name: '/employer/registration'),
                             ),
                           )
                               .then((_) {
@@ -151,13 +158,16 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
                             });
                           });
                         } else if (value == 'excluir') {
+                          AnalyticsService.recordButtonClick('delete_employee_button', pageName: '/employer/employee-list');
                           _showDeleteConfirmationDialog(employee);
                         } else if (value == 'ver_ponto') {
+                          AnalyticsService.recordButtonClick('view_point_button', pageName: '/employer/employee-list');
                           Navigator.of(context).push(
                             MaterialPageRoute(
                               builder: (context) => EmployeePointScreen(
                                 colaborador: employee,
                               ),
+                              settings: const RouteSettings(name: '/employer/employee-point'),
                             ),
                           );
                         }

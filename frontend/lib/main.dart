@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:geoponto/screens/loading_screen.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:geoponto/utils/analytics_navigator_observer.dart';
+
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 void main() {
   initializeDateFormatting('pt_BR', null);
   runApp(const MyApp());
 }
+
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -73,6 +77,8 @@ class MyApp extends StatelessWidget {
         ),
       ),
       home: const LoadingScreen(),
+      navigatorKey: navigatorKey,
+      navigatorObservers: [AnalyticsNavigatorObserver()],
     );
   }
 }

@@ -6,6 +6,9 @@ import 'package:geoponto/screens/employer/dashboard_screen.dart';
 import 'package:geoponto/screens/employer/employer_registration_screen.dart';
 import 'package:geoponto/screens/employee/home_screen.dart';
 import 'package:http/http.dart' as http;
+import 'package:geoponto/screens/analytics_dashboard_screen.dart';
+import 'package:geoponto/components/analytics_button.dart';
+import 'package:geoponto/mixins/render_time_mixin.dart';
 
 enum LoginType { collaborator, employer }
 
@@ -16,7 +19,7 @@ class LoginScreen extends StatefulWidget {
   State<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _LoginScreenState extends State<LoginScreen> with RenderTimeMixin<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   LoginType _loginType = LoginType.collaborator;
   bool _rememberMe = false;
@@ -62,7 +65,10 @@ class _LoginScreenState extends State<LoginScreen> {
           final int idFuncionario = responseBody['id_funcionario'];
           final int idEmpresa = responseBody['id_empresa'];
           Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (context) => EmployeeHomeScreen(idFuncionario: idFuncionario, idEmpresa: idEmpresa)),
+            MaterialPageRoute(
+              builder: (context) => EmployeeHomeScreen(idFuncionario: idFuncionario, idEmpresa: idEmpresa),
+              settings: const RouteSettings(name: '/employee/home'),
+            ),
           );
         } else {
           final responseBody = jsonDecode(response.body);
@@ -93,7 +99,10 @@ class _LoginScreenState extends State<LoginScreen> {
           final responseBody = jsonDecode(response.body);
           final int idEmpresa = responseBody['id_empresa'];
           Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (context) => EmployerDashboardScreen(idEmpresa: idEmpresa)),
+            MaterialPageRoute(
+              builder: (context) => EmployerDashboardScreen(idEmpresa: idEmpresa),
+              settings: const RouteSettings(name: '/employer/dashboard'),
+            ),
           );
         } else {
           final responseBody = jsonDecode(response.body);
@@ -257,8 +266,9 @@ class _LoginScreenState extends State<LoginScreen> {
               ],
             ),
             const SizedBox(height: 24),
-            ElevatedButton(
-              onPressed: _isLoading ? null : _handleLogin,
+            AnalyticsButton(
+              buttonId: 'login_button',
+              onPressed: _isLoading ? () {} : _handleLogin,
               child: _isLoading
                   ? const SizedBox(
                       height: 20,
@@ -270,17 +280,34 @@ class _LoginScreenState extends State<LoginScreen> {
             if (_loginType == LoginType.employer)
               Padding(
                 padding: const EdgeInsets.only(top: 16.0),
-                child: ElevatedButton(
+                child: AnalyticsButton(
+                  buttonId: 'employer_registration_button',
                   onPressed: () {
                     Navigator.of(context).push(
                       MaterialPageRoute(
                         builder: (context) => const EmployerRegistrationScreen(),
+                        settings: const RouteSettings(name: '/employer/registration'),
                       ),
                     );
                   },
                   child: const Text('Cadastrar'),
                 ),
               ),
+            Padding(
+              padding: const EdgeInsets.only(top: 16.0),
+              child: AnalyticsButton(
+                buttonId: 'view_analytics_dashboard',
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => const AnalyticsDashboardScreen(),
+                      settings: const RouteSettings(name: '/analytics-dashboard'),
+                    ),
+                  );
+                },
+                child: const Text('Ver Dashboard de Analytics'),
+              ),
+            ),
           ],
         ),
       ),

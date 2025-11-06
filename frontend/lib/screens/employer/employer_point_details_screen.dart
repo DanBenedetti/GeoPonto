@@ -7,6 +7,7 @@ import 'package:geoponto/screens/employer/map_view_screen.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:geoponto/services/analytics_service.dart';
 
 class EmployerPointDetailsScreen extends StatefulWidget {
   final Ponto ponto;
@@ -202,11 +203,13 @@ class _EmployerPointDetailsScreenState
               final latitude = registro['latitude'];
               final longitude = registro['longitude'];
               if (latitude != null && longitude != null) {
+                AnalyticsService.recordButtonClick('view_map_button', pageName: '/employer/employee-point-details');
                 Navigator.of(context).push(
                   MaterialPageRoute(
                     builder: (context) => MapViewScreen(
                       location: LatLng(latitude, longitude),
                     ),
+                    settings: const RouteSettings(name: '/employer/map-view'),
                   ),
                 );
               }

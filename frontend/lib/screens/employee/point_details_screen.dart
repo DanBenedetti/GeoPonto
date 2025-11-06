@@ -5,6 +5,7 @@ import 'package:geoponto/models/jornada.dart';
 import 'package:geoponto/screens/employee/adjustment_screen.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
+import 'package:geoponto/services/analytics_service.dart';
 
 class PointDetailsScreen extends StatefulWidget {
   final int idFuncionario;
@@ -181,7 +182,8 @@ class _PointDetailsScreenState extends State<PointDetailsScreen> {
         const SizedBox(height: 16),
         ElevatedButton(
           onPressed: () {
-            Navigator.push(context, MaterialPageRoute(builder: (context) => const AdjustmentScreen()));
+            AnalyticsService.recordButtonClick('adjustment_button', pageName: '/employee/point-details');
+            Navigator.push(context, MaterialPageRoute(builder: (context) => const AdjustmentScreen(), settings: const RouteSettings(name: '/employee/adjustment')));
           },
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.grey[300],

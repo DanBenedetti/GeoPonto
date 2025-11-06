@@ -17,6 +17,9 @@ import 'package:geolocator/geolocator.dart';
 import 'package:geoponto/screens/employer/employee_registration_screen.dart';
 import 'package:geoponto/screens/login_screen.dart';
 import 'package:geoponto/screens/status_database/status.dart';
+import 'package:geoponto/services/analytics_service.dart';
+import 'package:geoponto/components/analytics_button.dart';
+import 'package:geoponto/mixins/render_time_mixin.dart';
 
 class EmployeeHomeScreen extends StatefulWidget {
   final int idFuncionario;
@@ -32,7 +35,7 @@ class EmployeeHomeScreen extends StatefulWidget {
   State<EmployeeHomeScreen> createState() => _EmployeeHomeScreenState();
 }
 
-class _EmployeeHomeScreenState extends State<EmployeeHomeScreen> with SearchMixin<EmployeeHomeScreen> {
+class _EmployeeHomeScreenState extends State<EmployeeHomeScreen> with SearchMixin<EmployeeHomeScreen>, RenderTimeMixin<EmployeeHomeScreen> {
   late Future<Colaborador> _funcionarioFuture;
   late Future<Jornada?> _jornadaFuture;
   late Future<List<Ponto>> _pontosFuture;
@@ -250,14 +253,16 @@ class _EmployeeHomeScreenState extends State<EmployeeHomeScreen> with SearchMixi
             TextButton(
               child: const Text('Cancelar'),
               onPressed: () {
+                AnalyticsService.recordButtonClick('logout_cancel_button', pageName: '/employee/home');
                 Navigator.of(context).pop();
               },
             ),
             TextButton(
               child: const Text('Sair', style: TextStyle(color: Colors.red)),
               onPressed: () {
+                AnalyticsService.recordButtonClick('logout_confirm_button', pageName: '/employee/home');
                 Navigator.of(context).pushAndRemoveUntil(
-                  MaterialPageRoute(builder: (context) => const LoginScreen()),
+                  MaterialPageRoute(builder: (context) => const LoginScreen(), settings: const RouteSettings(name: '/login')),
                   (Route<dynamic> route) => false,
                 );
               },
@@ -275,20 +280,23 @@ class _EmployeeHomeScreenState extends State<EmployeeHomeScreen> with SearchMixi
         context,
         onMeuCadastro: () {
           _funcionarioFuture.then((funcionario) {
+            AnalyticsService.recordButtonClick('edit_employee_from_home_button', pageName: '/employee/home');
             Navigator.of(context).push(
               MaterialPageRoute(
                 builder: (context) => EmployeeRegistrationScreen(
                   idEmpresa: widget.idEmpresa,
                   colaborador: funcionario,
                 ),
+                settings: const RouteSettings(name: '/employee/registration'),
               ),
             );
           });
         },
         onSair: _showLogoutConfirmationDialog,
         onDbStatus: () {
+          AnalyticsService.recordButtonClick('db_status_from_home_button', pageName: '/employee/home');
           Navigator.of(context).push(
-            MaterialPageRoute(builder: (context) => const DatabaseStatusScreen()),
+            MaterialPageRoute(builder: (context) => const DatabaseStatusScreen(), settings: const RouteSettings(name: '/db-status')),
           );
         },
       ),
@@ -340,18 +348,20 @@ class _EmployeeHomeScreenState extends State<EmployeeHomeScreen> with SearchMixi
       selectedIndex: _selectedShortcutIndex,
       onIndexChanged: (index) async {
         if (index == 1) { // Tapped "Meu RH"
+          AnalyticsService.recordButtonClick('my_hr_shortcut', pageName: '/employee/home');
           setState(() {
             _selectedShortcutIndex = 1;
           });
           await Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => MyHrScreen(colaborador: funcionario)),
+            MaterialPageRoute(builder: (context) => MyHrScreen(colaborador: funcionario), settings: const RouteSettings(name: '/employee/my-hr')),
           );
           // When we come back, reset the index
           setState(() {
             _selectedShortcutIndex = 0;
           });
         } else if (index == 2) { // Tapped "Holerite"
+            AnalyticsService.recordButtonClick('payslip_shortcut', pageName: '/employee/home');
             setState(() {
               _selectedShortcutIndex = 2;
             });
@@ -487,7 +497,8 @@ class _EmployeeHomeScreenState extends State<EmployeeHomeScreen> with SearchMixi
         children: [
           Text(_currentTime, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           const SizedBox(height: 16),
-          ElevatedButton(
+          AnalyticsButton(
+            buttonId: 'clock_in_button',
             onPressed: _handleClockIn,
             style: ElevatedButton.styleFrom(
               backgroundColor: Theme.of(context).primaryColor,

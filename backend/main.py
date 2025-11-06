@@ -628,5 +628,78 @@ VALUES (1, 'João', 'Silva', '123.456.789-00', 'joao.silva@example.com', 'senha1
             conn.close()
 
 
+
+@app.route('/analytics/page-view', methods=['POST'])
+def record_page_view():
+    data = request.get_json()
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute(
+        'INSERT INTO page_views (page_name, render_time_ms) VALUES (%s, %s)',
+        (data['page_name'], data['render_time_ms'])
+    )
+    conn.commit()
+    cur.close()
+    conn.close()
+    return jsonify({'status': 'success'}), 201
+
+@app.route('/analytics/button-click', methods=['POST'])
+def record_button_click():
+    data = request.get_json()
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute(
+        'INSERT INTO button_clicks (button_id, page_name) VALUES (%s, %s)',
+        (data['button_id'], data.get('page_name'))
+    )
+    conn.commit()
+    cur.close()
+    conn.close()
+    return jsonify({'status': 'success'}), 201
+
+@app.route('/analytics/metrics', methods=['GET'])
+def get_analytics_metrics():
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    # Páginas mais acessadas
+    cur.execute("""
+        SELECT page_name, COUNT(*) as view_count
+        FROM page_views
+        GROUP BY page_name
+        ORDER BY view_count DESC
+        LIMIT 5;
+    """)
+    most_accessed_pages = [{'page_name': row[0], 'view_count': row[1]} for row in cur.fetchall()]
+
+    # Botões mais clicados
+    cur.execute("""
+        SELECT button_id, COUNT(*) as click_count
+        FROM button_clicks
+        GROUP BY button_id
+        ORDER BY click_count DESC
+        LIMIT 5;
+    """)
+    most_clicked_buttons = [{'button_id': row[0], 'click_count': row[1]} for row in cur.fetchall()]
+
+    # Páginas mais pesadas (maior tempo médio de renderização)
+    cur.execute("""
+        SELECT page_name, AVG(render_time_ms) as avg_render_time
+        FROM page_views
+        GROUP BY page_name
+        ORDER BY avg_render_time DESC
+        LIMIT 5;
+    """)
+    slowest_pages = [{'page_name': row[0], 'avg_render_time': float(row[1])} for row in cur.fetchall()]
+
+    cur.close()
+    conn.close()
+
+    return jsonify({
+        'most_accessed_pages': most_accessed_pages,
+        'most_clicked_buttons': most_clicked_buttons,
+        'slowest_pages': slowest_pages
+    })
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

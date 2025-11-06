@@ -11,6 +11,8 @@ import 'package:geoponto/screens/employee/requests_screen.dart';
 import 'package:geoponto/screens/employee/point_mirror_screen.dart';
 import 'package:geoponto/config/api_config.dart';
 import 'package:http/http.dart' as http;
+import 'package:geoponto/services/analytics_service.dart';
+import 'package:geoponto/mixins/render_time_mixin.dart';
 
 import 'package:geoponto/screens/employer/employee_registration_screen.dart';
 import 'package:geoponto/screens/login_screen.dart';
@@ -25,7 +27,7 @@ class MyHrScreen extends StatefulWidget {
   State<MyHrScreen> createState() => _MyHrScreenState();
 }
 
-class _MyHrScreenState extends State<MyHrScreen> with SearchMixin<MyHrScreen> {
+class _MyHrScreenState extends State<MyHrScreen> with SearchMixin<MyHrScreen>, RenderTimeMixin<MyHrScreen> {
   int _selectedIndex = 1; // 0: Menu, 1: Início, 2: Ajustes
   int _selectedShortcutIndex = 1; // 0: Bater Ponto, 1: Meu RH, 2: Holerite
   int _absenceCount = 0;
@@ -66,14 +68,16 @@ class _MyHrScreenState extends State<MyHrScreen> with SearchMixin<MyHrScreen> {
             TextButton(
               child: const Text('Cancelar'),
               onPressed: () {
+                AnalyticsService.recordButtonClick('logout_cancel_button', pageName: '/employee/my-hr');
                 Navigator.of(context).pop();
               },
             ),
             TextButton(
               child: const Text('Sair', style: TextStyle(color: Colors.red)),
               onPressed: () {
+                AnalyticsService.recordButtonClick('logout_confirm_button', pageName: '/employee/my-hr');
                 Navigator.of(context).pushAndRemoveUntil(
-                  MaterialPageRoute(builder: (context) => const LoginScreen()),
+                  MaterialPageRoute(builder: (context) => const LoginScreen(), settings: const RouteSettings(name: '/login')),
                   (Route<dynamic> route) => false,
                 );
               },
@@ -91,19 +95,22 @@ class _MyHrScreenState extends State<MyHrScreen> with SearchMixin<MyHrScreen> {
         context,
         automaticallyImplyLeading: false,
         onMeuCadastro: () {
+          AnalyticsService.recordButtonClick('edit_employee_from_my_hr_button', pageName: '/employee/my-hr');
           Navigator.of(context).push(
             MaterialPageRoute(
               builder: (context) => EmployeeRegistrationScreen(
                 idEmpresa: widget.colaborador.id_empresa!,
                 colaborador: widget.colaborador,
               ),
+              settings: const RouteSettings(name: '/employee/registration'),
             ),
           );
         },
         onSair: _showLogoutConfirmationDialog,
         onDbStatus: () {
+          AnalyticsService.recordButtonClick('db_status_from_my_hr_button', pageName: '/employee/my-hr');
           Navigator.of(context).push(
-            MaterialPageRoute(builder: (context) => const DatabaseStatusScreen()),
+            MaterialPageRoute(builder: (context) => const DatabaseStatusScreen(), settings: const RouteSettings(name: '/db-status')),
           );
         },
       ),
@@ -129,6 +136,7 @@ class _MyHrScreenState extends State<MyHrScreen> with SearchMixin<MyHrScreen> {
         selectedIndex: _selectedIndex,
         onItemSelected: (index) {
           if (index == 1 && _selectedIndex != 1) {
+            AnalyticsService.recordButtonClick('bottom_nav_home', pageName: '/employee/my-hr');
             Navigator.pop(context);
           } else {
             setState(() => _selectedIndex = index);
@@ -143,8 +151,10 @@ class _MyHrScreenState extends State<MyHrScreen> with SearchMixin<MyHrScreen> {
       selectedIndex: _selectedShortcutIndex,
       onIndexChanged: (index) {
         if (index == 0) { // selecionado "Bater ponto"
+          AnalyticsService.recordButtonClick('clock_in_shortcut_from_my_hr', pageName: '/employee/my-hr');
           Navigator.pop(context);
         } else if (index == 2) { // selecionado "Holerite"
+            AnalyticsService.recordButtonClick('payslip_shortcut_from_my_hr', pageName: '/employee/my-hr');
             setState(() {
               _selectedShortcutIndex = 2;
             });
@@ -174,7 +184,8 @@ class _MyHrScreenState extends State<MyHrScreen> with SearchMixin<MyHrScreen> {
           title: 'Faltas', 
           count: _absenceCount.toString().padLeft(2, '0'),
           onTap: () {
-            Navigator.push(context, MaterialPageRoute(builder: (context) => AbsencesScreen(idFuncionario: widget.colaborador.id_funcionario!)));
+            AnalyticsService.recordButtonClick('absences_button', pageName: '/employee/my-hr');
+            Navigator.push(context, MaterialPageRoute(builder: (context) => AbsencesScreen(idFuncionario: widget.colaborador.id_funcionario!), settings: const RouteSettings(name: '/employee/absences')));
           }
         ),
         const SizedBox(height: 12),
@@ -182,7 +193,8 @@ class _MyHrScreenState extends State<MyHrScreen> with SearchMixin<MyHrScreen> {
           title: 'Ocorrências', 
           count: '02',
           onTap: () {
-            Navigator.push(context, MaterialPageRoute(builder: (context) => const OccurrencesScreen()));
+            AnalyticsService.recordButtonClick('occurrences_button', pageName: '/employee/my-hr');
+            Navigator.push(context, MaterialPageRoute(builder: (context) => const OccurrencesScreen(), settings: const RouteSettings(name: '/employee/occurrences')));
           }
         ),
       ],
@@ -235,21 +247,24 @@ class _MyHrScreenState extends State<MyHrScreen> with SearchMixin<MyHrScreen> {
               icon: Icons.timer_outlined, 
               label: 'Meu ponto',
               onTap: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => EmployeePointScreen(colaborador: widget.colaborador)));
+                AnalyticsService.recordButtonClick('my_point_button', pageName: '/employee/my-hr');
+                Navigator.push(context, MaterialPageRoute(builder: (context) => EmployeePointScreen(colaborador: widget.colaborador), settings: const RouteSettings(name: '/employee/point')));
               }
             ),
             _buildControlePontoItem(
               icon: Icons.chat_bubble_outline, 
               label: 'Solicitações',
               onTap: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => RequestsScreen()));
+                AnalyticsService.recordButtonClick('requests_button', pageName: '/employee/my-hr');
+                Navigator.push(context, MaterialPageRoute(builder: (context) => RequestsScreen(), settings: const RouteSettings(name: '/employee/requests')));
               }
             ),
             _buildControlePontoItem(
               icon: Icons.file_copy_outlined, 
               label: 'Espelho ponto',
               onTap: () {
-                 Navigator.push(context, MaterialPageRoute(builder: (context) => PointMirrorScreen()));
+                 AnalyticsService.recordButtonClick('point_mirror_button', pageName: '/employee/my-hr');
+                 Navigator.push(context, MaterialPageRoute(builder: (context) => PointMirrorScreen(), settings: const RouteSettings(name: '/employee/point-mirror')));
               }
             ),
           ],

@@ -9,6 +9,8 @@ import 'package:geoponto/models/localizacao.dart';
 import 'package:http/http.dart' as http;
 import 'package:geoponto/screens/employer/map_picker_screen.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:geoponto/services/analytics_service.dart';
+import 'package:geoponto/components/analytics_button.dart';
 
 class JornadaScreen extends StatefulWidget {
   final Colaborador colaborador;
@@ -314,8 +316,9 @@ class _JornadaScreenState extends State<JornadaScreen> {
                     _buildLocalizacaoSwitch(),
                     if (_limitarLocalizacao) _buildLocalizacaoFields(),
                     const SizedBox(height: 32),
-                    ElevatedButton(
-                      onPressed: _isLoading ? null : _submitForm,
+                    AnalyticsButton(
+                      buttonId: 'save_journey_button',
+                      onPressed: _isLoading ? () {} : _submitForm,
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 16),
                       ),
@@ -471,6 +474,7 @@ class _JornadaScreenState extends State<JornadaScreen> {
               child: Text('Selecionar no Mapa'),
             ),
             onPressed: () async {
+              AnalyticsService.recordButtonClick('select_on_map_button', pageName: '/employer/journey');
               final selectedPosition = await Navigator.of(context).push<LatLng>(
                 MaterialPageRoute(
                   builder: (context) => MapPickerScreen(
@@ -479,6 +483,7 @@ class _JornadaScreenState extends State<JornadaScreen> {
                       double.tryParse(_longitudeController.text) ?? -47.3969,
                     ),
                   ),
+                  settings: const RouteSettings(name: '/employer/map-picker'),
                 ),
               );
 

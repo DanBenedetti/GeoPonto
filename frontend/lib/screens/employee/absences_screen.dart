@@ -4,6 +4,7 @@ import 'package:geoponto/config/api_config.dart';
 import 'package:geoponto/screens/employee/point_details_screen.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
+import 'package:geoponto/services/analytics_service.dart';
 
 class AbsencesScreen extends StatefulWidget {
   final int idFuncionario;
@@ -93,7 +94,8 @@ class _AbsencesScreenState extends State<AbsencesScreen> {
         subtitle: Text(reason),
         trailing: const Icon(Icons.arrow_forward_ios, size: 16),
         onTap: () {
-          Navigator.push(context, MaterialPageRoute(builder: (context) => PointDetailsScreen(idFuncionario: widget.idFuncionario, absenceDate: absenceDate)));
+          AnalyticsService.recordButtonClick('view_absence_details', pageName: '/employee/absences');
+          Navigator.push(context, MaterialPageRoute(builder: (context) => PointDetailsScreen(idFuncionario: widget.idFuncionario, absenceDate: absenceDate), settings: const RouteSettings(name: '/employee/point-details')));
         },
         contentPadding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 16.0),
       ),

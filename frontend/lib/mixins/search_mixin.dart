@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:geoponto/navigation/app_routes.dart';
 import 'package:geoponto/screens/employee/home_screen.dart';
 import 'package:geoponto/screens/employee/my_hr_screen.dart';
+import 'package:geoponto/services/analytics_service.dart';
 
 mixin SearchMixin<T extends StatefulWidget> on State<T> {
   final TextEditingController searchController = TextEditingController();
@@ -143,6 +144,7 @@ mixin SearchMixin<T extends StatefulWidget> on State<T> {
                   
                   final currentRouteName = ModalRoute.of(context)?.settings.name;
                   if (currentRouteName != screen.name) {
+                    AnalyticsService.recordButtonClick('search_result_tapped', pageName: currentRouteName);
 
                     bool isMainScreen = allScreens.any((s) => s.name == screen.name && (s.screenBuilder() is MyHrScreen || s.screenBuilder() is EmployeeHomeScreen));
 

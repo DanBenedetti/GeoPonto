@@ -4,6 +4,8 @@ import 'package:geoponto/screens/employer/employee_list_screen.dart';
 import 'package:geoponto/screens/employer/employee_registration_screen.dart';
 
 import 'package:geoponto/screens/login_screen.dart';
+import 'package:geoponto/services/analytics_service.dart';
+import 'package:geoponto/mixins/render_time_mixin.dart';
 
 class EmployerDashboardScreen extends StatefulWidget {
   final int idEmpresa;
@@ -14,7 +16,7 @@ class EmployerDashboardScreen extends StatefulWidget {
   State<EmployerDashboardScreen> createState() => _EmployerDashboardScreenState();
 }
 
-class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
+class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> with RenderTimeMixin<EmployerDashboardScreen> {
   void _showLogoutConfirmationDialog() {
     showDialog(
       context: context,
@@ -26,14 +28,16 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
             TextButton(
               child: const Text('Cancelar'),
               onPressed: () {
+                AnalyticsService.recordButtonClick('logout_cancel_button', pageName: '/employer/dashboard');
                 Navigator.of(context).pop();
               },
             ),
             TextButton(
               child: const Text('Sair', style: TextStyle(color: Colors.red)),
               onPressed: () {
+                AnalyticsService.recordButtonClick('logout_confirm_button', pageName: '/employer/dashboard');
                 Navigator.of(context).pushAndRemoveUntil(
-                  MaterialPageRoute(builder: (context) => const LoginScreen()),
+                  MaterialPageRoute(builder: (context) => const LoginScreen(), settings: const RouteSettings(name: '/login')),
                   (Route<dynamic> route) => false,
                 );
               },
@@ -54,7 +58,10 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
-            onPressed: _showLogoutConfirmationDialog,
+            onPressed: () {
+              AnalyticsService.recordButtonClick('logout_icon_button', pageName: '/employer/dashboard');
+              _showLogoutConfirmationDialog();
+            },
           ),
         ],
       ),
@@ -68,8 +75,9 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
               icon: Icons.person_add_alt_1_outlined,
               title: 'Cadastrar Novo Funcionário',
               onTap: () {
+                AnalyticsService.recordButtonClick('register_employee_card', pageName: '/employer/dashboard');
                 Navigator.of(context).push(
-                  MaterialPageRoute(builder: (context) => EmployeeRegistrationScreen(idEmpresa: widget.idEmpresa)),
+                  MaterialPageRoute(builder: (context) => EmployeeRegistrationScreen(idEmpresa: widget.idEmpresa), settings: const RouteSettings(name: '/employer/registration')),
                 );
               },
             ),
@@ -79,8 +87,9 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> {
               icon: Icons.people_outline,
               title: 'Gerir Funcionários',
               onTap: () {
+                 AnalyticsService.recordButtonClick('manage_employees_card', pageName: '/employer/dashboard');
                  Navigator.of(context).push(
-                  MaterialPageRoute(builder: (context) => EmployeeListScreen(idEmpresa: widget.idEmpresa)),
+                  MaterialPageRoute(builder: (context) => EmployeeListScreen(idEmpresa: widget.idEmpresa), settings: const RouteSettings(name: '/employer/employee-list')),
                 );
               },
             ),

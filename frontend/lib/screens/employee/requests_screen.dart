@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:geoponto/screens/employee/adjustment_screen.dart';
+import 'package:geoponto/services/analytics_service.dart';
 
 enum RequestStatus { pending, approved, rejected }
 
@@ -76,7 +77,8 @@ class RequestsScreen extends StatelessWidget {
         ),
         onTap: () {
           if (status == RequestStatus.rejected) {
-            Navigator.push(context, MaterialPageRoute(builder: (context) => const AdjustmentScreen()));
+            AnalyticsService.recordButtonClick('adjustment_request_button', pageName: '/employee/requests');
+            Navigator.push(context, MaterialPageRoute(builder: (context) => const AdjustmentScreen(), settings: const RouteSettings(name: '/employee/adjustment')));
           }
         },
         contentPadding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 16.0),

@@ -7,6 +7,7 @@ import 'package:geoponto/screens/employer/employer_point_details_screen.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:month_picker_dialog/month_picker_dialog.dart';
+import 'package:geoponto/services/analytics_service.dart';
 
 class EmployeePointScreen extends StatefulWidget {
   final Colaborador colaborador;
@@ -145,10 +146,11 @@ class _EmployeePointScreenState extends State<EmployeePointScreen> {
             style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
         trailing: const Icon(Icons.arrow_forward_ios, size: 16),
         onTap: () {
+          AnalyticsService.recordButtonClick('view_point_details', pageName: '/employer/employee-point');
           Navigator.push(
               context,
               MaterialPageRoute(
-                  builder: (context) => EmployerPointDetailsScreen(ponto: ponto, idFuncionario: widget.colaborador.id_funcionario!,)));
+                  builder: (context) => EmployerPointDetailsScreen(ponto: ponto, idFuncionario: widget.colaborador.id_funcionario!,), settings: const RouteSettings(name: '/employer/employee-point-details')));
         },
         shape: Border(bottom: BorderSide(color: Colors.grey[200]!)),
       ),
