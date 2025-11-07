@@ -1,11 +1,15 @@
 # Framework web para a API
 Flask==3.0.3
+Flask-Cors==4.0.1
 
 # Driver para conexão com o PostgreSQL
 psycopg2-binary==2.9.9
 
 # Gerenciador de variáveis de ambiente
 python-dotenv==1.0.1
+
+# Servidor WSGI para produção
+gunicorn==22.0.0
 
 # Ferramenta para rodar testes
 pytest==8.2.2

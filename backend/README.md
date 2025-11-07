@@ -9,6 +9,8 @@ Este diretório contém o código-fonte da API do sistema GeoPonto, desenvolvida
 *   **Banco de Dados:** PostgreSQL
 *   **Driver de Conexão:** `psycopg2-binary`
 *   **Gerenciamento de Ambiente:** `python-dotenv`
+*   **CORS:** `Flask-Cors`
+*   **Servidor WSGI:** `gunicorn`
 
 ## 🛠️ Configuração do Ambiente de Desenvolvimento
 
@@ -55,11 +57,19 @@ O banco de dados é gerenciado via Docker Compose para facilitar a configuraçã
 
 ## ▶️ Como Rodar a Aplicação
 
-A forma recomendada de rodar todo o ambiente (backend + banco de dados) é com Docker Compose, a partir da raiz do projeto:
+### Desenvolvimento
+Para rodar a aplicação em modo de desenvolvimento, com hot-reload:
 ```bash
-docker-compose up --build -d
+flask run
 ```
-A API estará disponível em **`http://localhost:5001`**.
+A API estará disponível em **`http://localhost:5000`**.
+
+### Produção
+Para rodar a aplicação em modo de produção, utilize o `gunicorn`:
+```bash
+gunicorn --bind 0.0.0.0:5000 main:app
+```
+A API estará disponível em **`http://localhost:5000`**.
 
 **Nota:** A porta `5001` está configurada no arquivo `docker-compose.yml`. Se você rodar o `main.py` manualmente (`python main.py`), a API estará na porta `5000`.
 
@@ -71,10 +81,14 @@ Aqui está a lista de todos os endpoints disponíveis na API.
 
 ### Autenticação
 
-*   `POST /login`
-    *   **Função:** Autentica um usuário (funcionário ou empregador).
+*   `POST /login/empresa`
+    *   **Função:** Autentica um empregador.
+    *   **Corpo (Body):** `{ "username": "...", "senha": "..." }`
+    *   **Resposta (Sucesso):** `{ "token": "seu_token_jwt", "id_empresa": "..." }`
+*   `POST /login/funcionario`
+    *   **Função:** Autentica um funcionário.
     *   **Corpo (Body):** `{ "email": "...", "senha": "..." }`
-    *   **Resposta (Sucesso):** `{ "token": "seu_token_jwt" }`
+    *   **Resposta (Sucesso):** `{ "token": "seu_token_jwt", "id_funcionario": "...", "id_empresa": "..." }`
 
 ### Empresas
 
@@ -96,8 +110,8 @@ Aqui está a lista de todos os endpoints disponíveis na API.
 *   `POST /funcionarios`
     *   **Função:** Cadastra um novo funcionário.
     *   **Corpo (Body):** Dados do funcionário em JSON.
-*   `GET /funcionarios`
-    *   **Função:** Lista todos os funcionários.
+*   `GET /funcionarios?id_empresa=<id_empresa>`
+    *   **Função:** Lista todos os funcionários de uma empresa.
 *   `GET /funcionarios/<id>`
     *   **Função:** Retorna os detalhes de um funcionário específico.
 *   `PUT /funcionarios/<id>`
@@ -110,17 +124,148 @@ Aqui está a lista de todos os endpoints disponíveis na API.
 
 *   `POST /ponto/<id_funcionario>`
     *   **Função:** Cria um novo registro de ponto para um funcionário.
-    *   **Corpo (Body):** `{ "latitude": ..., "longitude": ..., "tipo_ponto": "..." }`
-*   `GET /ponto/funcionario/<id_funcionario>`
-    *   **Função:** Lista todos os registros de ponto de um funcionário.
-*   `PUT /ponto/funcionario/<id_ponto>`
-    *   **Função:** Atualiza um registro de ponto específico.
+    *   **Corpo (Body):** `{ "latitude": ..., "longitude": ... }`
+*   `GET /ponto/funcionario/<id_funcionario>?month=<mes>&year=<ano>`
+    *   **Função:** Lista todos os registros de ponto de um funcionário em um determinado mês e ano.
 *   `DELETE /ponto/funcionario/<id_ponto>`
     *   **Função:** Deleta um registro de ponto específico.
 
-### Relatórios
+### Jornadas
 
-*   `GET /relatorios/horas-trabalhadas/funcionario/<id_funcionario>`
-    *   **Função:** Retorna os dados para o relatório de horas trabalhadas (lógica a ser implementada).
-*   `GET /relatorios/faltas/funcionario/<id_funcionario>`
-    *   **Função:** Retorna os dados para o relatório de faltas (lógica a ser implementada).
+*   `POST /jornadas`
+    *   **Função:** Cria ou atualiza a jornada de um funcionário.
+    *   **Corpo (Body):** Dados da jornada em JSON.
+*   `GET /jornadas/funcionario/<id_funcionario>?day_of_week=<dia_da_semana>`
+    *   **Função:** Retorna a jornada de um funcionário para um dia específico da semana.
+*   `PUT /jornadas/<id_jornada>`
+    *   **Função:** Atualiza uma jornada específica.
+*   `DELETE /jornadas/<id_jornada>`
+    *   **Função:** Deleta uma jornada específica.
+
+### Localizações
+
+*   `POST /localizacoes`
+    *   **Função:** Cria uma nova localização para um funcionário.
+    *   **Corpo (Body):** `{ "id_funcionario": ..., "latitude": ..., "longitude": ..., "raio_permitido": ... }`
+*   `GET /localizacoes/funcionario/<id_funcionario>`
+    *   **Função:** Retorna a localização de um funcionário.
+*   `PUT /localizacoes/<id_localizacao>`
+    *   **Função:** Atualiza uma localização.
+*   `DELETE /localizacoes/<id_localizacao>`
+    *   **Função:** Deleta uma localização.
+
+### Faltas
+
+*   `GET /funcionarios/<id_funcionario>/faltas`
+    *   **Função:** Retorna a lista de faltas de um funcionário nos últimos 40 dias.
+
+### Analytics
+
+*   `POST /analytics/page-view`
+    *   **Função:** Registra a visualização de uma página.
+    *   **Corpo (Body):** `{ "page_name": "...", "render_time_ms": ... }`
+*   `POST /analytics/button-click`
+    *   **Função:** Registra o clique em um botão.
+    *   **Corpo (Body):** `{ "button_id": "...", "page_name": "..." }`
+*   `GET /analytics/metrics`
+    *   **Função:** Retorna as métricas de analytics.
+
+### Status do Banco de Dados
+
+*   `GET /db-status`
+    *   **Função:** Retorna o status do banco de dados.
+
+---
+
+## Exemplos de JSON
+
+### `POST /empresas`
+```json
+{
+    "nome_fantasia": "Tech Solutions",
+    "razao_social": "Tech Solutions Ltda.",
+    "cnpj": "12.345.678/0001-99",
+    "senha": "senha_segura",
+    "cep": "12345-678",
+    "logradouro": "Rua dos Desenvolvedores",
+    "numero": "123",
+    "bairro": "Centro",
+    "cidade": "São Paulo",
+    "estado": "SP",
+    "pais": "Brasil",
+    "username": "techsolutions"
+}
+```
+
+### `POST /funcionarios`
+```json
+{
+    "id_empresa": 1,
+    "nome": "João",
+    "sobrenome": "Silva",
+    "cpf": "123.456.789-00",
+    "rua": "Rua do Comércio",
+    "numero": "456",
+    "bairro": "Centro",
+    "cidade": "São Paulo",
+    "cep": "12345-678",
+    "email": "joao.silva@example.com",
+    "telefone": "11987654321",
+    "cargo": "Desenvolvedor",
+    "senha": "outra_senha_segura",
+    "data_admissao": "2023-01-15"
+}
+```
+
+### `POST /ponto/<id_funcionario>`
+```json
+{
+    "latitude": -23.550520,
+    "longitude": -46.633308
+}
+```
+
+### `POST /jornadas` (Jornada Padrão)
+```json
+{
+    "id_funcionario": 1,
+    "jornada_diferenciada": false,
+    "dias_semana": [1, 2, 3, 4, 5],
+    "horario_entrada": "09:00",
+    "horario_saida_intervalo": "12:00",
+    "horario_retorno_intervalo": "13:00",
+    "horario_saida": "18:00"
+}
+```
+
+### `POST /jornadas` (Jornada Diferenciada)
+```json
+{
+    "id_funcionario": 1,
+    "jornada_diferenciada": true,
+    "dias": [
+        {
+            "dia_semana": 1,
+            "horario_entrada": "09:00",
+            "horario_saida": "17:00"
+        },
+        {
+            "dia_semana": 2,
+            "horario_entrada": "08:00",
+            "horario_saida_intervalo": "12:00",
+            "horario_retorno_intervalo": "13:00",
+            "horario_saida": "17:00"
+        }
+    ]
+}
+```
+
+### `POST /localizacoes`
+```json
+{
+    "id_funcionario": 1,
+    "latitude": -23.550520,
+    "longitude": -46.633308,
+    "raio_permitido": 100
+}
+```
