@@ -1,4 +1,5 @@
 from flask import Flask, jsonify, request
+from flask_cors import CORS
 import psycopg2
 import os
 from dotenv import load_dotenv
@@ -8,6 +9,7 @@ from decimal import Decimal
 load_dotenv()
 
 app = Flask(__name__)
+CORS(app) # Isso permite que seu frontend fale com o backend na Azure
 
 def get_db_connection():
     conn = psycopg2.connect(
