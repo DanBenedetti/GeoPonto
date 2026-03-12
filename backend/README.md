@@ -30,27 +30,56 @@ Este diretório contém o código-fonte da API do sistema GeoPonto, desenvolvida
 
 ## 🐘 Banco de Dados (PostgreSQL)
 
-O banco de dados é gerenciado via Docker Compose.
+Para rodar localmente na VM sem Docker, siga estas etapas:
 
-1.  **Arquivo de Configuração:**
-    Crie um arquivo `.env` em `/backend` com as credenciais do banco:
-    ```env
-    POSTGRES_USER=seu_usuario
-    POSTGRES_PASSWORD=sua_senha
-    POSTGRES_DB=geoponto_db
-    ```
-
-2.  **Inicialização:**
-    Na raiz do projeto (`GeoPonto/`), suba o contêiner do banco:
+1.  **Instalação (Ubuntu/Debian):**
     ```bash
-    docker-compose up -d postgres
+    sudo apt update
+    sudo apt install postgresql postgresql-contrib
     ```
-    O script `database.sql` será executado automaticamente na primeira vez para criar as tabelas.
 
-## ▶️ Como Rodar a Aplicação
+2.  **Configuração Inicial:**
+    Acesse o terminal do Postgres e crie o banco e o usuário:
+    ```bash
+    sudo -u postgres psql
+    ```
+    Dentro do terminal do Postgres (`psql`), execute:
+    ```sql
+    CREATE DATABASE geoponto;
+    CREATE USER geoponto_user WITH PASSWORD 'sua_senha_segura';
+    GRANT ALL PRIVILEGES ON DATABASE geoponto TO geoponto_user;
+    \q
+    ```
 
-*   **Desenvolvimento:** `flask run` (API em `http://localhost:5000`)
-*   **Produção:** `gunicorn --bind 0.0.0.0:5000 main:app`
+3.  **Importação das Tabelas:**
+    ```bash
+    psql -h localhost -U geoponto_user -d geoponto -f database.sql
+    ```
+
+4.  **Variáveis de Ambiente:**
+    Crie o arquivo `.env` baseado no `.env.example`:
+    ```bash
+    cp .env.example .env
+    nano .env  # Edite com as credenciais criadas acima
+    ```
+
+## ▶️ Como Rodar a Aplicação na VM
+
+1.  **Prepare o Ambiente Python:**
+    ```bash
+    sudo apt install python3-venv python3-pip
+    python3 -m venv venv
+    source venv/bin/activate
+    pip install -r requirements.txt
+    ```
+
+2.  **Execução (Produção):**
+    Use o Gunicorn para manter a API rodando de forma estável:
+    ```bash
+    gunicorn --bind 0.0.0.0:5000 main:app
+    ```
+
+> **Dica:** Para manter o backend rodando mesmo após fechar o terminal SSH, você pode usar o `screen`, `tmux` ou configurar um serviço no `systemd`.
 
 ---
 
