@@ -1,42 +1,49 @@
 #!/bin/bash
 
-# Script de configuração automática para VM Azure (Ubuntu/Debian)
-# GeoPonto Backend - Instalação sem Docker
+# Configuração Automática do Backend GeoPonto na Azure
+# ---------------------------------------------------
 
-echo "🚀 Iniciando configuração do ambiente GeoPonto..."
+# 1. Carregar variáveis do .env (se existir) ou usar padrões
+DB_NAME="geoponto"
+DB_USER="geoponto_user"
+DB_PASS="geoponto_pass" # Recomendo mudar após a primeira execução
 
-# 1. Atualizar pacotes
-echo "📦 Atualizando pacotes do sistema..."
-sudo apt update && sudo apt upgrade -y
+echo "🚀 Iniciando configuração completa do ambiente..."
 
-# 2. Instalar PostgreSQL
-echo "🐘 Instalando PostgreSQL..."
-sudo apt install -y postgresql postgresql-contrib
+# 2. Atualizar e Instalar dependências
+echo "📦 Instalando pacotes do sistema (PostgreSQL, Python, etc)..."
+sudo apt update
+sudo apt install -y postgresql postgresql-contrib python3-venv python3-pip libpq-dev
 
-# 3. Instalar Python e Venv
-echo "🐍 Instalando Python e ferramentas de ambiente virtual..."
-sudo apt install -y python3-venv python3-pip libpq-dev
+# 3. Configurar PostgreSQL (Criação de Banco e Usuário)
+echo "🐘 Configurando banco de dados PostgreSQL..."
+sudo -u postgres psql -c "CREATE DATABASE $DB_NAME;"
+sudo -u postgres psql -c "CREATE USER $DB_USER WITH PASSWORD '$DB_PASS';"
+sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE $DB_NAME TO $DB_USER;"
 
-# 4. Criar ambiente virtual
-echo "🛠️ Criando ambiente virtual Python..."
+# 4. Importar Tabelas
+echo "📊 Importando estruturas das tabelas (database.sql e analytics.sql)..."
+# Usando a senha via variável de ambiente PGPASSWORD para evitar prompt interativo
+export PGPASSWORD=$DB_PASS
+psql -h localhost -U $DB_USER -d $DB_NAME -f database.sql
+psql -h localhost -U $DB_USER -d $DB_NAME -f analytics.sql
+
+# 5. Configurar Python Venv e Dependências
+echo "🐍 Configurando ambiente virtual e dependências Python..."
 python3 -m venv venv
 source venv/bin/activate
-
-# 5. Instalar dependências do projeto
-echo "📚 Instalando dependências do backend..."
 pip install --upgrade pip
 pip install -r requirements.txt
 
-# 6. Preparar arquivo de ambiente
-if [ ! -f .env ]; then
-    echo "📝 Criando arquivo .env a partir do exemplo..."
-    cp .env.example .env
-    echo "⚠️  ATENÇÃO: Lembre-se de editar o arquivo .env com suas credenciais!"
-fi
+# 6. Criar o arquivo .env final
+echo "📝 Gerando arquivo .env com as credenciais configuradas..."
+cat <<EOF > .env
+POSTGRES_DB=$DB_NAME
+POSTGRES_USER=$DB_USER
+POSTGRES_PASSWORD=$DB_PASS
+POSTGRES_HOST=localhost
+POSTGRES_PORT=5432
+EOF
 
-echo "✅ Configuração básica concluída!"
-echo ""
-echo "PRÓXIMOS PASSOS:"
-echo "1. Configure o banco de dados conforme o README.md."
-echo "2. Ative o ambiente virtual: source venv/bin/activate"
-echo "3. Execute o servidor: gunicorn --bind 0.0.0.0:5000 main:app"
+echo "✅ Configuração concluída com sucesso!"
+echo "Agora você pode iniciar o servidor usando: ./back.sh"

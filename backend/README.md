@@ -28,58 +28,32 @@ Este diretório contém o código-fonte da API do sistema GeoPonto, desenvolvida
     pip install -r requirements.txt
     ```
 
-## 🐘 Banco de Dados (PostgreSQL)
+## ⚙️ Configuração na VM Azure (Sem Docker)
 
-Para rodar localmente na VM sem Docker, siga estas etapas:
+A configuração agora é totalmente automatizada para facilitar o deploy.
 
-1.  **Instalação (Ubuntu/Debian):**
-    ```bash
-    sudo apt update
-    sudo apt install postgresql postgresql-contrib
-    ```
+### 1. Preparação e Instalação
+Acesse sua VM via SSH e execute o script de configuração automática. Ele instalará o PostgreSQL, criará o banco/usuário, importará as tabelas e preparará o ambiente Python.
 
-2.  **Configuração Inicial:**
-    Acesse o terminal do Postgres e crie o banco e o usuário:
-    ```bash
-    sudo -u postgres psql
-    ```
-    Dentro do terminal do Postgres (`psql`), execute:
-    ```sql
-    CREATE DATABASE geoponto;
-    CREATE USER geoponto_user WITH PASSWORD 'sua_senha_segura';
-    GRANT ALL PRIVILEGES ON DATABASE geoponto TO geoponto_user;
-    \q
-    ```
+```bash
+cd Geoponto/GeoPonto/backend
+chmod +x setup_vm.sh back.sh stop.sh
+./setup_vm.sh
+```
 
-3.  **Importação das Tabelas:**
-    ```bash
-    psql -h localhost -U geoponto_user -d geoponto -f database.sql
-    ```
+### 2. ▶️ Como Rodar a Aplicação
 
-4.  **Variáveis de Ambiente:**
-    Crie o arquivo `.env` baseado no `.env.example`:
-    ```bash
-    cp .env.example .env
-    nano .env  # Edite com as credenciais criadas acima
-    ```
+Para iniciar o servidor em **segundo plano** (ele continuará rodando mesmo se você fechar o terminal):
+```bash
+./back.sh
+```
+*   **Logs:** As mensagens do servidor ficam salvas em `backend.log`.
+*   **Porta:** O servidor roda na porta `5000`.
 
-## ▶️ Como Rodar a Aplicação na VM
-
-1.  **Prepare o Ambiente Python:**
-    ```bash
-    sudo apt install python3-venv python3-pip
-    python3 -m venv venv
-    source venv/bin/activate
-    pip install -r requirements.txt
-    ```
-
-2.  **Execução (Produção):**
-    Use o Gunicorn para manter a API rodando de forma estável:
-    ```bash
-    gunicorn --bind 0.0.0.0:5000 main:app
-    ```
-
-> **Dica:** Para manter o backend rodando mesmo após fechar o terminal SSH, você pode usar o `screen`, `tmux` ou configurar um serviço no `systemd`.
+Para **parar** o servidor:
+```bash
+./stop.sh
+```
 
 ---
 
