@@ -1,6 +1,9 @@
+import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
-import 'package:geocoding/geocoding.dart';
+import 'package:geocoding/geocoding.dart' as geocoding;
+import 'package:http/http.dart' as http;
 import 'package:latlong2/latlong.dart';
 
 class MapPickerScreen extends StatefulWidget {
@@ -24,24 +27,55 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
   }
 
   Future<void> _searchAddress() async {
+    if (_searchController.text.isEmpty) return;
+
     try {
-      final locations = await locationFromAddress(_searchController.text);
-      if (locations.isNotEmpty) {
-        final location = locations.first;
-        setState(() {
-          _selectedPosition = LatLng(location.latitude, location.longitude);
-          _mapController.move(_selectedPosition, 15.0);
+      if (kIsWeb) {
+        // Solução para Web: Nominatim (OpenStreetMap)
+        final url = Uri.parse(
+            'https://nominatim.openstreetmap.org/search?q=${Uri.encodeComponent(_searchController.text)}&format=json&limit=1');
+        
+        final response = await http.get(url, headers: {
+          'User-Agent': 'GeoPontoApp_PI_Fatec',
         });
+
+        if (response.statusCode == 200) {
+          final List<dynamic> results = json.decode(response.body);
+          if (results.isNotEmpty) {
+            final lat = double.parse(results[0]['lat']);
+            final lon = double.parse(results[0]['lon']);
+            setState(() {
+              _selectedPosition = LatLng(lat, lon);
+              _mapController.move(_selectedPosition, 15.0);
+            });
+            return;
+          }
+        }
       } else {
+        // Solução para Android/iOS: Geocoding Nativo
+        final locations = await geocoding.locationFromAddress(_searchController.text);
+        if (locations.isNotEmpty) {
+          final location = locations.first;
+          setState(() {
+            _selectedPosition = LatLng(location.latitude, location.longitude);
+            _mapController.move(_selectedPosition, 15.0);
+          });
+          return;
+        }
+      }
+
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Endereço não encontrado.')),
         );
       }
     } catch (e) {
-      print(e);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Erro ao pesquisar o endereço.')),
-      );
+      debugPrint('Erro na busca: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Erro ao pesquisar o endereço.')),
+        );
+      }
     }
   }
 
