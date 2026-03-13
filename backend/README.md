@@ -36,7 +36,7 @@ A configuração agora é totalmente automatizada para facilitar o deploy.
 Acesse sua VM via SSH e execute o script de configuração automática. Ele instalará o PostgreSQL, criará o banco/usuário, importará as tabelas e preparará o ambiente Python.
 
 ```bash
-cd Geoponto/GeoPonto/backend
+cd Geoponto/backend
 chmod +x setup_vm.sh back.sh stop.sh
 ./setup_vm.sh
 ```
