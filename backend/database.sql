@@ -1,5 +1,5 @@
--- Tabela de Empresas
-CREATE TABLE Empresas (
+-- Tabela de empresas
+CREATE TABLE IF NOT EXISTS empresas (
     id_empresa SERIAL PRIMARY KEY,
     nome_fantasia VARCHAR(255) NOT NULL,
     razao_social VARCHAR(255) NOT NULL,
@@ -17,8 +17,8 @@ CREATE TABLE Empresas (
     atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Tabela de Funcionários
-CREATE TABLE Funcionarios (
+-- Tabela de funcionarios
+CREATE TABLE IF NOT EXISTS funcionarios (
     id_funcionario SERIAL PRIMARY KEY,
     id_empresa INT,
     nome VARCHAR(255) NOT NULL,
@@ -36,22 +36,23 @@ CREATE TABLE Funcionarios (
     senha VARCHAR(255) NOT NULL,
     status BOOLEAN DEFAULT TRUE,
     criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (id_empresa) REFERENCES empresas(id_empresa)
 );
 
--- Tabela de Pontos
-CREATE TABLE Pontos (
+-- Tabela de pontos
+CREATE TABLE IF NOT EXISTS pontos (
     id_ponto SERIAL PRIMARY KEY,
     id_funcionario INT NOT NULL,
     latitude DECIMAL(10, 8) NOT NULL,
     longitude DECIMAL(11, 8) NOT NULL,
     criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (id_funcionario) REFERENCES Funcionarios(id_funcionario)
+    FOREIGN KEY (id_funcionario) REFERENCES funcionarios(id_funcionario)
 );
 
--- Tabela de Jornadas
-CREATE TABLE Jornadas (
+-- Tabela de jornadas
+CREATE TABLE IF NOT EXISTS jornadas (
     id_jornada SERIAL PRIMARY KEY,
     id_funcionario INT NOT NULL,
     dia_semana INT NOT NULL, -- (0: Domingo, 1: Segunda, ..., 6: Sábado)
@@ -63,11 +64,11 @@ CREATE TABLE Jornadas (
     falta BOOLEAN,
     criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (id_funcionario) REFERENCES Funcionarios(id_funcionario)
+    FOREIGN KEY (id_funcionario) REFERENCES funcionarios(id_funcionario)
 );
 
--- Tabela de Localizações
-CREATE TABLE Localizacoes (
+-- Tabela de localizacoes
+CREATE TABLE IF NOT EXISTS localizacoes (
     id_localizacao SERIAL PRIMARY KEY,
     id_funcionario INT NOT NULL,
     latitude DECIMAL(10, 8) NOT NULL,
@@ -75,5 +76,5 @@ CREATE TABLE Localizacoes (
     raio_permitido INT NOT NULL, -- em metros
     criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (id_funcionario) REFERENCES Funcionarios(id_funcionario)
+    FOREIGN KEY (id_funcionario) REFERENCES funcionarios(id_funcionario)
 );

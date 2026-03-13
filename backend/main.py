@@ -9,7 +9,7 @@ from decimal import Decimal
 load_dotenv()
 
 app = Flask(__name__)
-CORS(app) # Isso permite que seu frontend fale com o backend na Azure
+CORS(app)
 
 def get_db_connection():
     conn = psycopg2.connect(
@@ -39,7 +39,7 @@ def login_empresa():
     data = request.get_json()
     conn = get_db_connection()
     cur = conn.cursor()
-    cur.execute('SELECT id_empresa FROM Empresas WHERE username = %s AND senha = %s', (data['username'], data['senha']))
+    cur.execute('SELECT id_empresa FROM empresas WHERE username = %s AND senha = %s', (data['username'], data['senha']))
     empresa = cur.fetchone()
     cur.close()
     conn.close()
@@ -53,7 +53,7 @@ def login_funcionario():
     data = request.get_json()
     conn = get_db_connection()
     cur = conn.cursor()
-    cur.execute('SELECT id_funcionario, id_empresa FROM Funcionarios WHERE email = %s AND senha = %s AND status = TRUE', (data['email'], data['senha']))
+    cur.execute('SELECT id_funcionario, id_empresa FROM funcionarios WHERE email = %s AND senha = %s AND status = TRUE', (data['email'], data['senha']))
     funcionario = cur.fetchone()
     cur.close()
     conn.close()
@@ -72,7 +72,7 @@ def create_empresa():
     conn = get_db_connection()
     cur = conn.cursor()
     cur.execute(
-        'INSERT INTO Empresas (nome_fantasia, razao_social, cnpj, senha, cep, logradouro, numero, bairro, cidade, estado, pais, username) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)',
+        'INSERT INTO empresas (nome_fantasia, razao_social, cnpj, senha, cep, logradouro, numero, bairro, cidade, estado, pais, username) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)',
         (data['nome_fantasia'], data['razao_social'], data['cnpj'], data['senha'], data['cep'], data['logradouro'], data['numero'], data['bairro'], data['cidade'], data['estado'], data['pais'], data['username'])
     )
     conn.commit()
@@ -84,7 +84,7 @@ def create_empresa():
 def get_empresas():
     conn = get_db_connection()
     cur = conn.cursor()
-    cur.execute('SELECT * FROM Empresas')
+    cur.execute('SELECT * FROM empresas')
     empresas = cur.fetchall()
     cur.close()
     conn.close()
@@ -94,7 +94,7 @@ def get_empresas():
 def get_empresa(id):
     conn = get_db_connection()
     cur = conn.cursor()
-    cur.execute('SELECT * FROM Empresas WHERE id_empresa = %s', (id,))
+    cur.execute('SELECT * FROM empresas WHERE id_empresa = %s', (id,))
     empresa = cur.fetchone()
     cur.close()
     conn.close()
