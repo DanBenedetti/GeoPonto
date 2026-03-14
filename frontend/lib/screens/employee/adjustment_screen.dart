@@ -12,7 +12,7 @@ class _AdjustmentScreenState extends State<AdjustmentScreen> {
   final _justificationController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   
-  List<TimeOfDay> _records = [
+  final List<TimeOfDay> _records = [
     const TimeOfDay(hour: 8, minute: 1),
     const TimeOfDay(hour: 12, minute: 5),
     const TimeOfDay(hour: 13, minute: 3),

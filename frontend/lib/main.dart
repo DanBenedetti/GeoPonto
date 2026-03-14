@@ -27,11 +27,9 @@ class MyApp extends StatelessWidget {
         colorScheme: const ColorScheme.light(
           primary: Color(0xFF16D04D),
           secondary: Color(0xFF16D04D),
-          background: Color(0xFFF0F0F0),
           surface: Colors.white,
           onPrimary: Colors.white,
           onSecondary: Colors.black,
-          onBackground: Colors.black,
           onSurface: Colors.black,
         ),
         appBarTheme: const AppBarTheme(

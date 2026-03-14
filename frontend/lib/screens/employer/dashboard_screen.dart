@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:geoponto/models/colaborador.dart';
 import 'package:geoponto/screens/employer/employee_list_screen.dart';
 import 'package:geoponto/screens/employer/employee_registration_screen.dart';
 

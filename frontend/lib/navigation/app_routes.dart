@@ -1,12 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:geoponto/screens/employee/home_screen.dart';
-import 'package:geoponto/screens/employee/my_hr_screen.dart';
-import 'package:geoponto/screens/employee/absences_screen.dart';
 import 'package:geoponto/screens/employee/occurrences_screen.dart';
 import 'package:geoponto/screens/employee/my_point_screen.dart';
 import 'package:geoponto/screens/employee/requests_screen.dart';
 import 'package:geoponto/screens/employee/point_mirror_screen.dart';
-import 'package:geoponto/screens/employee/point_details_screen.dart';
 import 'package:geoponto/screens/employee/adjustment_screen.dart';
 
 class AppScreen {

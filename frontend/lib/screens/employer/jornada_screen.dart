@@ -420,7 +420,7 @@ class _JornadaScreenState extends State<JornadaScreen> {
             ),
             const SizedBox(height: 8),
             DropdownButtonFormField<int>(
-              value: excecao.diaSemana,
+              initialValue: excecao.diaSemana,
               hint: const Text('Selecione o dia'),
               onChanged: (int? newValue) {
                 setState(() {

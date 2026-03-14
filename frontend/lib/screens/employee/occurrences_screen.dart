@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:geoponto/screens/employee/point_details_screen.dart';
 
 class OccurrencesScreen extends StatelessWidget {
   const OccurrencesScreen({super.key});
