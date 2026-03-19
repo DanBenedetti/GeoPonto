@@ -1,0 +1,5 @@
+Modelo: geoponto_extractor_v8_1.keras
+Distância Positiva: 2.7429 +/- 1.2571
+Distância Negativa: 4.5862 +/- 1.5156
+Threshold Otimizado: 3.5684
+Acurácia: 77.50%

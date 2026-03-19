@@ -1,0 +1,24 @@
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1773653272.258783  125848 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1773653272.258937  125848 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+I0000 00:00:1773653272.284504  125848 cpu_feature_guard.cc:227] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: AVX2 AVX_VNNI FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1773653272.918178  125848 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1773653272.918355  125848 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+Detectadas 10177 identidades (CelebA) para treinamento do zero.
+Found 202599 files belonging to 10177 classes.
+Using 192470 files for training.
+E0000 00:00:1773653285.436184  125848 cuda_platform.cc:52] failed call to cuInit: INTERNAL: CUDA error: Failed call to cuInit: CUDA_ERROR_NO_DEVICE: no CUDA-capable device is detected
+Found 202599 files belonging to 10177 classes.
+Using 10129 files for validation.
+
+[RESUME] Modelo encontrado em 'melhor_modelo_zero_massivo.keras'. Carregando pesos para continuar treinamento...
+Traceback (most recent call last):
+  File "/home/danilopc/Documentos/Fatec/6 semestre/PI/Geoponto/GeoPonto/Biometria/treinar_modelo.py", line 57, in <module>
+    tf.keras.backend.set_value(model.optimizer.learning_rate, 0.00005) # Um pouco menor para refinar
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/danilopc/Documentos/Fatec/6 semestre/PI/Geoponto/GeoPonto/Biometria/venv/lib/python3.12/site-packages/keras/src/legacy/backend.py", line 1873, in set_value
+    value = np.asarray(value, dtype=x.dtype.name)
+                                    ^^^^^^^^^^^^
+AttributeError: 'str' object has no attribute 'name'

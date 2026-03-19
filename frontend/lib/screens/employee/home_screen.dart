@@ -17,6 +17,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:geoponto/screens/employer/employee_registration_screen.dart';
 import 'package:geoponto/screens/login_screen.dart';
 import 'package:geoponto/screens/status_database/status.dart';
+import 'package:geoponto/screens/biometric_auth_screen.dart';
 import 'package:geoponto/services/analytics_service.dart';
 import 'package:geoponto/components/analytics_button.dart';
 import 'package:geoponto/mixins/render_time_mixin.dart';
@@ -320,6 +321,19 @@ class _EmployeeHomeScreenState extends State<EmployeeHomeScreen> with SearchMixi
                       _buildShortcuts(funcionario),
                       const SizedBox(height: 24),
                       _buildWelcomeCard(funcionario),
+                      const SizedBox(height: 24),
+                      AnalyticsButton(
+                        buttonId: 'register_biometry_button',
+                        onPressed: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => const BiometricAuthScreen(isRegistration: true),
+                              settings: const RouteSettings(name: '/biometric_registration'),
+                            ),
+                          );
+                        },
+                        child: const Text('Cadastrar Biometria Facial'),
+                      ),
                       const SizedBox(height: 24),
                       const Text('Últimos registros', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
                       const SizedBox(height: 16),

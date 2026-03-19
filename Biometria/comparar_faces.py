@@ -3,37 +3,37 @@ import numpy as np
 from tensorflow.keras.preprocessing import image
 import sys
 
-# 1. Carregar o Modelo Extrator
+# 1. Carregar o Modelo Extrator V8.3.1 (Ajuste Cirúrgico Final)
+MODEL_PATH = 'geoponto_extractor_v8_3_1.keras'
+THRESHOLD = 1.80 # Calibrado para fotos da vida real (Danilo/Gabriel/Rangel)
+
 try:
-    model = tf.keras.models.load_model('geoponto_extractor.keras', safe_mode=False)
-except:
-    print("ERRO: O modelo 'geoponto_extractor.keras' ainda não foi criado. Rode o 'treinar_modelo.py' primeiro.")
+    model = tf.keras.models.load_model(MODEL_PATH)
+    print(f"Sucesso: Extrator {MODEL_PATH} carregado com sucesso.")
+except Exception as e:
+    print(f"ERRO: O modelo '{MODEL_PATH}' não foi encontrado na raiz.")
     sys.exit()
 
-def get_embedding(img_path):
-    img = image.load_img(img_path, target_size=(224, 224))
-    img_array = image.img_to_array(img)
-    img_array = np.expand_dims(img_array, axis=0)
-    # Importante: MobileNetV3 espera imagens entre 0 e 255 ou pré-processadas
-    # Se você usou weights='imagenet', o preprocess_input é recomendado
-    img_array = tf.keras.applications.mobilenet_v3.preprocess_input(img_array)
-    
-    embedding = model.predict(img_array)
-    return embedding / np.linalg.norm(embedding) # Normaliza o vetor
+def preprocess_image(path):
+    # Usa a mesma lógica do treinamento para consistência de resultados
+    img = tf.io.read_file(path)
+    img = tf.image.decode_jpeg(img, channels=3)
+    img = tf.image.resize(img, (224, 224))
+    img = tf.expand_dims(img, axis=0)
+    return img
 
 def comparar(path1, path2):
-    v1 = get_embedding(path1)
-    v2 = get_embedding(path2)
+    # Gera os embeddings usando as imagens pré-processadas
+    v1 = model.predict(preprocess_image(path1), verbose=0)[0]
+    v2 = model.predict(preprocess_image(path2), verbose=0)[0]
     
     # Calcula a Distância Euclidiana (Quanto menor, mais parecido)
-    distancia = np.linalg.norm(v1 - v2)
+    from scipy.spatial.distance import euclidean
+    distancia = euclidean(v1, v2)
     
     print(f"\nDistância entre as fotos: {distancia:.4f}")
     
-    # Limiar Sugerido (Threshold): Ajustado para 1.1 para equilibrar reconhecimento de terceiros
-    LIMIAR = 1.1
-    
-    if distancia < LIMIAR:
+    if distancia < THRESHOLD:
         print("RESULTADO: MESMA PESSOA (Acesso Permitido) ✅")
     else:
         print("RESULTADO: PESSOAS DIFERENTES (Acesso Negado) ❌")

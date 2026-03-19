@@ -5,6 +5,8 @@ import 'package:geoponto/config/api_config.dart';
 import 'package:geoponto/screens/employer/dashboard_screen.dart';
 import 'package:geoponto/screens/employer/employer_registration_screen.dart';
 import 'package:geoponto/screens/employee/home_screen.dart';
+import 'package:geoponto/screens/biometric_auth_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'package:geoponto/screens/analytics_dashboard_screen.dart';
 import 'package:geoponto/components/analytics_button.dart';
@@ -64,12 +66,31 @@ class _LoginScreenState extends State<LoginScreen> with RenderTimeMixin<LoginScr
           final responseBody = jsonDecode(response.body);
           final int idFuncionario = responseBody['id_funcionario'];
           final int idEmpresa = responseBody['id_empresa'];
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(
-              builder: (context) => EmployeeHomeScreen(idFuncionario: idFuncionario, idEmpresa: idEmpresa),
-              settings: const RouteSettings(name: '/employee/home'),
-            ),
-          );
+          
+          // Verifica se já existe biometria cadastrada para este funcionário no dispositivo
+          final prefs = await SharedPreferences.getInstance();
+          final String biometryKey = 'biometry_template_$idFuncionario';
+          final bool hasBiometry = prefs.containsKey(biometryKey);
+
+          if (mounted) {
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(
+                builder: (context) => BiometricAuthScreen(
+                  idFuncionario: idFuncionario, // Passa o ID para salvar/validar corretamente
+                  isRegistration: !hasBiometry, // Se não tem, vai para cadastro
+                  onAuthenticated: () {
+                    Navigator.of(context).pushReplacement(
+                      MaterialPageRoute(
+                        builder: (context) => EmployeeHomeScreen(idFuncionario: idFuncionario, idEmpresa: idEmpresa),
+                        settings: const RouteSettings(name: '/employee/home'),
+                      ),
+                    );
+                  },
+                ),
+                settings: const RouteSettings(name: '/biometric_auth'),
+              ),
+            );
+          }
         } else {
           final responseBody = jsonDecode(response.body);
           ScaffoldMessenger.of(context).showSnackBar(

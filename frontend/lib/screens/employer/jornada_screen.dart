@@ -475,22 +475,26 @@ class _JornadaScreenState extends State<JornadaScreen> {
             ),
             onPressed: () async {
               AnalyticsService.recordButtonClick('select_on_map_button', pageName: '/employer/journey');
-              final selectedPosition = await Navigator.of(context).push<LatLng>(
+              final result = await Navigator.of(context).push<Map<String, dynamic>>(
                 MaterialPageRoute(
                   builder: (context) => MapPickerScreen(
                     initialPosition: LatLng(
                       double.tryParse(_latitudeController.text) ?? -20.5937, // Default to a central location in Brazil
                       double.tryParse(_longitudeController.text) ?? -47.3969,
                     ),
+                    initialRadius: double.tryParse(_raioController.text) ?? 50.0,
                   ),
                   settings: const RouteSettings(name: '/employer/map-picker'),
                 ),
               );
 
-              if (selectedPosition != null) {
+              if (result != null) {
+                final LatLng position = result['position'];
+                final double radius = result['radius'];
                 setState(() {
-                  _latitudeController.text = selectedPosition.latitude.toString();
-                  _longitudeController.text = selectedPosition.longitude.toString();
+                  _latitudeController.text = position.latitude.toString();
+                  _longitudeController.text = position.longitude.toString();
+                  _raioController.text = radius.round().toString();
                 });
               }
             },
