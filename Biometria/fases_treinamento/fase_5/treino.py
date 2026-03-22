@@ -3,82 +3,61 @@ from tensorflow.keras import layers, models, optimizers, callbacks, regularizers
 import os
 
 # ==============================================================================
-# FASE 5 GOLD: REFINAMENTO FINAL DE PRECISÃO
-# Estratégia: Layer Freezing + Taxa de Aprendizado Microscópica
+# FASE 5: ROBUSTEZ À VIDA REAL (DEEP REFINEMENT)
+# Estratégia: Injeção de Ruído e Variação de Luz para simular câmeras de celular.
 # ==============================================================================
 
 # 1. Configurações
 IMG_SIZE = (224, 224)
 BATCH_SIZE = 32
-EPOCHS = 100 
+DATASET_PATH = 'GeoPonto/Biometria/dataset_celeba_otimizado/' 
+MODEL_BASE = 'modelo_fase4_refinado.keras' 
+NEW_MODEL_PATH = 'modelo_fase5_robusto.keras'
 
-DATASET_PATH = 'GeoPonto/Biometria/dataset_celeba_fase5/'
-MODEL_BASE = 'modelo_fase5_ultra.keras' 
-OUTPUT_MODEL = 'modelo_final_homologado.keras'
+# 2. Pipeline de Dados com DATA AUGMENTATION DE ROBUSTEZ (Detalhado no README)
+augmentation_layer = tf.keras.Sequential([
+    layers.RandomFlip("horizontal"),
+    layers.RandomRotation(0.2),
+    layers.RandomZoom(0.2),
+    layers.RandomContrast(0.2),
+    # README: Camadas essenciais para 'Vida Real'
+    layers.RandomBrightness(0.2), # Simula fotos no sol ou escuro
+    layers.GaussianNoise(0.1)     # Simula ruído de sensor de celular
+])
 
-# 2. Pipeline de Dados
 train_ds = tf.keras.utils.image_dataset_from_directory(
-    DATASET_PATH,
-    validation_split=0.1,
-    subset="training",
-    seed=123,
-    image_size=IMG_SIZE,
-    batch_size=BATCH_SIZE,
-    label_mode='categorical'
+    DATASET_PATH, validation_split=0.1, subset="training", seed=123,
+    image_size=IMG_SIZE, batch_size=BATCH_SIZE, label_mode='categorical'
 )
+
+# Aplicando Augmentation no Treino
+train_ds = train_ds.map(lambda x, y: (augmentation_layer(x, training=True), y), num_parallel_calls=tf.data.AUTOTUNE)
+train_ds = train_ds.prefetch(buffer_size=tf.data.AUTOTUNE)
 
 val_ds = tf.keras.utils.image_dataset_from_directory(
-    DATASET_PATH,
-    validation_split=0.1,
-    subset="validation",
-    seed=123,
-    image_size=IMG_SIZE,
-    batch_size=BATCH_SIZE,
-    label_mode='categorical'
-)
+    DATASET_PATH, validation_split=0.1, subset="validation", seed=123,
+    image_size=IMG_SIZE, batch_size=BATCH_SIZE, label_mode='categorical'
+).prefetch(tf.data.AUTOTUNE)
 
-train_ds = train_ds.prefetch(buffer_size=tf.data.AUTOTUNE)
-val_ds = val_ds.prefetch(buffer_size=tf.data.AUTOTUNE)
-
-# 3. Carregamento e Ajuste de Freezing
+# 3. Carregamento do Modelo
 if os.path.exists(MODEL_BASE):
-    print(f"\n[RESUME] Carregando Modelo Ultra (12% Acc). Iniciando REFINAMENTO GOLD...")
+    print(f"\n[RESUME] Carregando Modelo Refinado para Injeção de Robustez...")
     model = tf.keras.models.load_model(MODEL_BASE)
-    
-    # CONGELAMENTO: Congelamos as camadas de base para focar apenas na classificação
-    # Procuramos a camada 'MobilenetV3' dentro do modelo
-    for layer in model.layers:
-        if 'MobilenetV3' in layer.name:
-            layer.trainable = False
-            print(f">>> Camada de Base {layer.name} CONGELADA para estabilidade.")
-    
-    # TAXA DE APRENDIZADO MICROSCÓPICA
-    model.optimizer.learning_rate.assign(0.00001) 
-    print(f"Taxa de aprendizado ajustada para refinamento: {model.optimizer.learning_rate.numpy()}")
+    # LR muito baixa para não destruir o aprendizado anterior, apenas adaptar ao ruído
+    model.optimizer.learning_rate.assign(0.00005) 
 else:
-    print(f"\n[ERRO] Modelo '{MODEL_BASE}' não encontrado.")
+    print(f"\n[ERRO] Modelo base '{MODEL_BASE}' não encontrado.")
     exit()
 
 # 4. Callbacks
-checkpoint = callbacks.ModelCheckpoint(OUTPUT_MODEL, monitor='val_accuracy', save_best_only=True, verbose=1)
-reduce_lr = callbacks.ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=10, min_lr=1e-8, verbose=1)
+checkpoint = callbacks.ModelCheckpoint(NEW_MODEL_PATH, monitor='val_accuracy', save_best_only=True, verbose=1)
 early_stop = callbacks.EarlyStopping(monitor='val_loss', patience=20, restore_best_weights=True)
 
 # 5. Execução
-print(f"\nIniciando Rodada Final de Homologação...")
-history = model.fit(
-    train_ds,
-    validation_data=val_ds,
-    epochs=EPOCHS,
-    callbacks=[checkpoint, early_stop, reduce_lr]
-)
+print(f"\nIniciando Treinamento Fase 5 (Injeção de Ruído e Brilho)...")
+model.fit(train_ds, validation_data=val_ds, epochs=100, callbacks=[checkpoint, early_stop])
 
-# 6. Finalização e Exportação
-model.save('modelo_completo_final.keras')
+# 6. Salvar Resultados
+model.save('modelo_completo_fase5.keras')
 embedding_model = models.Model(inputs=model.input, outputs=model.get_layer("embedding_output").output)
-embedding_model.save('geoponto_extractor.keras')
-
-print("\n" + "="*60)
-print("PROCESSO DE TREINAMENTO FINALIZADO!")
-print("O modelo atingiu sua maturidade máxima para o PI.")
-print("="*60)
+embedding_model.save('geoponto_extractor_fase5.keras')

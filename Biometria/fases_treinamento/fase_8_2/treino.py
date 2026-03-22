@@ -82,6 +82,6 @@ try:
     print(f"Sucesso! Extrator salvo em: {NEW_EXTRACTOR_PATH}")
 except Exception as e:
     print(f"Erro ao salvar extrator: {e}")
-    model.save('backup_modelo_fase8_2_completo.keras')
+    model.save('modelo_fase8_2_completo.keras')
 
 print("\n--- FASE 8.2 FINALIZADA ---")
