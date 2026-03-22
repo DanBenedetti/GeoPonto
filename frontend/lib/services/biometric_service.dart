@@ -40,26 +40,30 @@ class BiometricService {
       final resizedImage = img.copyResize(rawImage, width: 224, height: 224);
 
       // Usar Float32List para garantir o layout de memória que o TFLite espera [1, 224, 224, 3]
+      // IMPORTANTE: O modelo TFLite já possui uma camada interna de Rescaling(1./255).
+      // Portanto, devemos passar os valores dos pixels no intervalo [0, 255].
       var input = Float32List(1 * 224 * 224 * 3);
       var buffer = 0;
       for (var y = 0; y < 224; y++) {
         for (var x = 0; x < 224; x++) {
           final pixel = resizedImage.getPixel(x, y);
-          // O script Python usa tf.image.resize que mantém a escala original (0-255) 
-          // a menos que convert_image_dtype seja chamado.
+          // Passar valores puros (0-255) conforme esperado pela primeira camada do modelo
           input[buffer++] = pixel.r.toDouble();
           input[buffer++] = pixel.g.toDouble();
           input[buffer++] = pixel.b.toDouble();
         }
       }
 
-      // Preparar saída [1, 200]
-      var output = Float32List(1 * 200).reshape([1, 200]);
+      // Preparar saída [1, 128] conforme o modelo extrator homologado
+      var output = Float32List(1 * 128).reshape([1, 128]);
 
       // Rodar Inferência com tensores formatados
       _interpreter!.run(input.reshape([1, 224, 224, 3]), output);
 
+      // Retornar o embedding bruto conforme o script de validação Python (validacao_real.py)
+      // O threshold de 1.80 foi calculado sobre vetores sem normalização L2.
       List<double> embedding = List<double>.from(output[0]);
+
       print('Embedding extraído (primeiros 5 valores): ${embedding.take(5).toList()}');
 
       return embedding;

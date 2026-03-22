@@ -2,7 +2,7 @@ import tensorflow as tf
 import os
 
 # --- Configurações ---
-MODEL_PATH = 'modelo_final_homologado.keras'
+MODEL_PATH = 'fases_treinamento/fase_8_3_1/geoponto_extractor_v8_3_1.keras'
 TFLITE_PATH = 'geoponto_extractor.tflite'
 
 if not os.path.exists(MODEL_PATH):
