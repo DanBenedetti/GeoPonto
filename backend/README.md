@@ -12,6 +12,83 @@ Este diretório contém o código-fonte da API do sistema GeoPonto, desenvolvida
 *   **CORS:** `Flask-Cors`
 *   **Servidor WSGI:** `gunicorn`
 
+## 🗄️ Modelagem do Banco de Dados
+
+### Diagrama Entidade-Relacionamento (ERD)
+
+```mermaid
+erDiagram
+    EMPRESAS ||--o{ FUNCIONARIOS : possui
+    FUNCIONARIOS ||--o{ PONTOS : registra
+    FUNCIONARIOS ||--o{ JORNADAS : cumpre
+    FUNCIONARIOS ||--o{ LOCALIZACOES : vincula_a
+
+    EMPRESAS {
+        int id_empresa PK
+        string nome_fantasia
+        string razao_social
+        string cnpj UK
+        string username UK
+        string senha
+        boolean status
+        timestamp criado_em
+    }
+
+    FUNCIONARIOS {
+        int id_funcionario PK
+        int id_empresa FK
+        string nome
+        string sobrenome
+        string cpf UK
+        string email UK
+        string senha
+        date data_admissao
+        boolean status
+    }
+
+    PONTOS {
+        int id_ponto PK
+        int id_funcionario FK
+        decimal latitude
+        decimal longitude
+        timestamp criado_em
+    }
+
+    JORNADAS {
+        int id_jornada PK
+        int id_funcionario FK
+        int dia_semana
+        time horario_entrada
+        time horario_saida_intervalo
+        time horario_retorno_intervalo
+        time horario_saida
+        boolean falta
+    }
+
+    LOCALIZACOES {
+        int id_localizacao PK
+        int id_funcionario FK
+        decimal latitude
+        decimal longitude
+        int raio_permitido
+    }
+```
+
+### Dicionário de Dados (Principais Tabelas)
+
+| Tabela | Descrição |
+| :--- | :--- |
+| `empresas` | Dados cadastrais das empresas contratantes. |
+| `funcionarios` | Informações dos colaboradores e credenciais de acesso. |
+| `pontos` | Registros históricos de batidas de ponto com geolocalização. |
+| `jornadas` | Configurações de horários de trabalho previstos por dia da semana. |
+| `localizacoes` | Regras de geofencing (raio permitido) por funcionário. |
+
+### Regras de Negócio Implementadas
+1.  **Geofencing:** O sistema valida se a distância entre o ponto batido (`pontos`) e o centro permitido (`localizacoes`) é menor ou igual ao `raio_permitido`.
+2.  **Integridade de Acesso:** Funcionários são vinculados obrigatoriamente a uma empresa (`id_empresa`).
+3.  **Gestão de Status:** Registros desativados (`status = FALSE`) são preservados para fins de auditoria histórica, mas impedidos de realizar novos logins.
+
 ## 🛠️ Configuração do Ambiente de Desenvolvimento
 
 1.  **Crie um Ambiente Virtual:**

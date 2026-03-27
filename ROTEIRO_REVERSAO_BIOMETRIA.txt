@@ -1,0 +1,27 @@
+# Roteiro de Reversão da Biometria - GeoPonto
+
+Este documento descreve como reativar o segundo fator de autenticação (biometria facial) no aplicativo.
+
+## 1. Configuração Global (O mais importante)
+No arquivo `frontend/lib/config/api_config.dart`:
+- Altere `static const bool bypassBiometry = true;` para `false`.
+Isso fará com que o aplicativo pare de saltar a tela de biometria durante o login.
+
+## 2. Serviço de Biometria (TFLite)
+No arquivo `frontend/lib/services/biometric_service.dart`:
+- Descomente a linha: `import 'package:tflite_flutter/tflite_flutter.dart';`
+- No método `_loadModel()`, descomente o bloco que inicializa o `Interpreter`.
+- No método `extractEmbedding()`, remova o `return null;` inicial e descomente o bloco de código original.
+- No método `isSamePerson()`, remova a linha `if (kIsWeb) return true;`.
+
+*Nota: O Chrome continuará dando erro ao compilar se o TFLite estiver descomentado, por isso a reversão só deve ser feita para testes em Android/iOS ou dispositivos físicos.*
+
+## 3. Tela de Login
+No arquivo `frontend/lib/screens/login_screen.dart`:
+- Localize o bloco `if (ApiConfig.bypassBiometry) { ... }` dentro do método `_handleLogin`.
+- Você pode remover esse bloco ou simplesmente deixá-lo lá, pois ele respeitará a flag do `ApiConfig`.
+
+## 4. Botão de Cadastro (Home)
+No arquivo `frontend/lib/screens/employee/home_screen.dart`:
+- O botão "Cadastrar Biometria Facial" foi removido por segurança (para evitar que o usuário troque a face cadastrada). 
+- Caso deseje restaurá-lo, reinsira o widget `AnalyticsButton` que chama a `BiometricAuthScreen` com `isRegistration: true`.
