@@ -4,10 +4,20 @@ Sistema de controle de ponto para funcionários, que utiliza geolocalização pa
 
 ## 💻 Tecnologias
 
+# App
+
 * **Frontend:** Flutter
 * **Backend:** Python
 * **Banco de Dados:** PostgreSQL
 * **Controle de Versão:** Git e GitHub
+
+# Web
+
+* **Frontend:** Flutter
+* **Backend:** Node.js
+* **Banco de Dados:** PostgreSQL
+* **Controle de Versão:** Git e GitHub
+
 
 ## 🚀 Funcionalidades
 
@@ -17,9 +27,20 @@ Sistema de controle de ponto para funcionários, que utiliza geolocalização pa
 * Relatórios de horas trabalhadas e faltas.
 * Autenticação e autorização de usuários.
 
+## Escopo
+
+* **App Mobile - Frente Empregado:** Interface para registro de jornada com biometria facial e geolocalização, 
+além de consulta ao espelho de ponto individual.
+* **App Mobile - Frente Empregador:** Ferramenta de gestão rápida para supervisores "em campo", permitindo 
+o cadastro de novos funcionários via app.
+* **Painel Web - Frente Empregador (Admin):** Ambiente de governança profunda, utilizado para configurações globais, 
+gestão de cadastros e tratamento de inconsistências. 
+
 ## 📋 Modelagem de Casos de Uso
 
 O diagrama abaixo descreve as principais interações entre os usuários (Funcionários e Empregadores) e o sistema GeoPonto.
+
+## Versão App
 
 ```mermaid
 flowchart LR
@@ -57,6 +78,41 @@ flowchart LR
     UC4 --- GPS
 ```
 
+## Versão Web
+
+flowchart LR
+    E((Empregador))
+    M[[Sistema de Mensageria]]
+
+    subgraph Sistema ["Sistema de Gerenciamento de Jornada (Versão Web)"]
+        direction TB
+        UC1([Cadastrar])
+        UC2([Fazer Login])
+        UC3([Cadastrar Funcionário])
+        UC4([Definir Jornada])
+        UC5([Definir carga horária e abrangência])
+        UC6([Validar Ocorrências])
+        UC7([Notificação de Ocorrências])
+        UC8([Ver Ponto])
+        UC9([Excluir Funcionário])
+    end
+
+    %% Relacionamentos do Ator
+    E --- UC1
+    E --- UC2
+    E --- UC3
+    E --- UC4
+    E --- UC6
+    E --- UC8
+    E --- UC9
+
+    %% Relacionamentos de Extensão (Conforme a imagem)
+    UC5 -.->|extend| UC4
+    UC7 -.->|extend| UC6
+
+    %% Integração com Sistema Externo
+    UC7 --- M
+
 ### Detalhes dos Casos de Uso
 *   **Autenticação de Dois Fatores (2FA):** O caso de uso "Fazer Login" inclui obrigatoriamente a "Autenticação via Biometria", garantindo a identidade do colaborador.
 *   **Geofencing:** O "Registro de Ponto" depende da "Validação de Geolocalização", que consome dados em tempo real do GPS para confirmar se o funcionário está dentro do raio permitido.
@@ -66,7 +122,7 @@ flowchart LR
 
 Para o cumprimento das metas do Projeto Integrador, o sistema foi delimitado pelos seguintes requisitos:
 
-### Requisitos Funcionais (RF)
+### Requisitos Funcionais Mobile (RF)
 | ID | Descrição | Ator |
 | :--- | :--- | :--- |
 | **RF01** | Autenticação por Dois Fatores (2FA) via senha e biometria facial. | Funcionário |
@@ -78,6 +134,21 @@ Para o cumprimento das metas do Projeto Integrador, o sistema foi delimitado pel
 | **RF07** | Validação e tratamento de ocorrências de ponto (Interface Web). | Empregador |
 | **RF08** | Notificação de registros e pendências via serviço de mensageria. | Sistema |
 
+
+### Requisitos Funcionais Web -  Foco no Empregador (RF)
+| | ID | Descrição | Ator |
+| :--- | :--- | :--- |
+| **RF09** | Cadastrar Novo Usuário com validação de identidade via IA antes de cada marcação. | Empregador |
+| **RF10** | Gerir Funcionário: controle centralizado de perfis e acessos. | Empregador |
+| **RF10.1** | Definir Jornada do Funcionário: definição da carga horária personalizada por funcionário. | Empregador |
+| **RF10.2** | Alterar Dados Cadastrais do Funcionário: alteração de endereço, e-mail, etc. | Empregador |
+| **RF10.3** | Ver Ponto: visualização das marcações de ponto por funcionário. | Empregador |
+| **RF10.4** | Excluir Funcionário: exclusão do perfil do funcionário do sistema. | Empregador |
+| **RF11** | Receber Mensagem de Notificação de Ocorrência: avisos via mensageria sobre ocorrências e solicitações. | Empregador |
+| **RF12** | Validar ocorrências: avaliação de situações atípicas na jornada de trabalho. | Empregador |
+| **RF12.1** | Acessar marcações de pontos de não conformidade: validação de marcações fora dos parâmetros definidos. | Empregador |
+| **RF12.2** | Acessar Atestados/Justificativas: validação de documentos como atestados e justificativas de ausência. | Empregador |
+
 ### Requisitos Não Funcionais (RNF)
 | ID | Descrição | Categoria |
 | :--- | :--- | :--- |
@@ -88,6 +159,14 @@ Para o cumprimento das metas do Projeto Integrador, o sistema foi delimitado pel
 | **RNF05** | Tempo de inferência da biometria no App não deve exceder 3 segundos. | Performance |
 | **RNF06** | Backend hospedado em nuvem (VM Azure) para alta disponibilidade. | Infraestrutura |
 | **RNF07** | Uso de PostgreSQL para persistência de dados georreferenciados. | Robustez |
+
+## 🎨 Protótipos no Figma
+
+Acesse os designs e o protótipo navegável do GeoPonto através dos links abaixo:
+
+[![Figma](https://img.shields.io/badge/Figma-Versão%20Mobile-F24E1E?style=for-the-badge&logo=figma&logoColor=white)](https://www.figma.com/design/PQE2Dk9cWi9V3rwjqzMBWr/GeoPonto?node-id=0-1&t=xtbLx2VCTzRkc8VK-1)
+
+[![Figma](https://img.shields.io/badge/Figma-Protótipo%20Web-1ABCFE?style=for-the-badge&logo=figma&logoColor=white)](https://www.figma.com/make/LGVx7yChBPbCld9NhvVxpg/GeoPonto-Web-App-Prototype?t=X0hwytkknSMlWlkr-1)
 
 ## 🛠️ Como Rodar o Projeto
 
