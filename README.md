@@ -165,7 +165,7 @@ Acesse os designs e o protótipo navegável do GeoPonto através dos links abaix
 
 [![Figma](https://img.shields.io/badge/Figma-Versão%20Mobile-F24E1E?style=for-the-badge&logo=figma&logoColor=white)](https://www.figma.com/design/PQE2Dk9cWi9V3rwjqzMBWr/GeoPonto?node-id=0-1&t=xtbLx2VCTzRkc8VK-1)
 
-[![Figma](https://img.shields.io/badge/Figma-Protótipo%20Web-1ABCFE?style=for-the-badge&logo=figma&logoColor=white)](https://www.figma.com/make/LGVx7yChBPbCld9NhvVxpg/GeoPonto-Web-App-Prototype?t=X0hwytkknSMlWlkr-1)
+[![Figma](https://img.shields.io/badge/Figma-Protótipo%20Web-1ABCFE?style=for-the-badge&logo=figma&logoColor=white)](https://www.figma.com/make/LGVx7yChBPbCld9NhvVxpg/GeoPonto-Web-App-Prototype?fullscreen=1&t=EXGogwnShySCRRbu-1)
 
 ## 🛠️ Como Rodar o Projeto
 
