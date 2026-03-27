@@ -105,7 +105,7 @@ erDiagram
     pip install -r requirements.txt
     ```
 
-## ⚙️ Configuração na VM Azure (Sem Docker)
+## ⚙️ Configuração na VM Azure
 
 A configuração agora é totalmente automatizada para facilitar o deploy.
 
