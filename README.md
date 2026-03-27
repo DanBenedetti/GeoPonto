@@ -97,8 +97,8 @@ flowchart LR
         EXT1([Definir carga horária e abrangência])
         EXT2(["Notificação de Ocorrências (Mensagens)"])
 
-        UC4 <-.- |extends| EXT1
-        UC5 <-.- |extends| EXT2
+        UC4 <.- |extends| EXT1
+        UC5 <.- |extends| EXT2
     end
 
     actor --- UC1
