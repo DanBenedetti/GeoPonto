@@ -81,11 +81,11 @@ flowchart LR
 ## Versão Web
 
 ```mermaid
-flowchart TB
+flowchart LR
     actor((Empregador))
 
     subgraph Sistema ["Sistema de Gerenciamento de Jornada de Trabalho (Versão Web)"]
-        direction TB
+        direction LR
         UC1([Cadastrar])
         UC2([Fazer Login])
         UC3([Cadastrar Funcionário])
