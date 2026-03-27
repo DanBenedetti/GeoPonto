@@ -85,7 +85,7 @@ flowchart LR
     actor((Empregador))
 
     subgraph Sistema ["Sistema de Gerenciamento de Jornada de Trabalho (Versão Web)"]
-        direction LR
+        direction TB
         UC1([Cadastrar])
         UC2([Fazer Login])
         UC3([Cadastrar Funcionário])
