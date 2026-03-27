@@ -16,7 +16,49 @@ Sistema de controle de ponto para funcionários, que utiliza geolocalização pa
 * Validação de presença dentro de um raio de 50 metros do local de trabalho.
 * Cadastro e gerenciamento de usuários e empresas.
 * Relatórios de horas trabalhadas e faltas.
-* Autenticação e autorização de usuários.
+*   Autenticação e autorização de usuários.
+
+## 📋 Modelagem de Casos de Uso
+
+O diagrama abaixo descreve as principais interações entre os usuários (Funcionários e Empregadores) e o sistema GeoPonto.
+
+```mermaid
+useCaseDiagram
+    actor "Funcionário" as F
+    actor "Empregador" as E
+    actor "Sistema de GPS" as GPS <<System>>
+
+    package "Sistema GeoPonto" {
+        usecase "Fazer Login" as UC1
+        usecase "Autenticar via Biometria facial" as UC2
+        usecase "Registrar Ponto" as UC3
+        usecase "Validar Geolocalização (Geofencing)" as UC4
+        usecase "Visualizar Histórico de Pontos" as UC5
+        usecase "Gerenciar Funcionários" as UC6
+        usecase "Configurar Localizações e Raio" as UC7
+        usecase "Gerenciar Jornadas de Trabalho" as UC8
+        usecase "Visualizar Dashboard de Analytics" as UC9
+    }
+
+    F --> UC1
+    F --> UC3
+    F --> UC5
+
+    E --> UC1
+    E --> UC6
+    E --> UC7
+    E --> UC8
+    E --> UC9
+
+    UC1 <.. UC2 : <<include>>
+    UC3 <.. UC4 : <<include>>
+    UC4 -- GPS
+```
+
+### Detalhes dos Casos de Uso
+*   **Autenticação de Dois Fatores (2FA):** O caso de uso "Fazer Login" inclui obrigatoriamente a "Autenticação via Biometria", garantindo a identidade do colaborador.
+*   **Geofencing:** O "Registro de Ponto" depende da "Validação de Geolocalização", que consome dados em tempo real do GPS para confirmar se o funcionário está dentro do raio permitido.
+*   **Gestão Administrativa:** O Empregador possui permissões exclusivas para configurar os parâmetros de controle (geocercas e jornadas) e analisar métricas de produtividade.
 
 ## 🛠️ Como Rodar o Projeto
 
