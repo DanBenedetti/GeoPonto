@@ -73,6 +73,16 @@ class _LoginScreenState extends State<LoginScreen> with RenderTimeMixin<LoginScr
           final bool hasBiometry = prefs.containsKey(biometryKey);
 
           if (mounted) {
+            if (ApiConfig.bypassBiometry) {
+              Navigator.of(context).pushReplacement(
+                MaterialPageRoute(
+                  builder: (context) => EmployeeHomeScreen(idFuncionario: idFuncionario, idEmpresa: idEmpresa),
+                  settings: const RouteSettings(name: '/employee/home'),
+                ),
+              );
+              return;
+            }
+            
             Navigator.of(context).pushReplacement(
               MaterialPageRoute(
                 builder: (context) => BiometricAuthScreen(

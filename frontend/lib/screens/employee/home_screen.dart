@@ -322,21 +322,7 @@ class _EmployeeHomeScreenState extends State<EmployeeHomeScreen> with SearchMixi
                       const SizedBox(height: 24),
                       _buildWelcomeCard(funcionario),
                       const SizedBox(height: 24),
-                      AnalyticsButton(
-                        buttonId: 'register_biometry_button',
-                        onPressed: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (context) => const BiometricAuthScreen(isRegistration: true),
-                              settings: const RouteSettings(name: '/biometric_registration'),
-                            ),
-                          );
-                        },
-                        child: const Text('Cadastrar Biometria Facial'),
-                      ),
-                      const SizedBox(height: 24),
-                      const Text('Últimos registros', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-                      const SizedBox(height: 16),
+                      const Text('Últimos registros', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),                      const SizedBox(height: 16),
                       _buildRecentRecords(),
                       const SizedBox(height: 24),
                       _buildClockInCard(),

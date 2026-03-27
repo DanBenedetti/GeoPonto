@@ -3,4 +3,6 @@ class ApiConfig {
     'API_BASE_URL',
     defaultValue: 'http://20.168.121.103:5000',
   );
+
+  static const bool bypassBiometry = true; // Altere para false para reativar a biometria
 }
