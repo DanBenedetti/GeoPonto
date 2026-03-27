@@ -7,7 +7,6 @@ Sistema de controle de ponto para funcionários, que utiliza geolocalização pa
 * **Frontend:** Flutter
 * **Backend:** Python
 * **Banco de Dados:** PostgreSQL
-* **Contêiner:** Docker
 * **Controle de Versão:** Git e GitHub
 
 ## 🚀 Funcionalidades
@@ -16,7 +15,7 @@ Sistema de controle de ponto para funcionários, que utiliza geolocalização pa
 * Validação de presença dentro de um raio de 50 metros do local de trabalho.
 * Cadastro e gerenciamento de usuários e empresas.
 * Relatórios de horas trabalhadas e faltas.
-*   Autenticação e autorização de usuários.
+* Autenticação e autorização de usuários.
 
 ## 📋 Modelagem de Casos de Uso
 
@@ -39,6 +38,7 @@ flowchart LR
         UC7([Configurar Localizações e Raio])
         UC8([Gerenciar Jornadas de Trabalho])
         UC9([Visualizar Dashboard de Analytics])
+        UC10([Validar Ponto e Ocorrências])
     end
 
     F --- UC1
@@ -50,6 +50,7 @@ flowchart LR
     E --- UC7
     E --- UC8
     E --- UC9
+    E --- UC10
 
     UC1 -.->|include| UC2
     UC3 -.->|include| UC4
@@ -69,8 +70,6 @@ Certifique-se de ter as seguintes ferramentas instaladas:
 
 * [Python 3.8+](https://www.python.org/downloads/)
 * [Flutter SDK](https://flutter.dev/docs/get-started/install)
-* [Docker](https://www.docker.com/get-started)
-* [Docker Compose](https://docs.docker.com/compose/install/)
 * [pip](https://pip.pypa.io/en/stable/installing/)
 
 **Instruções:**
@@ -83,14 +82,10 @@ Certifique-se de ter as seguintes ferramentas instaladas:
     ```bash
     cd GeoPonto_fatec
     ```
-3.  **Configurar o Banco de Dados:**
+3.  **Configurar o Banco de Dados e Backend:**
 
-    * Utilizaremos o Docker Compose para subir o banco de dados PostgreSQL.
-    * Crie um arquivo `.env` na raiz do projeto e adicione as variáveis de ambiente necessárias (ex: `DB_USER`, `DB_PASSWORD`, `DB_NAME`).
-    * Suba o contêiner do banco de dados:
-        ```bash
-        docker-compose up -d postgres
-        ```
+    * A configuração do banco de dados (PostgreSQL) e do ambiente Python agora é automatizada via scripts no diretório `/backend`.
+    * Consulte o README interno da pasta `backend` para instruções detalhadas sobre o `setup_vm.sh`.
 
 4.  **Rodar a aplicação Backend (Python):**
 
@@ -133,7 +128,6 @@ Certifique-se de ter as seguintes ferramentas instaladas:
 * `/frontend`: Contém o código-fonte da interface do usuário em Flutter.
 * `/docs`: Documentação adicional do projeto.
 * `/scripts`: Scripts para automação (CI/CD, deploy, etc.).
-* `docker-compose.yml`: Arquivo para orquestrar os contêineres Docker.
 
 ## 👥 Equipe
 
