@@ -23,36 +23,37 @@ Sistema de controle de ponto para funcionários, que utiliza geolocalização pa
 O diagrama abaixo descreve as principais interações entre os usuários (Funcionários e Empregadores) e o sistema GeoPonto.
 
 ```mermaid
-useCaseDiagram
-    actor "Funcionário" as F
-    actor "Empregador" as E
-    actor "Sistema de GPS" as GPS <<System>>
+flowchart LR
+    F((Funcionário))
+    E((Empregador))
+    GPS[[Sistema GPS]]
 
-    package "Sistema GeoPonto" {
-        usecase "Fazer Login" as UC1
-        usecase "Autenticar via Biometria facial" as UC2
-        usecase "Registrar Ponto" as UC3
-        usecase "Validar Geolocalização (Geofencing)" as UC4
-        usecase "Visualizar Histórico de Pontos" as UC5
-        usecase "Gerenciar Funcionários" as UC6
-        usecase "Configurar Localizações e Raio" as UC7
-        usecase "Gerenciar Jornadas de Trabalho" as UC8
-        usecase "Visualizar Dashboard de Analytics" as UC9
-    }
+    subgraph Sistema ["Sistema GeoPonto"]
+        direction TB
+        UC1([Fazer Login])
+        UC2([Autenticar via Biometria facial])
+        UC3([Registrar Ponto])
+        UC4([Validar Geolocalização - Geofencing])
+        UC5([Visualizar Histórico de Pontos])
+        UC6([Gerenciar Funcionários])
+        UC7([Configurar Localizações e Raio])
+        UC8([Gerenciar Jornadas de Trabalho])
+        UC9([Visualizar Dashboard de Analytics])
+    end
 
-    F --> UC1
-    F --> UC3
-    F --> UC5
+    F --- UC1
+    F --- UC3
+    F --- UC5
 
-    E --> UC1
-    E --> UC6
-    E --> UC7
-    E --> UC8
-    E --> UC9
+    E --- UC1
+    E --- UC6
+    E --- UC7
+    E --- UC8
+    E --- UC9
 
-    UC1 <.. UC2 : <<include>>
-    UC3 <.. UC4 : <<include>>
-    UC4 -- GPS
+    UC1 -.->|include| UC2
+    UC3 -.->|include| UC4
+    UC4 --- GPS
 ```
 
 ### Detalhes dos Casos de Uso
