@@ -5,6 +5,12 @@ Este diretório contém a inteligência artificial responsável pelo reconhecime
 ## 🚀 Metodologia Acadêmica
 Seguindo os requisitos do Projeto Integrador (PI), o modelo foi treinado **integralmente do zero** (weights=None). Esta abordagem demonstra o domínio sobre a arquitetura de redes neurais, superando o desafio de ensinar a visão computacional sem o uso de pesos pré-existentes.
 
+### 📚 Dataset Principal: CelebA
+Para o treinamento, utilizamos o dataset **CelebA (Large-scale CelebFaces Attributes Dataset)**, um dos padrões ouro na academia para tarefas de visão computacional facial.
+*   **Link Oficial:** [CelebA Dataset](https://mmlab.ie.cuhk.edu.hk/projects/CelebA.html)
+*   **Volume:** Mais de 200.000 imagens de celebridades com grande variação de pose, iluminação e atributos.
+*   **Uso no GeoPonto:** Extraímos identidades com alta densidade de amostras para garantir que o modelo aprendesse a extrair *embeddings* invariantes de uma mesma pessoa.
+
 ### Especificações Técnicas da Arquitetura:
 *   **Base:** MobileNetV3Small (escolhida pela eficiência em dispositivos móveis).
 *   **Entrada:** Tensores de 224x224x3 pixels (RGB).
@@ -45,6 +51,26 @@ Para superar os desafios de convergência, seguimos uma estratégia de 8 passos 
 | **6** | Especialização | Foco em Dataset Elite (250 classes de alta frequência). | 11.95% |
 | **7** | Polimento | Transição de Adam para **SGD com Momentum** (Nesterov). | 28.37% |
 | **8** | Ajuste Cirúrgico| LR baixíssima (5e-6) e remoção de Label Smoothing. | **84.06% (1:1)** |
+
+---
+
+## 📈 Métricas e Auditoria Visual
+
+Para garantir a transparência acadêmica do Projeto Integrador, as métricas de convergência e as matrizes de confusão de cada fase crítica estão documentadas abaixo:
+
+### Evolução das Matrizes de Confusão
+As matrizes de confusão demonstram a capacidade do modelo em distinguir entre centenas de identidades simultâneas.
+*   **[Fase 1: Inicialização Massiva](metricas_fases/metricas_fase_1/matriz_confusao.png)** - Alta dispersão inicial.
+*   **[Fase 2: Otimização 1.000 classes](metricas_fases/metricas_fase_2/matriz_confusao.png)** - Início da formação de clusters.
+*   **[Fase 3: Impulso de Gradiente](metricas_fases/metricas_fase_3/matriz_confusao.png)** - Refinamento da diagonal principal.
+*   **[Fase 4: Refinamento de Pesos](metricas_fases/metricas_fase_4/matriz_confusao.png)** - Consolidação da acurácia base.
+*   **[Fase 4 V2: Robustez Visual](metricas_fases/fase4_v2_refinado/matriz_confusao_v2.png)** - Matriz após injeção de ruído.
+
+### Validação de Verificação (1:1)
+Diferente da classificação, a verificação foca na distância euclidiana entre duas fotos.
+*   **[Histograma de Frequência - Fase 8](metricas_fases/fase8_1_baseline/histograma_verificacao.png)**: Visualização da separação entre "Mesma Pessoa" e "Pessoas Diferentes".
+*   **[Validação em Ambiente Real](metricas_fases/validacao_vida_real/histograma_real.png)**: Desempenho do modelo com fotos capturadas fora do dataset.
+*   **[Comparativo Final Científico](metricas_fases/comparativo_final_cientifico.png)**: Gráfico consolidado demonstrando a evolução da acurácia ao longo das 8 fases.
 
 ---
 
