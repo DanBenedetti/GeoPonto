@@ -62,6 +62,33 @@ flowchart LR
 *   **Geofencing:** O "Registro de Ponto" depende da "Validação de Geolocalização", que consome dados em tempo real do GPS para confirmar se o funcionário está dentro do raio permitido.
 *   **Gestão Administrativa:** O Empregador possui permissões exclusivas para configurar os parâmetros de controle (geocercas e jornadas) e analisar métricas de produtividade.
 
+## 📋 Requisitos do Sistema
+
+Para o cumprimento das metas do Projeto Integrador, o sistema foi delimitado pelos seguintes requisitos:
+
+### Requisitos Funcionais (RF)
+| ID | Descrição | Ator |
+| :--- | :--- | :--- |
+| **RF01** | Autenticação por Dois Fatores (2FA) via senha e biometria facial. | Funcionário |
+| **RF02** | Registro de ponto com captura automática de coordenadas GPS. | Funcionário |
+| **RF03** | Validação automática de Geofencing (raio permitido) para registro. | Sistema |
+| **RF04** | Visualização de espelho de ponto e histórico de registros. | Funcionário |
+| **RF05** | Gestão de funcionários, empresas e jornadas (Interface Web). | Empregador |
+| **RF06** | Configuração de perímetros de trabalho e raios de tolerância (Interface Web). | Empregador |
+| **RF07** | Validação e tratamento de ocorrências de ponto (Interface Web). | Empregador |
+| **RF08** | Notificação de registros e pendências via serviço de mensageria. | Sistema |
+
+### Requisitos Não Funcionais (RNF)
+| ID | Descrição | Categoria |
+| :--- | :--- | :--- |
+| **RNF01** | Acurácia da biometria facial deve ser superior a 80%. | Segurança |
+| **RNF02** | O extrator de características faciais deve ser treinado do zero (Weights=None). | Acadêmico |
+| **RNF03** | Interface do funcionário deve ser Mobile (Android/iOS). | Portabilidade |
+| **RNF04** | Interface do empregador deve ser Web (Browser). | Acessibilidade |
+| **RNF05** | Tempo de inferência da biometria no App não deve exceder 3 segundos. | Performance |
+| **RNF06** | Backend hospedado em nuvem (VM Azure) para alta disponibilidade. | Infraestrutura |
+| **RNF07** | Uso de PostgreSQL para persistência de dados georreferenciados. | Robustez |
+
 ## 🛠️ Como Rodar o Projeto
 
 **Pré-requisitos:**
