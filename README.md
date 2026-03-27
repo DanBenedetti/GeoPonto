@@ -81,38 +81,33 @@ flowchart LR
 ## Versão Web
 
 ```mermaid
-flowchart LR
-    E((Empregador))
-    M[[Sistema de Mensageria]]
+flowchart TB
+    actor((Empregador))
 
-    subgraph Sistema ["Sistema de Gerenciamento de Jornada (Versão Web)"]
+    subgraph Sistema ["Sistema de Gerenciamento de Jornada de Trabalho (Versão Web)"]
         direction TB
         UC1([Cadastrar])
         UC2([Fazer Login])
         UC3([Cadastrar Funcionário])
         UC4([Definir Jornada])
-        UC5([Definir carga horária e abrangência])
-        UC6([Validar Ocorrências])
-        UC7([Notificação de Ocorrências])
-        UC8([Ver Ponto])
-        UC9([Excluir Funcionário])
+        UC5([Validar Ocorrências])
+        UC6([Ver Ponto])
+        UC7([Excluir Funcionário])
+
+        EXT1([Definir carga horária e abrangência])
+        EXT2(["Notificação de Ocorrências (Mensagens)"])
+
+        UC4 -.-> EXT1
+        UC5 -.-> EXT2
     end
 
-    %% Relacionamentos do Ator
-    E --- UC1
-    E --- UC2
-    E --- UC3
-    E --- UC4
-    E --- UC6
-    E --- UC8
-    E --- UC9
-
-    %% Relacionamentos de Extensão (Conforme a imagem)
-    UC5 -.->|extend| UC4
-    UC7 -.->|extend| UC6
-
-    %% Integração com Sistema Externo
-    UC7 --- M
+    actor --- UC1
+    actor --- UC2
+    actor --- UC3
+    actor --- UC4
+    actor --- UC5
+    actor --- UC6
+    actor --- UC7
 ```
     
 
