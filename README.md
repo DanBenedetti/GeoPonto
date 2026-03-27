@@ -80,38 +80,41 @@ flowchart LR
 
 ## Versão Web
 
+```mermaid
 flowchart LR
-    E((Empregador))
-    M[[Sistema de Mensageria]]
+    E((Empregador))
+    M[[Sistema de Mensageria]]
 
-    subgraph Sistema ["Sistema de Gerenciamento de Jornada (Versão Web)"]
-        direction TB
-        UC1([Cadastrar])
-        UC2([Fazer Login])
-        UC3([Cadastrar Funcionário])
-        UC4([Definir Jornada])
-        UC5([Definir carga horária e abrangência])
-        UC6([Validar Ocorrências])
-        UC7([Notificação de Ocorrências])
-        UC8([Ver Ponto])
-        UC9([Excluir Funcionário])
-    end
+    subgraph Sistema ["Sistema de Gerenciamento de Jornada (Versão Web)"]
+        direction TB
+        UC1([Cadastrar])
+        UC2([Fazer Login])
+        UC3([Cadastrar Funcionário])
+        UC4([Definir Jornada])
+        UC5([Definir carga horária e abrangência])
+        UC6([Validar Ocorrências])
+        UC7([Notificação de Ocorrências])
+        UC8([Ver Ponto])
+        UC9([Excluir Funcionário])
+    end
 
-    %% Relacionamentos do Ator
-    E --- UC1
-    E --- UC2
-    E --- UC3
-    E --- UC4
-    E --- UC6
-    E --- UC8
-    E --- UC9
+    %% Relacionamentos do Ator
+    E --- UC1
+    E --- UC2
+    E --- UC3
+    E --- UC4
+    E --- UC6
+    E --- UC8
+    E --- UC9
 
-    %% Relacionamentos de Extensão (Conforme a imagem)
-    UC5 -.->|extend| UC4
-    UC7 -.->|extend| UC6
+    %% Relacionamentos de Extensão (Conforme a imagem)
+    UC5 -.->|extend| UC4
+    UC7 -.->|extend| UC6
 
-    %% Integração com Sistema Externo
-    UC7 --- M
+    %% Integração com Sistema Externo
+    UC7 --- M
+```
+    
 
 ### Detalhes dos Casos de Uso
 *   **Autenticação de Dois Fatores (2FA):** O caso de uso "Fazer Login" inclui obrigatoriamente a "Autenticação via Biometria", garantindo a identidade do colaborador.
