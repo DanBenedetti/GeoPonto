@@ -11,9 +11,9 @@
         <a href="#" class="hover:text-green-600 transition-colors">Contato</a>
       </div>
       <div>
-        <button class="bg-green-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-green-700 transition-colors shadow-sm">
+        <router-link to="/login" class="bg-green-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-green-700 transition-colors shadow-sm inline-block">
           Login
-        </button>
+        </router-link>
       </div>
     </div>
   </nav>
