@@ -107,6 +107,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useDarkMode } from '../composables/useDarkMode'
+import { authService } from '../services/authService'
 
 const router = useRouter()
 const userName = ref(localStorage.getItem('userName') || 'Empregador')
@@ -114,11 +115,14 @@ const { isDarkMode, toggleDarkMode, initTheme } = useDarkMode()
 
 onMounted(() => {
   initTheme()
+  if (!localStorage.getItem('isLoggedIn')) {
+    router.push('/')
+    return
+  }
 })
 
 const handleLogout = () => {
-  localStorage.removeItem('isLoggedIn')
-  localStorage.removeItem('userName')
+  authService.logout()
   router.push('/')
 }
 

@@ -82,12 +82,16 @@
 </template>
 
 <script setup>
-import { reactive, onMounted } from 'vue'
+import { reactive, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useDarkMode } from '../composables/useDarkMode'
+import { companyService } from '../services/companyService'
+import { Company } from '../models/Company'
 
 const router = useRouter()
 const { isDarkMode, initTheme } = useDarkMode()
+const loading = ref(false)
+const error = ref('')
 
 onMounted(() => {
   initTheme()
@@ -109,13 +113,38 @@ const registerForm = reactive({
   confirmPassword: ''
 })
 
-const handleRegister = () => {
+const handleRegister = async () => {
   if (registerForm.password !== registerForm.confirmPassword) {
     alert('As senhas não coincidem')
     return
   }
-  // Simulando cadastro
-  alert('Cadastro realizado com sucesso! Agora você pode fazer login pelo portal.')
-  router.push('/')
+
+  loading.value = true
+  error.value = ''
+
+  try {
+    const company = new Company({
+      razao_social: registerForm.razaoSocial,
+      nome_fantasia: registerForm.nomeFantasia,
+      cnpj: registerForm.cnpj,
+      cep: registerForm.cep,
+      logradouro: registerForm.logradouro,
+      numero: registerForm.numero,
+      bairro: registerForm.bairro,
+      cidade: registerForm.municipio,
+      estado: registerForm.uf,
+      pais: registerForm.pais,
+      username: registerForm.username,
+      senha: registerForm.password
+    })
+
+    await companyService.register(company.toJSON())
+    alert('Cadastro realizado com sucesso! Agora você pode fazer login pelo portal.')
+    router.push('/')
+  } catch (err) {
+    alert(err.message || 'Erro ao realizar cadastro')
+  } finally {
+    loading.value = false
+  }
 }
 </script>

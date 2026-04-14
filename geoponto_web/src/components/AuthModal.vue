@@ -1,6 +1,7 @@
 <template>
-  <div v-if="isOpen" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4" @click.self="close">
-    <div class="bg-white dark:bg-gray-800 rounded-[2rem] shadow-2xl w-full max-w-4xl overflow-hidden relative animate-in fade-in zoom-in duration-300">
+  <div v-if="isOpen" class="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm overflow-y-auto" @click.self="close">
+    <div class="flex min-h-full items-center justify-center p-4">
+      <div class="bg-white dark:bg-gray-800 rounded-[2rem] shadow-2xl w-full max-w-4xl overflow-hidden relative animate-in fade-in zoom-in duration-300">
       <!-- Close Button -->
       <button @click="close" class="absolute top-6 right-6 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -23,7 +24,7 @@
                   <input 
                     v-model="loginForm.username"
                     type="text" 
-                    placeholder="admin"
+                    placeholder="Usuário"
                     required
                     class="w-full px-5 py-4 bg-gray-100 dark:bg-gray-700 border-2 border-gray-300 dark:border-gray-600 rounded-2xl focus:border-green-500 focus:bg-white dark:focus:bg-gray-600 transition-all outline-none text-gray-700 dark:text-gray-200 shadow-inner"
                   >
@@ -76,11 +77,13 @@
       </div>
     </div>
   </div>
+</div>
 </template>
 
 <script setup>
 import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { authService } from '../services/authService'
 
 const props = defineProps({
   isOpen: Boolean
@@ -90,6 +93,7 @@ const emit = defineEmits(['close'])
 
 const router = useRouter()
 const error = ref('')
+const loading = ref(false)
 
 const loginForm = reactive({
   username: '',
@@ -100,16 +104,25 @@ const close = () => {
   emit('close')
 }
 
-const handleLogin = () => {
-  // Simple validation for demo
+const handleLogin = async () => {
   if (loginForm.username && loginForm.password) {
-    if (loginForm.username === 'admin' && loginForm.password === 'admin') {
+    loading.value = true
+    error.value = ''
+    try {
+      const response = await authService.loginEmpresa(loginForm.username, loginForm.password)
+      
       localStorage.setItem('isLoggedIn', 'true')
-      localStorage.setItem('userName', 'Admin GeoPonto')
+      localStorage.setItem('token', response.token)
+      localStorage.setItem('id_empresa', response.id_empresa)
+      localStorage.setItem('userName', loginForm.username)
+      localStorage.setItem('userType', 'empresa')
+      
       close()
       router.push('/dashboard')
-    } else {
-      error.value = 'Usuário ou senha incorretos'
+    } catch (err) {
+      error.value = err.message || 'Usuário ou senha incorretos'
+    } finally {
+      loading.value = false
     }
   }
 }
