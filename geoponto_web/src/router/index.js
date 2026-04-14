@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
-import LoginView from '../views/LoginView.vue'
+import RegisterView from '../views/RegisterView.vue'
 import DashboardView from '../views/DashboardView.vue'
 import OccurrencesView from '../views/OccurrencesView.vue'
 
@@ -11,9 +11,9 @@ const routes = [
     component: HomeView
   },
   {
-    path: '/login',
-    name: 'login',
-    component: LoginView
+    path: '/register',
+    name: 'register',
+    component: RegisterView
   },
   {
     path: '/dashboard',
@@ -37,7 +37,8 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
   const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true'
   if (to.meta.requiresAuth && !isLoggedIn) {
-    next('/login')
+    // If not logged in, redirect to home where the login modal is
+    next('/')
   } else {
     next()
   }

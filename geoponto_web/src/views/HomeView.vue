@@ -1,18 +1,18 @@
 <template>
-  <div class="min-h-screen bg-gray-50 flex flex-col">
+  <div class="min-h-screen bg-gray-50 dark:bg-gray-950 flex flex-col transition-colors duration-300">
     <Navbar />
 
     <main class="flex-grow">
       <!-- Hero Section -->
       <ResponsiveBanner
-        desktopSrc="/img/banner_site_topo.png"
+        :desktopSrc="isDarkMode ? '/img/banner_topo_site_dark.png' : '/img/banner_site_topo.png'"
         mobileSrc="/img/banner_mobile_topo.png"
         alt="GeoPonto Topo"
       />
 
       <!-- Services Grid -->
       <section class="py-16 px-6 container mx-auto">
-        <h2 class="text-3xl font-extrabold text-center text-gray-900 mb-12">
+        <h2 class="text-3xl font-extrabold text-center text-gray-900 dark:text-white mb-12">
           Nossos Serviços Especializados
         </h2>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -29,14 +29,14 @@
 
       <!-- Services Interstitial Banner -->
       <ResponsiveBanner
-        desktopSrc="/img/banner_site_servico.png"
+        :desktopSrc="isDarkMode ? '/img/banner_servicos_site_dark.png' : '/img/banner_site_servico.png'"
         mobileSrc="/img/banner_mobile_servicos.png"
         alt="Serviços GeoPonto"
       />
 
       <!-- App Banner Section -->
       <ResponsiveBanner
-        desktopSrc="/img/banner_site_app.png"
+        :desktopSrc="isDarkMode ? '/img/banner_site_app_dark.png' : '/img/banner_site_app.png'"
         mobileSrc="/img/banner_mobile_app.png"
         alt="App GeoPonto"
       />
@@ -51,6 +51,9 @@ import Navbar from '../components/Navbar.vue'
 import Footer from '../components/Footer.vue'
 import ResponsiveBanner from '../components/ResponsiveBanner.vue'
 import ServiceCard from '../components/ServiceCard.vue'
+import { useDarkMode } from '../composables/useDarkMode'
+
+const { isDarkMode } = useDarkMode()
 
 const services = [
   {
