@@ -2,7 +2,7 @@
   <footer class="bg-gray-900 text-white py-12 px-6">
     <div class="container mx-auto grid grid-cols-1 md:grid-cols-4 gap-8">
       <div class="col-span-1 md:col-span-1 flex flex-col items-center md:items-start">
-        <img src="/img/Logo_GeoPonto.png" alt="GeoPonto" class="h-30 mb-6 brightness-0 invert opacity-90">
+        <img src="/img/Logo_GeoPonto_branco.png" alt="GeoPonto" class="h-60 mb-6">
         <p class="text-gray-400 text-sm text-center md:text-left">
           GeoPonto - Sua solução inteligente para gestão de ponto eletrônico e localização em tempo real.
         </p>

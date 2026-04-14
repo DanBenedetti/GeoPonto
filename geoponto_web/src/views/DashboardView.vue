@@ -2,10 +2,10 @@
   <div class="min-h-screen bg-gray-50 dark:bg-gray-950 flex transition-colors duration-300">
     <!-- Sidebar -->
     <aside class="w-64 bg-green-700 dark:bg-green-900 text-white flex flex-col">
-      <div class="p-6">
-        <img src="/img/Logo_GeoPonto.png" alt="GeoPonto" class="h-36 brightness-0 invert mx-auto" />
+      <div class="p-4">
+        <img src="/img/Logo_GeoPonto_branco.png" alt="GeoPonto" class="h-32 mx-auto" />
       </div>
-      <nav class="flex-grow mt-6">
+      <nav class="flex-grow mt-2">
         <router-link to="/dashboard" class="flex items-center px-6 py-3 bg-green-800 dark:bg-green-950 border-l-4 border-white">
           <span class="mr-3">📊</span> Painel Principal
         </router-link>

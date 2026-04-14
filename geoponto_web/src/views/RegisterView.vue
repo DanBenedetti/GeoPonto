@@ -2,7 +2,7 @@
   <div class="min-h-screen bg-gray-100 dark:bg-gray-950 flex flex-col justify-center items-center py-12 sm:px-6 lg:px-8 font-sans transition-colors duration-300">
     <div class="sm:mx-auto sm:w-full sm:max-w-md">
       <router-link to="/">
-        <img class="mx-auto h-32 w-auto dark:brightness-110" src="/img/Logo_GeoPonto.png" alt="GeoPonto" />
+        <img class="mx-auto h-32 w-auto dark:brightness-110" :src="isDarkMode ? '/img/Logo_GeoPonto_branco.png' : '/img/Logo_GeoPonto.png'" alt="GeoPonto" />
       </router-link>
       <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900 dark:text-white">
         Crie sua conta de Empregador
@@ -87,7 +87,7 @@ import { useRouter } from 'vue-router'
 import { useDarkMode } from '../composables/useDarkMode'
 
 const router = useRouter()
-const { initTheme } = useDarkMode()
+const { isDarkMode, initTheme } = useDarkMode()
 
 onMounted(() => {
   initTheme()
