@@ -3,6 +3,7 @@ import HomeView from '../views/HomeView.vue'
 import RegisterView from '../views/RegisterView.vue'
 import DashboardView from '../views/DashboardView.vue'
 import OccurrencesView from '../views/OccurrencesView.vue'
+import ReportsView from '../views/ReportsView.vue'
 
 const routes = [
   {
@@ -19,6 +20,12 @@ const routes = [
     path: '/dashboard',
     name: 'dashboard',
     component: DashboardView,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/dashboard/reports',
+    name: 'reports',
+    component: ReportsView,
     meta: { requiresAuth: true }
   },
   {

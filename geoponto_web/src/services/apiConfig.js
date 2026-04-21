@@ -1,3 +1,3 @@
-const API_BASE_URL = 'http://20.168.121.103:5000';
+const API_BASE_URL = 'http://localhost:5000'; // Alterado para testar localmente com os dados mockados
 
 export default API_BASE_URL;

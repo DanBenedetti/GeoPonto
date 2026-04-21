@@ -1,0 +1,84 @@
+ * Serving Flask app 'main'
+ * Debug mode: on
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.1.13:5000
+[33mPress CTRL+C to quit[0m
+ * Restarting with stat
+ * Debugger is active!
+ * Debugger PIN: 161-828-274
+127.0.0.1 - - [21/Apr/2026 10:21:30] "GET /db_test HTTP/1.1" 200 -
+ * Detected change in '/home/thiago_dev/Documentos/DSM/GeoPonto/GeoPonto/backend/populate.py', reloading
+ * Restarting with stat
+ * Debugger is active!
+ * Debugger PIN: 161-828-274
+ * Detected change in '/home/thiago_dev/Documentos/DSM/GeoPonto/GeoPonto/backend/populate.py', reloading
+ * Restarting with stat
+ * Debugger is active!
+ * Debugger PIN: 161-828-274
+ * Detected change in '/home/thiago_dev/Documentos/DSM/GeoPonto/GeoPonto/backend/populate.py', reloading
+ * Restarting with stat
+ * Debugger is active!
+ * Debugger PIN: 161-828-274
+127.0.0.1 - - [21/Apr/2026 11:50:55] "GET /ponto/funcionario/1?month=4&year=2026 HTTP/1.1" 200 -
+127.0.0.1 - - [21/Apr/2026 11:59:02] "GET /funcionarios?id_empresa=1 HTTP/1.1" 200 -
+ * Detected change in '/home/thiago_dev/Documentos/DSM/GeoPonto/GeoPonto/backend/populate.py', reloading
+ * Restarting with stat
+ * Debugger is active!
+ * Debugger PIN: 161-828-274
+127.0.0.1 - - [21/Apr/2026 12:05:21] "GET /ponto/funcionario/1?month=04&year=2026 HTTP/1.1" 200 -
+127.0.0.1 - - [21/Apr/2026 12:12:08] "GET /funcionarios?id_empresa=6 HTTP/1.1" 200 -
+127.0.0.1 - - [21/Apr/2026 12:12:08] "GET /funcionarios?id_empresa=6 HTTP/1.1" 200 -
+127.0.0.1 - - [21/Apr/2026 12:13:51] "GET /funcionarios?id_empresa=6 HTTP/1.1" 200 -
+127.0.0.1 - - [21/Apr/2026 12:13:59] "GET /funcionarios?id_empresa=6 HTTP/1.1" 200 -
+127.0.0.1 - - [21/Apr/2026 12:14:07] "GET /funcionarios?id_empresa=6 HTTP/1.1" 200 -
+127.0.0.1 - - [21/Apr/2026 12:14:10] "GET /funcionarios?id_empresa=6 HTTP/1.1" 200 -
+127.0.0.1 - - [21/Apr/2026 12:14:41] "OPTIONS /funcionarios HTTP/1.1" 200 -
+127.0.0.1 - - [21/Apr/2026 12:14:41] "[35m[1mPOST /funcionarios HTTP/1.1[0m" 500 -
+127.0.0.1 - - [21/Apr/2026 12:14:43] "[35m[1mPOST /funcionarios HTTP/1.1[0m" 500 -
+127.0.0.1 - - [21/Apr/2026 12:14:45] "[35m[1mPOST /funcionarios HTTP/1.1[0m" 500 -
+127.0.0.1 - - [21/Apr/2026 12:14:48] "OPTIONS /funcionarios HTTP/1.1" 200 -
+127.0.0.1 - - [21/Apr/2026 12:14:48] "[35m[1mPOST /funcionarios HTTP/1.1[0m" 500 -
+127.0.0.1 - - [21/Apr/2026 12:14:49] "[35m[1mPOST /funcionarios HTTP/1.1[0m" 500 -
+127.0.0.1 - - [21/Apr/2026 12:14:49] "[35m[1mPOST /funcionarios HTTP/1.1[0m" 500 -
+127.0.0.1 - - [21/Apr/2026 12:14:49] "[35m[1mPOST /funcionarios HTTP/1.1[0m" 500 -
+127.0.0.1 - - [21/Apr/2026 12:15:01] "OPTIONS /funcionarios HTTP/1.1" 200 -
+127.0.0.1 - - [21/Apr/2026 12:15:01] "[35m[1mPOST /funcionarios HTTP/1.1[0m" 500 -
+127.0.0.1 - - [21/Apr/2026 12:15:03] "[35m[1mPOST /funcionarios HTTP/1.1[0m" 500 -
+127.0.0.1 - - [21/Apr/2026 12:15:03] "[35m[1mPOST /funcionarios HTTP/1.1[0m" 500 -
+127.0.0.1 - - [21/Apr/2026 12:15:03] "[35m[1mPOST /funcionarios HTTP/1.1[0m" 500 -
+127.0.0.1 - - [21/Apr/2026 12:15:03] "[35m[1mPOST /funcionarios HTTP/1.1[0m" 500 -
+127.0.0.1 - - [21/Apr/2026 12:15:04] "[35m[1mPOST /funcionarios HTTP/1.1[0m" 500 -
+127.0.0.1 - - [21/Apr/2026 12:15:04] "[35m[1mPOST /funcionarios HTTP/1.1[0m" 500 -
+127.0.0.1 - - [21/Apr/2026 12:15:11] "OPTIONS /funcionarios HTTP/1.1" 200 -
+127.0.0.1 - - [21/Apr/2026 12:15:11] "[35m[1mPOST /funcionarios HTTP/1.1[0m" 500 -
+127.0.0.1 - - [21/Apr/2026 12:15:11] "[35m[1mPOST /funcionarios HTTP/1.1[0m" 500 -
+127.0.0.1 - - [21/Apr/2026 12:15:11] "[35m[1mPOST /funcionarios HTTP/1.1[0m" 500 -
+127.0.0.1 - - [21/Apr/2026 12:15:12] "[35m[1mPOST /funcionarios HTTP/1.1[0m" 500 -
+127.0.0.1 - - [21/Apr/2026 12:15:12] "[35m[1mPOST /funcionarios HTTP/1.1[0m" 500 -
+127.0.0.1 - - [21/Apr/2026 12:15:12] "[35m[1mPOST /funcionarios HTTP/1.1[0m" 500 -
+127.0.0.1 - - [21/Apr/2026 12:15:12] "[35m[1mPOST /funcionarios HTTP/1.1[0m" 500 -
+127.0.0.1 - - [21/Apr/2026 12:15:12] "[35m[1mPOST /funcionarios HTTP/1.1[0m" 500 -
+127.0.0.1 - - [21/Apr/2026 12:15:15] "[35m[1mPOST /funcionarios HTTP/1.1[0m" 500 -
+127.0.0.1 - - [21/Apr/2026 12:15:15] "[35m[1mPOST /funcionarios HTTP/1.1[0m" 500 -
+127.0.0.1 - - [21/Apr/2026 12:15:19] "GET /funcionarios?id_empresa=6 HTTP/1.1" 200 -
+127.0.0.1 - - [21/Apr/2026 12:15:28] "OPTIONS /login/empresa HTTP/1.1" 200 -
+127.0.0.1 - - [21/Apr/2026 12:15:28] "POST /login/empresa HTTP/1.1" 200 -
+127.0.0.1 - - [21/Apr/2026 12:15:28] "GET /funcionarios?id_empresa=1 HTTP/1.1" 200 -
+127.0.0.1 - - [21/Apr/2026 12:15:32] "GET /funcionarios?id_empresa=1 HTTP/1.1" 200 -
+127.0.0.1 - - [21/Apr/2026 12:15:34] "GET /funcionarios?id_empresa=1 HTTP/1.1" 200 -
+127.0.0.1 - - [21/Apr/2026 12:15:37] "GET /ponto/funcionario/1?month=04&year=2026 HTTP/1.1" 200 -
+127.0.0.1 - - [21/Apr/2026 12:15:42] "GET /ponto/funcionario/2?month=04&year=2026 HTTP/1.1" 200 -
+127.0.0.1 - - [21/Apr/2026 12:15:46] "GET /ponto/funcionario/1?month=04&year=2026 HTTP/1.1" 200 -
+127.0.0.1 - - [21/Apr/2026 12:15:54] "GET /funcionarios?id_empresa=1 HTTP/1.1" 200 -
+127.0.0.1 - - [21/Apr/2026 12:16:24] "OPTIONS /funcionarios HTTP/1.1" 200 -
+127.0.0.1 - - [21/Apr/2026 12:16:24] "[35m[1mPOST /funcionarios HTTP/1.1[0m" 201 -
+127.0.0.1 - - [21/Apr/2026 12:16:24] "GET /funcionarios?id_empresa=1 HTTP/1.1" 200 -
+127.0.0.1 - - [21/Apr/2026 12:16:28] "GET /funcionarios?id_empresa=1 HTTP/1.1" 200 -
+127.0.0.1 - - [21/Apr/2026 12:16:31] "GET /ponto/funcionario/27?month=04&year=2026 HTTP/1.1" 200 -
+127.0.0.1 - - [21/Apr/2026 12:16:33] "GET /ponto/funcionario/2?month=04&year=2026 HTTP/1.1" 200 -
+127.0.0.1 - - [21/Apr/2026 12:16:35] "GET /ponto/funcionario/1?month=04&year=2026 HTTP/1.1" 200 -
+127.0.0.1 - - [21/Apr/2026 12:18:23] "GET /ponto/funcionario/2?month=04&year=2026 HTTP/1.1" 200 -
+127.0.0.1 - - [21/Apr/2026 12:18:35] "GET /ponto/funcionario/1?month=04&year=2026 HTTP/1.1" 200 -
+127.0.0.1 - - [21/Apr/2026 12:18:48] "GET /ponto/funcionario/27?month=04&year=2026 HTTP/1.1" 200 -

@@ -12,9 +12,9 @@
         <router-link to="/dashboard/occurrences" class="flex items-center px-6 py-3 hover:bg-green-600 dark:hover:bg-green-800 transition-colors">
           <span class="mr-3">⚠️</span> Ocorrências
         </router-link>
-        <div class="flex items-center px-6 py-3 opacity-50 cursor-not-allowed">
+        <router-link to="/dashboard/reports" class="flex items-center px-6 py-3 hover:bg-green-600 dark:hover:bg-green-800 transition-colors">
           <span class="mr-3">📈</span> Relatórios
-        </div>
+        </router-link>
       </nav>
       <div class="p-6 border-t border-green-600 dark:border-green-800">
         <button @click="handleLogout" class="flex items-center text-green-100 hover:text-white transition-colors w-full">
