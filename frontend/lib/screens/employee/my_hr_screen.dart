@@ -31,11 +31,30 @@ class _MyHrScreenState extends State<MyHrScreen> with SearchMixin<MyHrScreen>, R
   int _selectedIndex = 1; // 0: Menu, 1: Início, 2: Ajustes
   int _selectedShortcutIndex = 1; // 0: Bater Ponto, 1: Meu RH, 2: Holerite
   int _absenceCount = 0;
+  int _occurrenceCount = 0;
 
   @override
   void initState() {
     super.initState();
     _fetchAbsenceCount();
+    _fetchOccurrenceCount();
+  }
+
+  Future<void> _fetchOccurrenceCount() async {
+    try {
+      final response = await http.get(
+        Uri.parse('${ApiConfig.baseUrl}/ocorrencias/funcionario/${widget.colaborador.id_funcionario}'),
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+        setState(() {
+          _occurrenceCount = data.where((oc) => oc['status'] == 'Pendente').length;
+        });
+      }
+    } catch (e) {
+      // Handle error
+    }
   }
 
   Future<void> _fetchAbsenceCount() async {
@@ -191,10 +210,16 @@ class _MyHrScreenState extends State<MyHrScreen> with SearchMixin<MyHrScreen>, R
         const SizedBox(height: 12),
         _buildPendenciaItem(
           title: 'Ocorrências', 
-          count: '02',
+          count: _occurrenceCount.toString().padLeft(2, '0'),
           onTap: () {
             AnalyticsService.recordButtonClick('occurrences_button', pageName: '/employee/my-hr');
-            Navigator.push(context, MaterialPageRoute(builder: (context) => const OccurrencesScreen(), settings: const RouteSettings(name: '/employee/occurrences')));
+            Navigator.push(
+              context, 
+              MaterialPageRoute(
+                builder: (context) => OccurrencesScreen(idFuncionario: widget.colaborador.id_funcionario!), 
+                settings: const RouteSettings(name: '/employee/occurrences')
+              )
+            );
           }
         ),
       ],

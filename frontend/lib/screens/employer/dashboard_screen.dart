@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:geoponto/screens/employer/employee_list_screen.dart';
 import 'package:geoponto/screens/employer/employee_registration_screen.dart';
+import 'package:geoponto/screens/employer/manage_occurrences_screen.dart';
 
 import 'package:geoponto/screens/login_screen.dart';
 import 'package:geoponto/services/analytics_service.dart';
@@ -89,6 +90,18 @@ class _EmployerDashboardScreenState extends State<EmployerDashboardScreen> with 
                  AnalyticsService.recordButtonClick('manage_employees_card', pageName: '/employer/dashboard');
                  Navigator.of(context).push(
                   MaterialPageRoute(builder: (context) => EmployeeListScreen(idEmpresa: widget.idEmpresa), settings: const RouteSettings(name: '/employer/employee-list')),
+                );
+              },
+            ),
+            const SizedBox(height: 16),
+            _buildDashboardCard(
+              context,
+              icon: Icons.assignment_late_outlined,
+              title: 'Gestão de Ocorrências',
+              onTap: () {
+                AnalyticsService.recordButtonClick('manage_occurrences_card', pageName: '/employer/dashboard');
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (context) => ManageOccurrencesScreen(idEmpresa: widget.idEmpresa), settings: const RouteSettings(name: '/employer/manage-occurrences')),
                 );
               },
             ),

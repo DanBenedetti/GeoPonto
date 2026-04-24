@@ -1,8 +1,19 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'dart:async';
+import 'package:geoponto/config/api_config.dart';
+import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
 
 class AdjustmentScreen extends StatefulWidget {
-  const AdjustmentScreen({super.key});
+  final int idFuncionario;
+  final DateTime date;
+
+  const AdjustmentScreen({
+    super.key,
+    required this.idFuncionario,
+    required this.date,
+  });
 
   @override
   State<AdjustmentScreen> createState() => _AdjustmentScreenState();
@@ -11,7 +22,9 @@ class AdjustmentScreen extends StatefulWidget {
 class _AdjustmentScreenState extends State<AdjustmentScreen> {
   final _justificationController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
+  bool _isSubmitting = false;
   
+  // O restante dos campos de simulação de pontos permanecem para não quebrar o layout existente
   final List<TimeOfDay> _records = [
     const TimeOfDay(hour: 8, minute: 1),
     const TimeOfDay(hour: 12, minute: 5),
@@ -98,6 +111,8 @@ class _AdjustmentScreenState extends State<AdjustmentScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final formattedDate = DateFormat('dd/MM/yyyy | EEEE', 'pt_BR').format(widget.date);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Solicitação de ajuste'),
@@ -112,7 +127,7 @@ class _AdjustmentScreenState extends State<AdjustmentScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildInfo('Data:', '20/08/2025 | quarta-feira'),
+              _buildInfo('Data:', formattedDate),
               const SizedBox(height: 8),
               _buildInfo('Turno:', '08:00 às 12:00 | 13:00 às 17:30'),
               const SizedBox(height: 16),
@@ -167,18 +182,15 @@ class _AdjustmentScreenState extends State<AdjustmentScreen> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () {
-                    if (_formKey.currentState!.validate()) {
-                      // TODO: lógica do Submit  do botão
-                      Navigator.pop(context);
-                    }
-                  },
+                  onPressed: _isSubmitting ? null : _submitAdjustment,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.green,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                   ),
-                  child: const Text('Enviar'),
+                  child: _isSubmitting 
+                    ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                    : const Text('Enviar'),
                 ),
               ),
             ],
@@ -186,6 +198,53 @@ class _AdjustmentScreenState extends State<AdjustmentScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _submitAdjustment() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() {
+      _isSubmitting = true;
+    });
+
+    try {
+      final response = await http.post(
+        Uri.parse('${ApiConfig.baseUrl}/ocorrencias'),
+        headers: {'Content-Type': 'application/json; charset=UTF-8'},
+        body: jsonEncode({
+          'id_funcionario': widget.idFuncionario,
+          'data_ocorrencia': DateFormat('yyyy-MM-dd').format(widget.date),
+          'tipo': 'Ajuste de Ponto',
+          'descricao': _justificationController.text,
+          'anexo_url': null, // Simulando sem anexo por enquanto
+        }),
+      );
+
+      if (mounted) {
+        if (response.statusCode == 201) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Solicitação enviada com sucesso!')),
+          );
+          Navigator.pop(context);
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Erro ao enviar solicitação: ${response.body}')),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erro de conexão: $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+        });
+      }
+    }
   }
 
   List<Widget> _buildRecordList() {

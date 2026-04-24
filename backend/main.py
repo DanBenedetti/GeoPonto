@@ -524,6 +524,88 @@ def delete_localizacao(id_localizacao):
     conn.close()
     return jsonify({'message': 'Localizacao deleted successfully'})
 
+# --- Rotas de Ocorrências ---
+
+@app.route('/ocorrencias', methods=['POST'])
+def create_ocorrencia():
+    data = request.get_json()
+    id_funcionario = data.get('id_funcionario')
+    data_ocorrencia = data.get('data_ocorrencia')
+    tipo = data.get('tipo')
+    descricao = data.get('descricao')
+    anexo_url = data.get('anexo_url')
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute(
+        'INSERT INTO ocorrencias (id_funcionario, data_ocorrencia, tipo, descricao, anexo_url) VALUES (%s, %s, %s, %s, %s) RETURNING id_ocorrencia',
+        (id_funcionario, data_ocorrencia, tipo, descricao, anexo_url)
+    )
+    id_ocorrencia = cur.fetchone()[0]
+    conn.commit()
+    cur.close()
+    conn.close()
+    return jsonify({'message': 'Ocorrência registrada com sucesso', 'id_ocorrencia': id_ocorrencia}), 201
+
+@app.route('/ocorrencias/funcionario/<int:id_funcionario>', methods=['GET'])
+def get_ocorrencias_funcionario(id_funcionario):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute('SELECT * FROM ocorrencias WHERE id_funcionario = %s ORDER BY data_ocorrencia DESC', (id_funcionario,))
+    columns = [desc[0] for desc in cur.description]
+    rows = cur.fetchall()
+    ocorrencias = [dict(zip(columns, row)) for row in rows]
+    
+    for oc in ocorrencias:
+        if oc['data_ocorrencia']:
+            oc['data_ocorrencia'] = oc['data_ocorrencia'].isoformat()
+            
+    cur.close()
+    conn.close()
+    return jsonify(ocorrencias)
+
+@app.route('/ocorrencias/empresa/<int:id_empresa>', methods=['GET'])
+def get_ocorrencias_empresa(id_empresa):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute('''
+        SELECT o.*, f.nome, f.sobrenome 
+        FROM ocorrencias o
+        JOIN funcionarios f ON o.id_funcionario = f.id_funcionario
+        WHERE f.id_empresa = %s
+        ORDER BY o.status = 'Pendente' DESC, o.data_ocorrencia DESC
+    ''', (id_empresa,))
+    columns = [desc[0] for desc in cur.description]
+    rows = cur.fetchall()
+    ocorrencias = [dict(zip(columns, row)) for row in rows]
+    
+    for oc in ocorrencias:
+        if oc['data_ocorrencia']:
+            oc['data_ocorrencia'] = oc['data_ocorrencia'].isoformat()
+            
+    cur.close()
+    conn.close()
+    return jsonify(ocorrencias)
+
+@app.route('/ocorrencias/<int:id_ocorrencia>/status', methods=['PUT'])
+def update_ocorrencia_status(id_ocorrencia):
+    data = request.get_json()
+    status = data.get('status') # 'Aprovado' ou 'Reprovado'
+    
+    if status not in ['Aprovado', 'Reprovado']:
+        return jsonify({'message': 'Status inválido'}), 400
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute(
+        'UPDATE ocorrencias SET status = %s, atualizado_em = CURRENT_TIMESTAMP WHERE id_ocorrencia = %s',
+        (status, id_ocorrencia)
+    )
+    conn.commit()
+    cur.close()
+    conn.close()
+    return jsonify({'message': f'Ocorrência {status.lower()} com sucesso'})
+
 @app.route('/funcionarios/<int:id_funcionario>/faltas', methods=['GET'])
 def get_faltas_funcionario(id_funcionario):
     conn = get_db_connection()
@@ -547,6 +629,13 @@ def get_faltas_funcionario(id_funcionario):
     )
     dias_com_ponto = {row[0] for row in cur.fetchall()}
 
+    # 3.1 Get all approved occurrences for the last 40 days
+    cur.execute(
+        'SELECT data_ocorrencia FROM ocorrencias WHERE id_funcionario = %s AND status = \'Aprovado\' AND data_ocorrencia >= %s',
+        (id_funcionario, start_date)
+    )
+    dias_com_ocorrencia_aprovada = {row[0] for row in cur.fetchall()}
+
     cur.close()
     conn.close()
 
@@ -561,7 +650,7 @@ def get_faltas_funcionario(id_funcionario):
         # We need to map Python's weekday to the database's dia_semana
         dia_semana_db = (current_date.weekday() + 1) % 7 
 
-        if dia_semana_db in dias_de_trabalho and current_date not in dias_com_ponto:
+        if dia_semana_db in dias_de_trabalho and current_date not in dias_com_ponto and current_date not in dias_com_ocorrencia_aprovada:
             faltas.append(current_date.isoformat())
         
         current_date += datetime.timedelta(days=1)
