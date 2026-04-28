@@ -51,7 +51,8 @@ class _BiometricAuthScreenState extends State<BiometricAuthScreen> {
 
     try {
       final image = await _controller!.takePicture();
-      final embedding = await _biometricService.extractEmbedding(File(image.path));
+      final bytes = await image.readAsBytes();
+      final embedding = await _biometricService.extractEmbedding(bytes);
 
       if (embedding == null) {
         throw Exception("Não foi possível extrair características da face.");

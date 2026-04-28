@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'dart:io' show File;
+import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 import 'package:geoponto/config/api_config.dart';
 import 'dart:math';
@@ -8,25 +8,28 @@ class BiometricImplementation {
   final double threshold = 1.80;
 
   BiometricImplementation() {
-    print('Biometria Web: Usando processamento remoto no servidor para segurança real.');
+    print('Biometria Web: Usando processamento remoto via Uint8List.');
   }
 
   Future<void> _loadModel() async {}
 
-  Future<List<double>?> extractEmbedding(File imageFile) async {
+  Future<List<double>?> extractEmbedding(Uint8List imageBytes) async {
     try {
-      print('Enviando imagem para o servidor para extração de biometria...');
+      print('Enviando bytes da imagem para o servidor (Web)...');
       
       var request = http.MultipartRequest(
         'POST',
         Uri.parse('${ApiConfig.baseUrl}/biometry/extract'),
       );
       
-      // Adiciona a imagem no request multipart
-      request.files.add(await http.MultipartFile.fromPath(
+      // Criamos o arquivo multipart diretamente dos bytes
+      var multipartFile = http.MultipartFile.fromBytes(
         'image',
-        imageFile.path,
-      ));
+        imageBytes,
+        filename: 'face.jpg',
+      );
+      
+      request.files.add(multipartFile);
 
       var streamedResponse = await request.send();
       var response = await http.Response.fromStream(streamedResponse);

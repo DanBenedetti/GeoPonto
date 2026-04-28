@@ -1,4 +1,4 @@
-import 'dart:io' show File;
+import 'dart:typed_data';
 import 'biometry/biometric_stub.dart'
     if (dart.library.io) 'biometry/biometric_mobile.dart';
 
@@ -7,8 +7,8 @@ class BiometricService {
 
   double get threshold => _implementation.threshold;
 
-  Future<List<double>?> extractEmbedding(File imageFile) async {
-    return await _implementation.extractEmbedding(imageFile);
+  Future<List<double>?> extractEmbedding(Uint8List imageBytes) async {
+    return await _implementation.extractEmbedding(imageBytes);
   }
 
   bool isSamePerson(List<double> currentEmbedding, List<double> storedEmbedding) {
