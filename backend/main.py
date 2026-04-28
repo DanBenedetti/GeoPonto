@@ -5,13 +5,58 @@ import os
 from dotenv import load_dotenv
 import datetime
 from decimal import Decimal
+import numpy as np
+import tensorflow as tf
+from PIL import Image
+import io
 
 load_dotenv()
 
 app = Flask(__name__)
 CORS(app)
 
+# Carregamento do Modelo de Biometria (Singleton)
+MODEL_PATH = os.path.join(os.path.dirname(__file__), '..', 'Biometria', 'modelo_final_homologado.keras')
+biometry_model = None
+
+def get_biometry_model():
+    global biometry_model
+    if biometry_model is None:
+        if os.path.exists(MODEL_PATH):
+            print(f"Carregando modelo de biometria de: {MODEL_PATH}")
+            biometry_model = tf.keras.models.load_model(MODEL_PATH)
+        else:
+            print(f"AVISO: Modelo não encontrado em {MODEL_PATH}")
+    return biometry_model
+
 def get_db_connection():
+...
+@app.route('/biometry/extract', methods=['POST'])
+def extract_biometry():
+    if 'image' not in request.files:
+        return jsonify({'message': 'Nenhuma imagem enviada'}), 400
+    
+    file = request.files['image']
+    model = get_biometry_model()
+    
+    if model is None:
+        return jsonify({'message': 'Modelo de biometria não disponível no servidor'}), 503
+
+    try:
+        # Processamento da imagem
+        img = Image.open(file.stream).convert('RGB')
+        img = img.resize((224, 224))
+        img_array = np.array(img).astype(np.float32)
+        img_array = np.expand_dims(img_array, axis=0) # Shape (1, 224, 224, 3)
+
+        # Extração do embedding
+        embedding = model.predict(img_array)
+        embedding_list = embedding[0].tolist()
+
+        return jsonify({'embedding': embedding_list})
+    except Exception as e:
+        print(f"Erro no processamento de biometria: {e}")
+        return jsonify({'message': f'Erro ao processar imagem: {str(e)}'}), 500
     conn = psycopg2.connect(
         host="localhost",
         database=os.environ.get("POSTGRES_DB"),
