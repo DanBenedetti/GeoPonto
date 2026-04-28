@@ -9,6 +9,7 @@ Este diretório contém o código-fonte da API do sistema GeoPonto, desenvolvida
 *   **Banco de Dados:** PostgreSQL
 *   **Driver de Conexão:** `psycopg2-binary`
 *   **Gerenciamento de Ambiente:** `python-dotenv`
+*   **Inteligência Artificial:** `TensorFlow` (Keras) para extração de embeddings faciais
 *   **CORS:** `Flask-Cors`
 *   **Servidor WSGI:** `gunicorn`
 
@@ -180,6 +181,26 @@ Documentação detalhada de todos os endpoints disponíveis.
         "id_empresa": 1
     }
     ```
+
+### Biometria Facial
+
+---
+
+#### Extração de Embeddings
+*   **Método:** `POST`
+*   **Path:** `/biometry/extract`
+*   **Descrição:** Recebe uma imagem facial e retorna um vetor numérico (embedding) de 128 posições gerado pelo modelo MobileNetV3. Este embedding é utilizado para comparação 1:1 no dispositivo móvel.
+*   **Corpo da Requisição (Multipart/Form-Data):**
+    *   `image`: Arquivo de imagem (JPG/PNG).
+*   **Resposta de Sucesso (200):**
+    ```json
+    {
+        "embedding": [0.123, -0.456, ..., 0.789]
+    }
+    ```
+*   **Notas Técnicas:** 
+    *   O modelo é carregado como um Singleton no servidor para otimizar memória.
+    *   A imagem é redimensionada para 224x224 antes da inferência.
 
 ### Empresas
 
@@ -570,6 +591,18 @@ Documentação detalhada de todos os endpoints disponíveis.
     }
     ```
 
+#### Atualizar Jornada
+*   **Método:** `PUT`
+*   **Path:** `/jornadas/<id_jornada>`
+*   **Descrição:** Atualiza os dados de uma jornada específica.
+*   **Resposta de Sucesso (200):** `{"message": "Jornada atualizada com sucesso"}`
+
+#### Deletar Jornada
+*   **Método:** `DELETE`
+*   **Path:** `/jornadas/<id_jornada>`
+*   **Descrição:** Remove uma jornada específica.
+*   **Resposta de Sucesso (200):** `{"message": "Jornada deleted successfully"}`
+
 ### Localizações Permitidas
 
 ---
@@ -613,11 +646,33 @@ Documentação detalhada de todos os endpoints disponíveis.
     }
     ```
 
+#### Atualizar Localização
+*   **Método:** `PUT`
+*   **Path:** `/localizacoes/<id_localizacao>`
+*   **Descrição:** Atualiza as coordenadas ou o raio de uma localização.
+*   **Resposta de Sucesso (200):** `{"message": "Localizacao updated successfully"}`
+
+#### Deletar Localização
+*   **Método:** `DELETE`
+*   **Path:** `/localizacoes/<id_localizacao>`
+*   **Descrição:** Remove uma configuração de localização.
+*   **Resposta de Sucesso (200):** `{"message": "Localizacao deleted successfully"}`
+
 ### Relatórios e Análises
 
 ---
 
-#### Listar Faltas do Funcionário
+#### Relatório de Horas Trabalhadas
+*   **Método:** `GET`
+*   **Path:** `/relatorios/horas-trabalhadas/funcionario/<id_funcionario>`
+*   **Descrição:** Retorna o histórico de pontos para cálculo de horas. (Em implementação).
+
+#### Relatório de Faltas (Geral)
+*   **Método:** `GET`
+*   **Path:** `/relatorios/faltas/funcionario/<id_funcionario>`
+*   **Descrição:** Endpoint auxiliar para geração de relatório de absenteísmo. (Em implementação).
+
+#### Listar Faltas do Funcionário (Últimos 40 dias)
 *   **Método:** `GET`
 *   **Path:** `/funcionarios/<id_funcionario>/faltas`
 *   **Descrição:** Retorna uma lista de datas em que um funcionário deveria ter trabalhado (com base na sua jornada), mas não registrou ponto. A análise cobre os últimos 40 dias.

@@ -10,7 +10,7 @@ if [ ! -d "venv" ]; then
     source venv/bin/activate
     echo "📦 Instalando dependências (isso pode demorar na primeira vez)..."
     pip install --upgrade pip
-    pip install flask flask-cors psycopg2-binary python-dotenv pytz tensorflow-cpu numpy Pillow gunicorn
+    pip install -r requirements.txt
 else
     source venv/bin/activate
 fi

@@ -10,6 +10,10 @@ DB_PASS="geoponto_pass" # Recomendo mudar após a primeira execução
 
 echo "🚀 Iniciando configuração completa do ambiente..."
 
+# 1.1 Configurar fuso horário para Brasília
+echo "🕒 Configurando fuso horário para America/Sao_Paulo..."
+sudo timedatectl set-timezone America/Sao_Paulo
+
 # 2. Atualizar e Instalar dependências
 echo "📦 Instalando pacotes do sistema (PostgreSQL, Python, etc)..."
 sudo apt update
@@ -54,4 +58,5 @@ POSTGRES_PORT=5432
 EOF
 
 echo "✅ Configuração concluída com sucesso!"
+echo "⚠️ IMPORTANTE: Certifique-se de que o modelo 'modelo_final_homologado.keras' está na pasta 'Biometria' (um nível acima deste diretório)."
 echo "Para iniciar: ./back.sh"
