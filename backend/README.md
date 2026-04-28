@@ -110,11 +110,31 @@ erDiagram
 
 A configuração agora é totalmente automatizada para facilitar o deploy.
 
-### 1. Preparação e Instalação
-Acesse sua VM via SSH e execute o script de configuração automática. Ele instalará o PostgreSQL, criará o banco/usuário, importará as tabelas e preparará o ambiente Python.
+### 0. Clonagem Estratégica (Sparse Checkout)
+Para economizar espaço e recursos na VM, clone apenas o necessário (Backend e Modelo de Biometria) utilizando a técnica de *Sparse Checkout*:
 
 ```bash
-cd Geoponto/backend
+# 1. Crie a pasta do projeto e inicie o git
+mkdir GeoPonto && cd GeoPonto
+git init
+git remote add origin https://github.com/DanBenedetti/GeoPonto
+
+# 2. Ative o Sparse Checkout
+git config core.sparseCheckout true
+
+# 3. Defina as pastas/arquivos necessários
+echo "backend/" >> .git/info/sparse-checkout
+echo "Biometria/modelo_final_homologado.keras" >> .git/info/sparse-checkout
+
+# 4. Puxe os arquivos da branch principal
+git pull origin main
+```
+*Nota: A estrutura resultante garantirá que o backend encontre o modelo de biometria na pasta vizinha, conforme esperado pelo código.*
+
+### 1. Preparação e Instalação
+Acesse a pasta do backend e execute o script de configuração automática:
+```bash
+cd backend
 chmod +x setup_vm.sh back.sh stop.sh
 ./setup_vm.sh
 ```
