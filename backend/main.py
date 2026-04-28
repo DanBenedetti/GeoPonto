@@ -55,6 +55,10 @@ def extract_biometry():
         img = Image.open(file.stream).convert('RGB')
         img = img.resize((224, 224))
         img_array = np.array(img).astype(np.float32)
+        
+        # Normalização (0-1) para evitar saturação do modelo
+        img_array = img_array / 255.0
+        
         img_array = np.expand_dims(img_array, axis=0) # Shape (1, 224, 224, 3)
 
         # Extração do embedding
