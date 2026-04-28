@@ -30,7 +30,15 @@ def get_biometry_model():
     return biometry_model
 
 def get_db_connection():
-...
+    conn = psycopg2.connect(
+        host="localhost",
+        database=os.environ.get("POSTGRES_DB"),
+        user=os.environ.get("POSTGRES_USER"),
+        password=os.environ.get("POSTGRES_PASSWORD"),
+        port=5432
+    )
+    return conn
+
 @app.route('/biometry/extract', methods=['POST'])
 def extract_biometry():
     if 'image' not in request.files:
@@ -57,14 +65,6 @@ def extract_biometry():
     except Exception as e:
         print(f"Erro no processamento de biometria: {e}")
         return jsonify({'message': f'Erro ao processar imagem: {str(e)}'}), 500
-    conn = psycopg2.connect(
-        host="localhost",
-        database=os.environ.get("POSTGRES_DB"),
-        user=os.environ.get("POSTGRES_USER"),
-        password=os.environ.get("POSTGRES_PASSWORD"),
-        port=5432
-    )
-    return conn
 
 @app.route('/')
 def index():
