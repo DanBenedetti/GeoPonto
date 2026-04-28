@@ -17,17 +17,27 @@ CORS(app)
 
 # Carregamento do Modelo de Biometria (Singleton)
 MODEL_PATH = os.path.join(os.path.dirname(__file__), '..', 'Biometria', 'modelo_final_homologado.keras')
-biometry_model = None
+biometry_extractor = None
 
 def get_biometry_model():
-    global biometry_model
-    if biometry_model is None:
+    global biometry_extractor
+    if biometry_extractor is None:
         if os.path.exists(MODEL_PATH):
-            print(f"Carregando modelo de biometria de: {MODEL_PATH}")
-            biometry_model = tf.keras.models.load_model(MODEL_PATH)
+            try:
+                print(f"Carregando modelo de biometria de: {MODEL_PATH}")
+                full_model = tf.keras.models.load_model(MODEL_PATH)
+                # Criamos um novo modelo que vai até a camada de 'embedding' (128 unidades)
+                # Isso garante que o servidor retorne exatamente o que o mobile espera.
+                biometry_extractor = tf.keras.Model(
+                    inputs=full_model.input,
+                    outputs=full_model.get_layer('embedding').output if 'embedding' in [l.name for l in full_model.layers] else full_model.layers[-2].output
+                )
+                print("Extrator de biometria configurado com sucesso!")
+            except Exception as e:
+                print(f"Erro ao configurar extrator: {e}")
         else:
             print(f"AVISO: Modelo não encontrado em {MODEL_PATH}")
-    return biometry_model
+    return biometry_extractor
 
 def get_db_connection():
     conn = psycopg2.connect(
@@ -51,15 +61,13 @@ def extract_biometry():
         return jsonify({'message': 'Modelo de biometria não disponível no servidor'}), 503
 
     try:
-        # Processamento da imagem
+        # Processamento da imagem (Exatamente como no Mobile)
         img = Image.open(file.stream).convert('RGB')
         img = img.resize((224, 224))
         img_array = np.array(img).astype(np.float32)
         
-        # Normalização (0-1) para evitar saturação do modelo
-        img_array = img_array / 255.0
-        
-        img_array = np.expand_dims(img_array, axis=0) # Shape (1, 224, 224, 3)
+        # Removida a normalização /255 pois o modelo v8.3.1 usa 0-255
+        img_array = np.expand_dims(img_array, axis=0) 
 
         # Extração do embedding
         embedding = model.predict(img_array)
