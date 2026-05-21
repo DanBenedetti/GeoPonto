@@ -1,0 +1,25 @@
+# Relatório de Extração de Padrões Faciais - Projeto GeoPonto
+
+## 1. O que fizemos nessa etapa
+Nessa parte do projeto, o nosso foco foi fazer o sistema "entender" o que é um rosto de forma matemática. Em vez de salvar a foto da pessoa, o GeoPonto agora transforma cada imagem em uma assinatura digital única (um conjunto de 128 números). Assim, quando o funcionário bate o ponto, o sistema só precisa comparar esses números para saber se é ele mesmo.
+
+## 2. As tecnologias que escolhemos
+Para o sistema ser robusto, dividimos a solução em três partes fundamentais:
+
+*   **Arquitetura MobileNetV3-Small (A estrutura):** Usamos a MobileNet como o "esqueleto" ou a estrutura de dados do nosso modelo. Ela é uma arquitetura de rede neural projetada especificamente para ser leve. Escolhemos ela porque o GeoPonto precisa rodar em smartphones sem travar ou consumir toda a bateria, garantindo rapidez na hora de ler o rosto.
+*   **Algoritmo ArcFace (A inteligência de comparação):** Esse é o algoritmo principal que ensina o sistema a diferenciar as pessoas. Ele trabalha com cálculos matemáticos avançados para garantir que as características de um mesmo rosto fiquem agrupadas, enquanto rostos diferentes sejam "empurrados" para longe na comparação. É o que dá a segurança contra fraudes.
+*   **Algoritmo SGD (O refinamento final):** Na fase que apelidamos de **Ajuste Cirúrgico (Fase 8.3.1)**, usamos o algoritmo de otimização chamado SGD (Stochastic Gradient Descent). Ele funciona como um ajuste fino nos parafusos da rede neural: com um passo bem lento e cuidadoso, ele estabilizou o que o modelo aprendeu, garantindo que a assinatura digital gerada fosse a mais precisa possível.
+
+## 3. Como testamos e o que descobrimos
+Não adiantava o modelo ir bem no laboratório se ele falhasse na mão do usuário. Por isso, fizemos testes com fotos reais (nossas e de outras bases).
+
+Um ponto importante que ajustamos foi o **Threshold (Limite de Aceitação)**. Vimos que se usássemos uma média comum, o sistema poderia ficar rigoroso demais ou acabar liberando quem não deveria por causa do equilíbrio dos dados. Ajustamos a lógica para focar na **Acurácia Balanceada**, que garante que o sistema seja justo tanto para validar o funcionário quanto para barrar invasores.
+
+## 4. Resultados da Entrega
+O sistema de biometria foi homologado com ótimos números para um ambiente real:
+*   **Taxa de Acerto:** Conseguimos chegar em **74,01%** de precisão nas validações balanceadas.
+*   **Limite Sugerido:** Definimos o limite de **1.80** como o padrão ouro. Se a distância entre as fotos for menor que isso, o acesso é liberado.
+*   **Performance:** O arquivo final (`geoponto_extractor_v8_3_1.keras`) ficou super leve, pronto para ser levado para o aplicativo.
+
+## 5. Conclusão
+Fechamos essa etapa com um extrator de padrões que é rápido e seguro. O modelo está pronto para ser integrado ao restante do sistema GeoPonto, garantindo que o registro de ponto seja feito de forma confiável e eficiente.

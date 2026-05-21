@@ -73,22 +73,22 @@ neg_mean = np.mean(neg_distances)
 pos_std = np.std(pos_distances)
 neg_std = np.std(neg_distances)
 
-# Threshold Otimizado (Best Accuracy)
-best_acc = 0
+# Threshold Otimizado (Balanced Accuracy - Melhor para datasets desbalanceados)
+best_bal_acc = 0
 best_thresh = 0
 all_dists = pos_distances + neg_distances
 for thresh in np.linspace(min(all_dists), max(all_dists), 200):
-    tp = sum(d < thresh for d in pos_distances)
-    tn = sum(d >= thresh for d in neg_distances)
-    acc = (tp + tn) / len(all_dists)
-    if acc > best_acc:
-        best_acc = acc
+    tpr = sum(d < thresh for d in pos_distances) / len(pos_distances) if len(pos_distances) > 0 else 0
+    tnr = sum(d >= thresh for d in neg_distances) / len(neg_distances) if len(neg_distances) > 0 else 0
+    bal_acc = (tpr + tnr) / 2
+    if bal_acc > best_bal_acc:
+        best_bal_acc = bal_acc
         best_thresh = thresh
 
 print("\n" + "="*50)
 print("RELATÓRIO DE VALIDAÇÃO EM AMBIENTE REAL")
 print("="*50)
-print(f"Acurácia de Vida Real: {best_acc*100:.2f}%")
+print(f"Acurácia Balanceada: {best_bal_acc*100:.2f}%")
 print(f"Threshold Sugerido: {best_thresh:.4f}")
 print("-"*50)
 print(f"Distância Média Positiva: {pos_mean:.4f} (Desvio: {pos_std:.4f})")
