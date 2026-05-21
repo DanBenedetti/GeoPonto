@@ -1,14 +1,10 @@
 import os
 import random
 from datetime import datetime, timedelta
+from dotenv import load_dotenv
 
-# Configurar as variáveis de ambiente necessárias se não estiverem definidas (assumindo defaults locais do Postgres)
-if 'POSTGRES_DB' not in os.environ:
-    os.environ['POSTGRES_DB'] = 'geoponto'
-if 'POSTGRES_USER' not in os.environ:
-    os.environ['POSTGRES_USER'] = 'geoponto'
-if 'POSTGRES_PASSWORD' not in os.environ:
-    os.environ['POSTGRES_PASSWORD'] = 'geoponto'
+# Carrega as variáveis do arquivo .env
+load_dotenv()
 
 from main import get_db_connection
 
