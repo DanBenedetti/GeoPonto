@@ -41,11 +41,11 @@ def get_biometry_model():
 
 def get_db_connection():
     conn = psycopg2.connect(
-        host="localhost",
+        host=os.environ.get("POSTGRES_HOST", "localhost"),
         database=os.environ.get("POSTGRES_DB"),
         user=os.environ.get("POSTGRES_USER"),
         password=os.environ.get("POSTGRES_PASSWORD"),
-        port=5432
+        port=int(os.environ.get("POSTGRES_PORT", 5432))
     )
     return conn
 
