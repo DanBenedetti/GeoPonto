@@ -183,7 +183,16 @@ class _PointDetailsScreenState extends State<PointDetailsScreen> {
         ElevatedButton(
           onPressed: () {
             AnalyticsService.recordButtonClick('adjustment_button', pageName: '/employee/point-details');
-            Navigator.push(context, MaterialPageRoute(builder: (context) => const AdjustmentScreen(), settings: const RouteSettings(name: '/employee/adjustment')));
+            Navigator.push(
+              context, 
+              MaterialPageRoute(
+                builder: (context) => AdjustmentScreen(
+                  idFuncionario: widget.idFuncionario,
+                  dataOcorrencia: widget.absenceDate,
+                ), 
+                settings: const RouteSettings(name: '/employee/adjustment')
+              )
+            );
           },
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.grey[300],

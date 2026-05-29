@@ -55,8 +55,8 @@
           <div class="p-6 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center">
             <h2 class="text-lg font-bold text-gray-900 dark:text-white">Histórico de Alertas</h2>
             <div class="flex space-x-2">
-              <span class="px-3 py-1 bg-yellow-100 dark:bg-yellow-900/40 text-yellow-800 dark:text-yellow-300 rounded-full text-xs font-semibold">Pendentes: 2</span>
-              <span class="px-3 py-1 bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300 rounded-full text-xs font-semibold">Resolvidos: 15</span>
+              <span class="px-3 py-1 bg-yellow-100 dark:bg-yellow-900/40 text-yellow-800 dark:text-yellow-300 rounded-full text-xs font-semibold">Pendentes: {{ pendingCount }}</span>
+              <span class="px-3 py-1 bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300 rounded-full text-xs font-semibold">Resolvidos: {{ resolvedCount }}</span>
             </div>
           </div>
           
@@ -71,10 +71,16 @@
               </tr>
             </thead>
             <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
-              <tr v-for="occ in sampleOccurrences" :key="occ.id" class="hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-colors">
+              <tr v-if="isLoading">
+                <td colspan="5" class="px-6 py-4 text-center">Carregando...</td>
+              </tr>
+              <tr v-else-if="occurrences.length === 0">
+                <td colspan="5" class="px-6 py-4 text-center">Nenhuma ocorrência encontrada.</td>
+              </tr>
+              <tr v-for="occ in occurrences" :key="occ.id_ocorrencia" class="hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-colors">
                 <td class="px-6 py-4">
                   <div class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ occ.name }}</div>
-                  <div class="text-xs text-gray-500 dark:text-gray-400">{{ occ.role }}</div>
+                  <div class="text-xs text-gray-500 dark:text-gray-400">ID: {{ occ.id_funcionario }}</div>
                 </td>
                 <td class="px-6 py-4">
                   <div class="text-sm text-gray-900 dark:text-gray-200">{{ occ.date }}</div>
@@ -92,7 +98,11 @@
                   </span>
                 </td>
                 <td class="px-6 py-4 text-right">
-                  <button class="text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300 text-sm font-medium transition-colors">Ver detalhes</button>
+                  <div v-if="occ.status === 'Pendente'" class="flex justify-end space-x-2">
+                    <button @click="updateStatus(occ.id_ocorrencia, 'Aprovado')" class="bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded text-xs transition-colors">Aprovar</button>
+                    <button @click="updateStatus(occ.id_ocorrencia, 'Reprovado')" class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-xs transition-colors">Reprovar</button>
+                  </div>
+                  <span v-else class="text-gray-400 text-xs italic">Finalizado</span>
                 </td>
               </tr>
             </tbody>
@@ -104,14 +114,53 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useDarkMode } from '../composables/useDarkMode'
 import { authService } from '../services/authService'
+import axios from 'axios'
 
 const router = useRouter()
 const userName = ref(localStorage.getItem('userName') || 'Empregador')
+const idEmpresa = ref(localStorage.getItem('idEmpresa'))
 const { isDarkMode, toggleDarkMode, initTheme } = useDarkMode()
+
+const occurrences = ref([])
+const isLoading = ref(true)
+
+const fetchOccurrences = async () => {
+  isLoading.value = true
+  try {
+    const response = await axios.get(`http://localhost:5000/ocorrencias/empresa/${idEmpresa.value}`)
+    occurrences.value = response.data.map(occ => ({
+      ...occ,
+      name: `${occ.nome} ${occ.sobrenome}`,
+      date: new Date(occ.data_ocorrencia).toLocaleDateString('pt-BR'),
+      time: new Date(occ.criado_em).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+      type: occ.tipo,
+      typeClass: occ.tipo.includes('Ajuste') ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300',
+      status: occ.status,
+      statusClass: occ.status === 'Pendente' ? 'text-yellow-600 dark:text-yellow-400' : (occ.status === 'Aprovado' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'),
+      statusDot: occ.status === 'Pendente' ? 'bg-yellow-500' : (occ.status === 'Aprovado' ? 'bg-green-500' : 'bg-red-500')
+    }))
+  } catch (error) {
+    console.error('Erro ao buscar ocorrências:', error)
+  } finally {
+    isLoading.value = false
+  }
+}
+
+const updateStatus = async (id, status) => {
+  try {
+    await axios.put(`http://localhost:5000/ocorrencias/${id}/status`, { status })
+    await fetchOccurrences()
+  } catch (error) {
+    console.error('Erro ao atualizar status:', error)
+  }
+}
+
+const pendingCount = computed(() => occurrences.value.filter(o => o.status === 'Pendente').length)
+const resolvedCount = computed(() => occurrences.value.filter(o => o.status !== 'Pendente').length)
 
 onMounted(() => {
   initTheme()
@@ -119,49 +168,6 @@ onMounted(() => {
     router.push('/')
     return
   }
+  fetchOccurrences()
 })
-
-const handleLogout = () => {
-  authService.logout()
-  router.push('/')
-}
-
-const sampleOccurrences = [
-  {
-    id: 1,
-    name: 'João Silva',
-    role: 'Desenvolvedor',
-    date: '13/04/2026',
-    time: '08:15',
-    type: 'Marcação fora do perímetro',
-    typeClass: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300',
-    status: 'Pendente',
-    statusClass: 'text-yellow-600 dark:text-yellow-400',
-    statusDot: 'bg-yellow-500'
-  },
-  {
-    id: 2,
-    name: 'Maria Oliveira',
-    role: 'Analista de RH',
-    date: '12/04/2026',
-    time: '18:30',
-    type: 'Hora Extra não autorizada',
-    typeClass: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300',
-    status: 'Pendente',
-    statusClass: 'text-yellow-600 dark:text-yellow-400',
-    statusDot: 'bg-yellow-500'
-  },
-  {
-    id: 3,
-    name: 'Pedro Santos',
-    role: 'Gerente',
-    date: '11/04/2026',
-    time: '09:05',
-    type: 'Atraso injustificado',
-    typeClass: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300',
-    status: 'Resolvido',
-    statusClass: 'text-green-600 dark:text-green-400',
-    statusDot: 'bg-green-500'
-  }
-]
 </script>

@@ -9,6 +9,8 @@ import numpy as np
 import tensorflow as tf
 from PIL import Image
 import io
+import pika
+import json
 
 load_dotenv()
 
@@ -759,6 +761,114 @@ def get_analytics_metrics():
         'most_clicked_buttons': most_clicked_buttons,
         'slowest_pages': slowest_pages
     })
+
+def send_to_queue(message):
+    try:
+        url = os.environ.get('CLOUDAMQP_URL', 'amqp://guest:guest@localhost/%2f')
+        params = pika.URLParameters(url)
+        connection = pika.BlockingConnection(params)
+        channel = connection.channel()
+        channel.queue_declare(queue='ocorrencias_fila', durable=True)
+        channel.basic_publish(
+            exchange='',
+            routing_key='ocorrencias_fila',
+            body=json.dumps(message),
+            properties=pika.BasicProperties(
+                delivery_mode=2,  # make message persistent
+            ))
+        connection.close()
+    except Exception as e:
+        print(f"Erro ao enviar para a fila: {e}")
+
+@app.route('/ocorrencias', methods=['POST'])
+def create_ocorrencia():
+    data = request.get_json()
+    conn = get_db_connection()
+    cur = conn.cursor()
+    
+    # Precisamos do id_empresa do funcionário
+    cur.execute('SELECT id_empresa FROM funcionarios WHERE id_funcionario = %s', (data['id_funcionario'],))
+    empresa_data = cur.fetchone()
+    if not empresa_data:
+        cur.close()
+        conn.close()
+        return jsonify({'message': 'Funcionário não encontrado'}), 404
+    
+    id_empresa = empresa_data[0]
+
+    cur.execute(
+        'INSERT INTO ocorrencias (id_funcionario, id_empresa, data_ocorrencia, tipo, descricao, anexo_url) VALUES (%s, %s, %s, %s, %s, %s) RETURNING id_ocorrencia',
+        (data['id_funcionario'], id_empresa, data['data_ocorrencia'], data['tipo'], data.get('descricao'), data.get('anexo_url'))
+    )
+    id_ocorrencia = cur.fetchone()[0]
+    conn.commit()
+    
+    # Enviar mensagem para a fila
+    message = {
+        'action': 'NEW_OCCURRENCE',
+        'id_ocorrencia': id_ocorrencia,
+        'id_funcionario': data['id_funcionario'],
+        'id_empresa': id_empresa,
+        'tipo': data['tipo'],
+        'data': data['data_ocorrencia']
+    }
+    send_to_queue(message)
+
+    cur.close()
+    conn.close()
+    return jsonify({'message': 'Ocorrência criada com sucesso', 'id_ocorrencia': id_ocorrencia}), 201
+
+@app.route('/ocorrencias/empresa/<int:id_empresa>', methods=['GET'])
+def get_ocorrencias_empresa(id_empresa):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT o.*, f.nome, f.sobrenome 
+        FROM ocorrencias o
+        JOIN funcionarios f ON o.id_funcionario = f.id_funcionario
+        WHERE o.id_empresa = %s
+        ORDER BY o.criado_em DESC
+    """, (id_empresa,))
+    
+    columns = [desc[0] for desc in cur.description]
+    rows = cur.fetchall()
+    ocorrencias = [dict(zip(columns, row)) for row in rows]
+    
+    for o in ocorrencias:
+        for key, value in o.items():
+            if isinstance(value, (datetime.datetime, datetime.date)):
+                o[key] = value.isoformat()
+    
+    cur.close()
+    conn.close()
+    return jsonify(ocorrencias)
+
+@app.route('/ocorrencias/<int:id_ocorrencia>/status', methods=['PUT'])
+def update_ocorrencia_status(id_ocorrencia):
+    data = request.get_json()
+    status = data.get('status')
+    if not status:
+        return jsonify({'message': 'Status é obrigatório'}), 400
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute(
+        'UPDATE ocorrencias SET status = %s, atualizado_em = CURRENT_TIMESTAMP WHERE id_ocorrencia = %s',
+        (status, id_ocorrencia)
+    )
+    conn.commit()
+    
+    # Enviar mensagem para a fila sobre a atualização
+    message = {
+        'action': 'STATUS_UPDATED',
+        'id_ocorrencia': id_ocorrencia,
+        'status': status
+    }
+    send_to_queue(message)
+
+    cur.close()
+    conn.close()
+    return jsonify({'message': f'Ocorrência {status} com sucesso'})
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

@@ -79,3 +79,19 @@ CREATE TABLE IF NOT EXISTS localizacoes (
     atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (id_funcionario) REFERENCES funcionarios(id_funcionario)
 );
+
+-- Tabela de ocorrencias
+CREATE TABLE IF NOT EXISTS ocorrencias (
+    id_ocorrencia SERIAL PRIMARY KEY,
+    id_funcionario INT NOT NULL,
+    id_empresa INT NOT NULL,
+    data_ocorrencia DATE NOT NULL,
+    tipo VARCHAR(100) NOT NULL,
+    descricao TEXT,
+    anexo_url TEXT,
+    status VARCHAR(50) DEFAULT 'Pendente',
+    criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (id_funcionario) REFERENCES funcionarios(id_funcionario),
+    FOREIGN KEY (id_empresa) REFERENCES empresas(id_empresa)
+);

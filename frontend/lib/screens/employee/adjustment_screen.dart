@@ -1,8 +1,15 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'dart:async';
+import 'package:geoponto/config/api_config.dart';
+import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
 
 class AdjustmentScreen extends StatefulWidget {
-  const AdjustmentScreen({super.key});
+  final int? idFuncionario;
+  final DateTime? dataOcorrencia;
+
+  const AdjustmentScreen({super.key, this.idFuncionario, this.dataOcorrencia});
 
   @override
   State<AdjustmentScreen> createState() => _AdjustmentScreenState();
@@ -11,6 +18,7 @@ class AdjustmentScreen extends StatefulWidget {
 class _AdjustmentScreenState extends State<AdjustmentScreen> {
   final _justificationController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
+  bool _isSending = false;
   
   final List<TimeOfDay> _records = [
     const TimeOfDay(hour: 8, minute: 1),
@@ -34,6 +42,51 @@ class _AdjustmentScreenState extends State<AdjustmentScreen> {
   void dispose() {
     _justificationController.dispose();
     super.dispose();
+  }
+
+  Future<void> _submitOccurrence() async {
+    if (!_formKey.currentState!.validate()) return;
+    if (widget.idFuncionario == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Erro: ID do funcionário não encontrado.')),
+      );
+      return;
+    }
+
+    setState(() => _isSending = true);
+
+    try {
+      final String dataFormatada = widget.dataOcorrencia != null 
+          ? DateFormat('yyyy-MM-dd').format(widget.dataOcorrencia!)
+          : DateFormat('yyyy-MM-dd').format(DateTime.now());
+
+      final response = await http.post(
+        Uri.parse('${ApiConfig.baseUrl}/ocorrencias'),
+        headers: {'Content-Type': 'application/json; charset=UTF-8'},
+        body: jsonEncode({
+          'id_funcionario': widget.idFuncionario,
+          'data_ocorrencia': dataFormatada,
+          'tipo': 'Ajuste de Ponto / Justificativa de Falta',
+          'descricao': _justificationController.text,
+          'anexo_url': null, // TODO: Implementar upload de arquivo se necessário
+        }),
+      );
+
+      if (response.statusCode == 201) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Ocorrência enviada com sucesso!')),
+        );
+        Navigator.pop(context);
+      } else {
+        throw Exception('Falha ao enviar ocorrência');
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erro ao enviar: $e')),
+      );
+    } finally {
+      setState(() => _isSending = false);
+    }
   }
 
   void _calculateHours() {
@@ -167,18 +220,15 @@ class _AdjustmentScreenState extends State<AdjustmentScreen> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () {
-                    if (_formKey.currentState!.validate()) {
-                      // TODO: lógica do Submit  do botão
-                      Navigator.pop(context);
-                    }
-                  },
+                  onPressed: _isSending ? null : _submitOccurrence,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.green,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                   ),
-                  child: const Text('Enviar'),
+                  child: _isSending 
+                    ? const CircularProgressIndicator(color: Colors.white)
+                    : const Text('Enviar'),
                 ),
               ),
             ],
