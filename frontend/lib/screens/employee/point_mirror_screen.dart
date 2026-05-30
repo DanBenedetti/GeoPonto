@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:geoponto/config/api_config.dart';
 import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
+import 'package:month_picker_dialog/month_picker_dialog.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class PointMirrorScreen extends StatefulWidget {
@@ -12,16 +14,15 @@ class PointMirrorScreen extends StatefulWidget {
 }
 
 class _PointMirrorScreenState extends State<PointMirrorScreen> {
-  List<dynamic> _availableMonths = [];
   Map<String, dynamic>? _selectedMonthStats;
-  bool _isLoadingMonths = true;
   bool _isLoadingStats = false;
   int? _idFuncionario;
-  Map<String, int>? _currentSelected;
+  late DateTime _selectedDate;
 
   @override
   void initState() {
     super.initState();
+    _selectedDate = DateTime.now();
     _loadInitialData();
   }
 
@@ -29,30 +30,7 @@ class _PointMirrorScreenState extends State<PointMirrorScreen> {
     final prefs = await SharedPreferences.getInstance();
     _idFuncionario = prefs.getInt('id_funcionario');
     if (_idFuncionario != null) {
-      await _fetchAvailableMonths();
-      if (_availableMonths.isNotEmpty) {
-        final firstMonth = _availableMonths.first;
-        _fetchMonthStats(firstMonth['year'], firstMonth['month']);
-        _currentSelected = {'year': firstMonth['year'], 'month': firstMonth['month']};
-      }
-    } else {
-      setState(() => _isLoadingMonths = false);
-    }
-  }
-
-  Future<void> _fetchAvailableMonths() async {
-    try {
-      final response = await http.get(
-        Uri.parse('${ApiConfig.baseUrl}/funcionarios/$_idFuncionario/meses-disponiveis'),
-      );
-      if (response.statusCode == 200) {
-        setState(() {
-          _availableMonths = jsonDecode(response.body);
-          _isLoadingMonths = false;
-        });
-      }
-    } catch (e) {
-      setState(() => _isLoadingMonths = false);
+      _fetchMonthStats(_selectedDate.year, _selectedDate.month);
     }
   }
 
@@ -66,12 +44,20 @@ class _PointMirrorScreenState extends State<PointMirrorScreen> {
         setState(() {
           _selectedMonthStats = jsonDecode(response.body);
           _isLoadingStats = false;
-          _currentSelected = {'year': year, 'month': month};
         });
+      } else {
+        setState(() => _isLoadingStats = false);
       }
     } catch (e) {
       setState(() => _isLoadingStats = false);
     }
+  }
+
+  void _changeDate(DateTime newDate) {
+    setState(() {
+      _selectedDate = newDate;
+    });
+    _fetchMonthStats(newDate.year, newDate.month);
   }
 
   @override
@@ -83,73 +69,63 @@ class _PointMirrorScreenState extends State<PointMirrorScreen> {
         elevation: 0,
         foregroundColor: Colors.black,
       ),
-      body: _isLoadingMonths
-          ? const Center(child: CircularProgressIndicator())
-          : Column(
-              children: [
-                _buildMonthSelector(),
-                Expanded(
-                  child: _isLoadingStats
-                      ? const Center(child: CircularProgressIndicator())
-                      : _selectedMonthStats == null
-                          ? const Center(child: Text('Selecione um mês para visualizar.'))
-                          : SingleChildScrollView(
-                              padding: const EdgeInsets.all(16.0),
-                              child: _buildMonthSummaryItem(
-                                month: _getLabelForCurrent(),
-                                period: _selectedMonthStats!['periodo'],
-                                normalHours: _selectedMonthStats!['horas_normais'],
-                                absences: _selectedMonthStats!['horas_faltas'],
-                                extraHours: _selectedMonthStats!['horas_extras'],
-                              ),
-                            ),
-                ),
-              ],
-            ),
+      body: Column(
+        children: [
+          _buildMonthSelector(context),
+          Expanded(
+            child: _isLoadingStats
+                ? const Center(child: CircularProgressIndicator())
+                : _selectedMonthStats == null
+                    ? const Center(child: Text('Nenhum dado encontrado.'))
+                    : SingleChildScrollView(
+                        padding: const EdgeInsets.all(16.0),
+                        child: _buildMonthSummaryItem(
+                          month: DateFormat.yMMMM('pt_BR').format(_selectedDate),
+                          period: _selectedMonthStats!['periodo'],
+                          normalHours: _selectedMonthStats!['horas_normais'],
+                          absences: _selectedMonthStats!['horas_faltas'],
+                          extraHours: _selectedMonthStats!['horas_extras'],
+                        ),
+                      ),
+          ),
+        ],
+      ),
     );
   }
 
-  String _getLabelForCurrent() {
-    if (_currentSelected == null) return '';
-    final monthData = _availableMonths.firstWhere(
-      (m) => m['year'] == _currentSelected!['year'] && m['month'] == _currentSelected!['month'],
-      orElse: () => {'label': ''},
-    );
-    return monthData['label'];
-  }
-
-  Widget _buildMonthSelector() {
-    return Container(
-      height: 60,
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        itemCount: _availableMonths.length,
-        itemBuilder: (context, index) {
-          final m = _availableMonths[index];
-          final isSelected = _currentSelected != null &&
-              _currentSelected!['year'] == m['year'] &&
-              _currentSelected!['month'] == m['month'];
-
-          return Padding(
-            padding: const EdgeInsets.only(right: 8.0),
-            child: ChoiceChip(
-              label: Text(m['label']),
-              selected: isSelected,
-              onSelected: (selected) {
-                if (selected) {
-                  _fetchMonthStats(m['year'], m['month']);
+  Widget _buildMonthSelector(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          IconButton(
+            icon: const Icon(Icons.arrow_back_ios),
+            onPressed: () => _changeDate(DateTime(_selectedDate.year, _selectedDate.month - 1)),
+          ),
+          TextButton(
+            onPressed: () {
+              showMonthPicker(
+                context: context,
+                initialDate: _selectedDate,
+                firstDate: DateTime(2020),
+                lastDate: DateTime(2100),
+              ).then((date) {
+                if (date != null) {
+                  _changeDate(date);
                 }
-              },
-              selectedColor: Theme.of(context).primaryColor,
-              labelStyle: TextStyle(
-                color: isSelected ? Colors.white : Colors.black,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-              ),
+              });
+            },
+            child: Text(
+              DateFormat.yMMMM('pt_BR').format(_selectedDate),
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
-          );
-        },
+          ),
+          IconButton(
+            icon: const Icon(Icons.arrow_forward_ios),
+            onPressed: () => _changeDate(DateTime(_selectedDate.year, _selectedDate.month + 1)),
+          ),
+        ],
       ),
     );
   }
@@ -171,7 +147,7 @@ class _PointMirrorScreenState extends State<PointMirrorScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(month, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
+            Text(month.toUpperCase(), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
             const SizedBox(height: 4),
             Text(period, style: const TextStyle(color: Colors.grey, fontSize: 13)),
             const Divider(height: 40),

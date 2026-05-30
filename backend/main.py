@@ -1113,6 +1113,30 @@ def get_espelho_mensal(id_funcionario, year, month):
         'horas_faltas': format_td(total_faltas)
     })
 
+@app.route('/ocorrencias/funcionario/<int:id_funcionario>/historico', methods=['GET'])
+def get_ocorrencias_historico_funcionario(id_funcionario):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT * 
+        FROM ocorrencias
+        WHERE id_funcionario = %s 
+        ORDER BY data_ocorrencia DESC
+    """, (id_funcionario,))
+    
+    columns = [desc[0] for desc in cur.description]
+    rows = cur.fetchall()
+    ocorrencias = [dict(zip(columns, row)) for row in rows]
+    
+    for o in ocorrencias:
+        for key, value in o.items():
+            if isinstance(value, (datetime.datetime, datetime.date)):
+                o[key] = value.isoformat()
+                
+    cur.close()
+    conn.close()
+    return jsonify(ocorrencias)
+
 @app.route('/ocorrencias/<int:id_ocorrencia>/status', methods=['PUT'])
 def update_ocorrencia_status(id_ocorrencia):
     data = request.get_json()
