@@ -1004,7 +1004,7 @@ def get_meses_disponiveis(id_funcionario):
         meses.append({
             'year': current.year,
             'month': current.month,
-            'label': DateFormat('%B %Y').format(current) # No Python usaremos outra forma
+            'label': "" # Será preenchido abaixo em português
         })
         # Retroceder um mês
         if current.month == 1:
@@ -1034,16 +1034,17 @@ def get_espelho_mensal(id_funcionario, year, month):
     # 2. Obter pontos do mês
     start_date = datetime.date(year, month, 1)
     last_day = calendar.monthrange(year, month)[1]
-    end_date = datetime.date(year, month, last_day)
+    last_date = datetime.date(year, month, last_day)
     
-    # Se o mês consultado for o atual, o 'end_date' deve ser hoje
+    # Se o mês consultado for o atual, o limite de cálculo deve ser hoje
     hoje = datetime.date.today()
+    calc_limit_date = last_date
     if year == hoje.year and month == hoje.month:
-        end_date = hoje
+        calc_limit_date = hoje
 
     cur.execute(
         'SELECT * FROM Pontos WHERE id_funcionario = %s AND CAST(criado_em AS DATE) BETWEEN %s AND %s ORDER BY criado_em ASC',
-        (id_funcionario, start_date, end_date)
+        (id_funcionario, start_date, last_date)
     )
     cols_p = [desc[0] for desc in cur.description]
     pontos_data = cur.fetchall()
@@ -1066,7 +1067,7 @@ def get_espelho_mensal(id_funcionario, year, month):
     def to_delta(t): return datetime.timedelta(hours=t.hour, minutes=t.minute) if t else None
 
     curr = start_date
-    while curr <= end_date:
+    while curr <= calc_limit_date:
         dia_semana = (curr.weekday() + 1) % 7
         jornada = jornadas.get(dia_semana)
         pontos_dia = pontos_por_dia.get(curr, [])
@@ -1106,12 +1107,13 @@ def get_espelho_mensal(id_funcionario, year, month):
         return f"{h:02d}:{m:02d}"
 
     return jsonify({
-        'periodo': f"01/{month:02d}/{year} - {end_date.strftime('%d/%m/%Y')}",
+        'periodo': f"01/{month:02d}/{year} - {last_date.strftime('%d/%m/%Y')}",
         'horas_normais': format_td(total_trabalhado),
         'horas_extras': format_td(total_extras),
         'horas_faltas': format_td(total_faltas)
     })
 
+@app.route('/ocorrencias/<int:id_ocorrencia>/status', methods=['PUT'])
 def update_ocorrencia_status(id_ocorrencia):
     data = request.get_json()
     status = data.get('status')
