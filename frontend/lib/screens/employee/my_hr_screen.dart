@@ -260,7 +260,7 @@ class _MyHrScreenState extends State<MyHrScreen> with SearchMixin<MyHrScreen>, R
               label: 'Solicitações',
               onTap: () {
                 AnalyticsService.recordButtonClick('requests_button', pageName: '/employee/my-hr');
-                Navigator.push(context, MaterialPageRoute(builder: (context) => RequestsScreen(), settings: const RouteSettings(name: '/employee/requests')));
+                Navigator.push(context, MaterialPageRoute(builder: (context) => RequestsScreen(idFuncionario: widget.colaborador.id_funcionario), settings: const RouteSettings(name: '/employee/requests')));
               }
             ),
             _buildControlePontoItem(
