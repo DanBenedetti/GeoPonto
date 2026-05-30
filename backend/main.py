@@ -720,6 +720,14 @@ def get_pendencias_funcionario(id_funcionario):
 
 @app.route('/funcionarios/<int:id_funcionario>/faltas', methods=['GET'])
 def get_faltas_funcionario(id_funcionario):
+    # Mantendo compatibilidade: chama a nova lógica e filtra apenas faltas
+    response = get_pendencias_funcionario(id_funcionario)
+    if response[1] != 200:
+        return response
+    
+    pendencias = response[0].get_json()
+    faltas = [p['data'] for p in pendencias if p['tipo'] == 'Falta']
+    return jsonify({'faltas': faltas})
 
 
 @app.route('/db-status')
