@@ -850,9 +850,12 @@ def get_ocorrencias_funcionario(id_funcionario):
     cur.execute("""
         SELECT * 
         FROM ocorrencias
-        WHERE id_funcionario = %s
+        WHERE id_funcionario = %s 
+          AND status = 'Pendente'
+          AND tipo != 'Ajuste de Ponto / Justificativa de Falta'
         ORDER BY data_ocorrencia DESC
     """, (id_funcionario,))
+
     
     columns = [desc[0] for desc in cur.description]
     rows = cur.fetchall()
