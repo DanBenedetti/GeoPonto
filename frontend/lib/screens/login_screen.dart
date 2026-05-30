@@ -8,7 +8,6 @@ import 'package:geoponto/screens/employee/home_screen.dart';
 import 'package:geoponto/screens/biometric_auth_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
-import 'package:geoponto/screens/analytics_dashboard_screen.dart';
 import 'package:geoponto/components/analytics_button.dart';
 import 'package:geoponto/mixins/render_time_mixin.dart';
 
@@ -327,21 +326,6 @@ class _LoginScreenState extends State<LoginScreen> with RenderTimeMixin<LoginScr
                   child: const Text('Cadastrar'),
                 ),
               ),
-            Padding(
-              padding: const EdgeInsets.only(top: 16.0),
-              child: AnalyticsButton(
-                buttonId: 'view_analytics_dashboard',
-                onPressed: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => const AnalyticsDashboardScreen(),
-                      settings: const RouteSettings(name: '/analytics-dashboard'),
-                    ),
-                  );
-                },
-                child: const Text('Ver Dashboard de Analytics'),
-              ),
-            ),
           ],
         ),
       ),

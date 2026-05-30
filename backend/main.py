@@ -979,29 +979,138 @@ def get_ocorrencias_funcionario(id_funcionario):
     conn.close()
     return jsonify(ocorrencias)
 
-@app.route('/ocorrencias/funcionario/<int:id_funcionario>/historico', methods=['GET'])
-def get_ocorrencias_historico_funcionario(id_funcionario):
+@app.route('/funcionarios/<int:id_funcionario>/meses-disponiveis', methods=['GET'])
+def get_meses_disponiveis(id_funcionario):
     conn = get_db_connection()
     cur = conn.cursor()
-    cur.execute("""
-        SELECT * 
-        FROM ocorrencias
-        WHERE id_funcionario = %s 
-        ORDER BY data_ocorrencia DESC
-    """, (id_funcionario,))
-    
-    columns = [desc[0] for desc in cur.description]
-    rows = cur.fetchall()
-    ocorrencias = [dict(zip(columns, row)) for row in rows]
-    
-    for o in ocorrencias:
-        for key, value in o.items():
-            if isinstance(value, (datetime.datetime, datetime.date)):
-                o[key] = value.isoformat()
-                
+    cur.execute('SELECT data_admissao FROM Funcionarios WHERE id_funcionario = %s', (id_funcionario,))
+    row = cur.fetchone()
     cur.close()
     conn.close()
-    return jsonify(ocorrencias)
+
+    if not row or not row[0]:
+        # Se não tem data de admissão, assume os últimos 6 meses
+        start_date = datetime.date.today() - datetime.timedelta(days=180)
+    else:
+        start_date = row[0]
+    
+    end_date = datetime.date.today()
+    
+    meses = []
+    current = datetime.date(end_date.year, end_date.month, 1)
+    limit = datetime.date(start_date.year, start_date.month, 1)
+    
+    while current >= limit:
+        meses.append({
+            'year': current.year,
+            'month': current.month,
+            'label': DateFormat('%B %Y').format(current) # No Python usaremos outra forma
+        })
+        # Retroceder um mês
+        if current.month == 1:
+            current = datetime.date(current.year - 1, 12, 1)
+        else:
+            current = datetime.date(current.year, current.month - 1, 1)
+            
+    # Ajuste para labels em português (Python locale)
+    meses_pt = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", 
+                "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"]
+    for m in meses:
+        m['label'] = f"{meses_pt[m['month']-1]} {m['year']}"
+
+    return jsonify(meses)
+
+@app.route('/funcionarios/<int:id_funcionario>/espelho/<int:year>/<int:month>', methods=['GET'])
+def get_espelho_mensal(id_funcionario, year, month):
+    import calendar
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    # 1. Obter jornadas do funcionário
+    cur.execute('SELECT * FROM Jornadas WHERE id_funcionario = %s', (id_funcionario,))
+    cols_j = [desc[0] for desc in cur.description]
+    jornadas = {row[cols_j.index('dia_semana')]: dict(zip(cols_j, row)) for row in cur.fetchall()}
+
+    # 2. Obter pontos do mês
+    start_date = datetime.date(year, month, 1)
+    last_day = calendar.monthrange(year, month)[1]
+    end_date = datetime.date(year, month, last_day)
+    
+    # Se o mês consultado for o atual, o 'end_date' deve ser hoje
+    hoje = datetime.date.today()
+    if year == hoje.year and month == hoje.month:
+        end_date = hoje
+
+    cur.execute(
+        'SELECT * FROM Pontos WHERE id_funcionario = %s AND CAST(criado_em AS DATE) BETWEEN %s AND %s ORDER BY criado_em ASC',
+        (id_funcionario, start_date, end_date)
+    )
+    cols_p = [desc[0] for desc in cur.description]
+    pontos_data = cur.fetchall()
+    
+    cur.close()
+    conn.close()
+
+    # Agrupar pontos por dia
+    pontos_por_dia = {}
+    for row in pontos_data:
+        p = dict(zip(cols_p, row))
+        d = p['criado_em'].date()
+        if d not in pontos_por_dia: pontos_por_dia[d] = []
+        pontos_por_dia[d].append(p)
+
+    total_trabalhado = datetime.timedelta()
+    total_extras = datetime.timedelta()
+    total_faltas = datetime.timedelta()
+
+    def to_delta(t): return datetime.timedelta(hours=t.hour, minutes=t.minute) if t else None
+
+    curr = start_date
+    while curr <= end_date:
+        dia_semana = (curr.weekday() + 1) % 7
+        jornada = jornadas.get(dia_semana)
+        pontos_dia = pontos_por_dia.get(curr, [])
+        
+        if jornada:
+            # Calcular carga esperada
+            h_ent = to_delta(jornada['horario_entrada'])
+            h_sai_int = to_delta(jornada['horario_saida_intervalo'])
+            h_ret_int = to_delta(jornada['horario_retorno_intervalo'])
+            h_sai = to_delta(jornada['horario_saida'])
+            
+            if h_ent and h_sai:
+                esperado = (h_sai_int - h_ent) + (h_sai - h_ret_int) if h_sai_int else (h_sai - h_ent)
+            else:
+                esperado = datetime.timedelta()
+
+            # Calcular trabalhado
+            trabalhado_dia = datetime.timedelta()
+            for i in range(0, len(pontos_dia) // 2 * 2, 2):
+                trabalhado_dia += (pontos_dia[i+1]['criado_em'] - pontos_dia[i]['criado_em'])
+            
+            total_trabalhado += trabalhado_dia
+            
+            if trabalhado_dia > esperado:
+                total_extras += (trabalhado_dia - esperado)
+            elif trabalhado_dia < esperado:
+                # Se for hoje e ainda estiver no horário de trabalho, não conta como falta ainda
+                if not (curr == hoje and trabalhado_dia < esperado):
+                    total_faltas += (esperado - trabalhado_dia)
+        
+        curr += datetime.timedelta(days=1)
+
+    def format_td(td):
+        total_sec = int(td.total_seconds())
+        h = total_sec // 3600
+        m = (total_sec % 3600) // 60
+        return f"{h:02d}:{m:02d}"
+
+    return jsonify({
+        'periodo': f"01/{month:02d}/{year} - {end_date.strftime('%d/%m/%Y')}",
+        'horas_normais': format_td(total_trabalhado),
+        'horas_extras': format_td(total_extras),
+        'horas_faltas': format_td(total_faltas)
+    })
 
 def update_ocorrencia_status(id_ocorrencia):
     data = request.get_json()
