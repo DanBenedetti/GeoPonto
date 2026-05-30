@@ -4,10 +4,11 @@ import 'package:geoponto/config/api_config.dart';
 import 'package:geoponto/screens/employee/point_details_screen.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class OccurrencesScreen extends StatefulWidget {
-  final int idFuncionario;
-  const OccurrencesScreen({super.key, required this.idFuncionario});
+  final int? idFuncionario;
+  const OccurrencesScreen({super.key, this.idFuncionario});
 
   @override
   State<OccurrencesScreen> createState() => _OccurrencesScreenState();
@@ -16,17 +17,42 @@ class OccurrencesScreen extends StatefulWidget {
 class _OccurrencesScreenState extends State<OccurrencesScreen> {
   List<dynamic> _occurrences = [];
   bool _isLoading = true;
+  int? _resolvedIdFuncionario;
 
   @override
   void initState() {
     super.initState();
-    _fetchOccurrences();
+    _resolvedIdFuncionario = widget.idFuncionario;
+    _loadAndFetchOccurrences();
+  }
+
+  Future<void> _loadAndFetchOccurrences() async {
+    if (_resolvedIdFuncionario == null) {
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        final storedId = prefs.getInt('id_funcionario');
+        if (storedId != null) {
+          setState(() {
+            _resolvedIdFuncionario = storedId;
+          });
+        }
+      } catch (_) {}
+    }
+
+    if (_resolvedIdFuncionario == null) {
+      setState(() {
+        _isLoading = false;
+      });
+      return;
+    }
+
+    await _fetchOccurrences();
   }
 
   Future<void> _fetchOccurrences() async {
     try {
       final response = await http.get(
-        Uri.parse('${ApiConfig.baseUrl}/ocorrencias/funcionario/${widget.idFuncionario}'),
+        Uri.parse('${ApiConfig.baseUrl}/ocorrencias/funcionario/$_resolvedIdFuncionario'),
       );
 
       if (response.statusCode == 200) {
@@ -54,25 +80,27 @@ class _OccurrencesScreenState extends State<OccurrencesScreen> {
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : _occurrences.isEmpty
-              ? const Center(child: Text('Nenhuma ocorrência encontrada.'))
-              : ListView.builder(
-                  padding: const EdgeInsets.all(16.0),
-                  itemCount: _occurrences.length,
-                  itemBuilder: (context, index) {
-                    final occurrence = _occurrences[index];
-                    final occurrenceDate = DateTime.parse(occurrence['data_ocorrencia']);
-                    final formattedDate = DateFormat('dd/MM/yyyy').format(occurrenceDate);
-                    final dayOfWeek = DateFormat('EEEE', 'pt_BR').format(occurrenceDate);
-                    
-                    return _buildOccurrenceItem(
-                      context,
-                      date: '$formattedDate | $dayOfWeek',
-                      description: '${occurrence['tipo']}: ${occurrence['descricao'] ?? ''}',
-                      occurrenceDate: occurrenceDate,
-                    );
-                  },
-                ),
+          : _resolvedIdFuncionario == null
+              ? const Center(child: Text('Erro: ID do funcionário não localizado.'))
+              : _occurrences.isEmpty
+                  ? const Center(child: Text('Nenhuma ocorrência encontrada.'))
+                  : ListView.builder(
+                      padding: const EdgeInsets.all(16.0),
+                      itemCount: _occurrences.length,
+                      itemBuilder: (context, index) {
+                        final occurrence = _occurrences[index];
+                        final occurrenceDate = DateTime.parse(occurrence['data_ocorrencia']);
+                        final formattedDate = DateFormat('dd/MM/yyyy').format(occurrenceDate);
+                        final dayOfWeek = DateFormat('EEEE', 'pt_BR').format(occurrenceDate);
+                        
+                        return _buildOccurrenceItem(
+                          context,
+                          date: '$formattedDate | $dayOfWeek',
+                          description: '${occurrence['tipo']}: ${occurrence['descricao'] ?? ''}',
+                          occurrenceDate: occurrenceDate,
+                        );
+                      },
+                    ),
     );
   }
 
@@ -94,16 +122,18 @@ class _OccurrencesScreenState extends State<OccurrencesScreen> {
         subtitle: Text(description),
         trailing: const Icon(Icons.arrow_forward_ios, size: 16),
         onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => PointDetailsScreen(
-                idFuncionario: widget.idFuncionario,
-                absenceDate: occurrenceDate,
+          if (_resolvedIdFuncionario != null) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => PointDetailsScreen(
+                  idFuncionario: _resolvedIdFuncionario!,
+                  absenceDate: occurrenceDate,
+                ),
+                settings: const RouteSettings(name: '/employee/point-details'),
               ),
-              settings: const RouteSettings(name: '/employee/point-details'),
-            ),
-          );
+            );
+          }
         },
         contentPadding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 16.0),
       ),

@@ -69,8 +69,11 @@ class _LoginScreenState extends State<LoginScreen> with RenderTimeMixin<LoginScr
           
           // Verifica se já existe biometria cadastrada para este funcionário no dispositivo
           final prefs = await SharedPreferences.getInstance();
+          await prefs.setInt('id_funcionario', idFuncionario);
+          await prefs.setInt('id_empresa', idEmpresa);
           final String biometryKey = 'biometry_template_$idFuncionario';
           final bool hasBiometry = prefs.containsKey(biometryKey);
+
 
           if (mounted) {
             if (ApiConfig.bypassBiometry) {

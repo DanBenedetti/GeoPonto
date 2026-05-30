@@ -82,12 +82,20 @@ class _PointDetailsScreenState extends State<PointDetailsScreen> {
     }
   }
 
-  Duration _parseTimeToDuration(String timeStr) {
-    final parts = timeStr.split(':');
-    final hours = int.parse(parts[0]);
-    final minutes = int.parse(parts[1]);
-    return Duration(hours: hours, minutes: minutes);
+  Duration _parseTimeToDuration(String? timeStr) {
+    if (timeStr == null || timeStr.trim().isEmpty) {
+      return Duration.zero;
+    }
+    try {
+      final parts = timeStr.split(':');
+      final hours = int.parse(parts[0]);
+      final minutes = int.parse(parts[1]);
+      return Duration(hours: hours, minutes: minutes);
+    } catch (_) {
+      return Duration.zero;
+    }
   }
+
 
   Map<String, String> _calculateDailyHours() {
     Duration worked = Duration.zero;
