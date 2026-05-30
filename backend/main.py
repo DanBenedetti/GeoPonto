@@ -583,49 +583,143 @@ def delete_localizacao(id_localizacao):
     conn.close()
     return jsonify({'message': 'Localizacao deleted successfully'})
 
-@app.route('/funcionarios/<int:id_funcionario>/faltas', methods=['GET'])
-def get_faltas_funcionario(id_funcionario):
+@app.route('/funcionarios/<int:id_funcionario>/pendencias', methods=['GET'])
+def get_pendencias_funcionario(id_funcionario):
     conn = get_db_connection()
     cur = conn.cursor()
 
-    # 1. Get employee's admission date
-    cur.execute('SELECT data_admissao FROM Funcionarios WHERE id_funcionario = %s', (id_funcionario,))
-    data_admissao = cur.fetchone()[0]
+    # 1. Obter data de admissão e ID da empresa
+    cur.execute('SELECT data_admissao, id_empresa FROM Funcionarios WHERE id_funcionario = %s', (id_funcionario,))
+    row = cur.fetchone()
+    if not row:
+        cur.close()
+        conn.close()
+        return jsonify({'message': 'Funcionário não encontrado'}), 404
+    
+    data_admissao = row[0]
+    id_empresa = row[1]
 
-    # 2. Get employee's work schedule
-    cur.execute('SELECT dia_semana FROM Jornadas WHERE id_funcionario = %s', (id_funcionario,))
-    dias_de_trabalho = {row[0] for row in cur.fetchall()}
+    # 2. Obter jornadas detalhadas do funcionário
+    cur.execute('SELECT * FROM Jornadas WHERE id_funcionario = %s', (id_funcionario,))
+    columns_j = [desc[0] for desc in cur.description]
+    jornadas = [dict(zip(columns_j, row)) for row in cur.fetchall()]
+    jornadas_map = {j['dia_semana']: j for j in jornadas}
 
-    # 3. Get all time punches for the last 40 days
+    # 3. Obter todos os pontos dos últimos 40 dias
     end_date = datetime.date.today()
     start_date = end_date - datetime.timedelta(days=40)
-
+    
     cur.execute(
-        'SELECT DISTINCT CAST(criado_em AS DATE) FROM Pontos WHERE id_funcionario = %s AND criado_em >= %s',
+        'SELECT * FROM Pontos WHERE id_funcionario = %s AND criado_em >= %s ORDER BY criado_em ASC',
         (id_funcionario, start_date)
     )
-    dias_com_ponto = {row[0] for row in cur.fetchall()}
+    columns_p = [desc[0] for desc in cur.description]
+    pontos_data = cur.fetchall()
+    
+    # Agrupar pontos por data
+    pontos_por_dia = {}
+    for row in pontos_data:
+        p = dict(zip(columns_p, row))
+        dt = p['criado_em'].date()
+        if dt not in pontos_por_dia:
+            pontos_por_dia[dt] = []
+        pontos_por_dia[dt].append(p)
+
+    # 4. Obter ocorrências já justificadas (para não mostrar pendência se já houver registro em 'ocorrencias')
+    cur.execute(
+        'SELECT data_ocorrencia FROM ocorrencias WHERE id_funcionario = %s AND data_ocorrencia >= %s',
+        (id_funcionario, start_date)
+    )
+    dias_com_ocorrencia = {row[0] for row in cur.fetchall()}
 
     cur.close()
     conn.close()
 
-    # 4. Determine absences
-    faltas = []
-    # If data_admissao is more recent than start_date, begin from data_admissao
-    current_date = max(start_date, data_admissao)
+    # 5. Processar cada dia para identificar pendências
+    pendencias = []
+    current_date = max(start_date, data_admissao if data_admissao else start_date)
 
     while current_date <= end_date:
-        # weekday() -> Monday is 0 and Sunday is 6
-        # dia_semana in Jornadas -> 0: Domingo, 1: Segunda, ..., 6: Sábado
-        # We need to map Python's weekday to the database's dia_semana
-        dia_semana_db = (current_date.weekday() + 1) % 7 
+        # Se já existe uma ocorrência registrada para este dia, ignoramos a pendência automática
+        if current_date in dias_com_ocorrencia:
+            current_date += datetime.timedelta(days=1)
+            continue
 
-        if dia_semana_db in dias_de_trabalho and current_date not in dias_com_ponto:
-            faltas.append(current_date.isoformat())
-        
+        dia_semana_db = (current_date.weekday() + 1) % 7 
+        jornada = jornadas_map.get(dia_semana_db)
+        pontos_dia = pontos_por_dia.get(current_date, [])
+        num_pontos = len(pontos_dia)
+
+        if jornada:
+            # Determinar quantos pontos são esperados
+            # Se tem intervalo cadastrado, espera-se 4 pontos. Se não, 2 pontos.
+            esperados = 4 if jornada.get('horario_saida_intervalo') else 2
+            
+            # Caso A: Falta (Nenhum ponto no dia de trabalho)
+            if num_pontos == 0 and current_date < end_date: # Ignora falta se for hoje
+                pendencias.append({
+                    'data': current_date.isoformat(),
+                    'tipo': 'Falta',
+                    'descricao': 'Nenhum registro de ponto encontrado para este dia de trabalho.'
+                })
+            
+            # Caso B: Ponto Incompleto (Menos marcações que o esperado ou número ímpar)
+            elif (num_pontos > 0 and num_pontos < esperados) or (num_pontos % 2 != 0):
+                # Se for hoje, só avisamos se o número for ímpar (ainda pode bater mais pontos)
+                if current_date < end_date or (num_pontos % 2 != 0):
+                    pendencias.append({
+                        'data': current_date.isoformat(),
+                        'tipo': 'Ponto Incompleto',
+                        'descricao': f'Quantidade de marcações inconsistente (registrado {num_pontos}, esperado {esperados}).'
+                    })
+
+            # Caso C: Excesso de Marcações
+            elif num_pontos > esperados:
+                pendencias.append({
+                    'data': current_date.isoformat(),
+                    'tipo': 'Excesso de Marcações',
+                    'descricao': f'Foram realizados {num_pontos} registros, excedendo o esperado de {esperados}.'
+                })
+
+            # Caso D: Jornada Incompleta (Bateu os pontos, mas as horas não batem)
+            elif num_pontos == esperados and num_pontos >= 2:
+                # Calcular horas trabalhadas
+                total_trabalhado = datetime.timedelta()
+                for i in range(0, num_pontos, 2):
+                    entrada = pontos_dia[i]['criado_em']
+                    saida = pontos_dia[i+1]['criado_em']
+                    total_trabalhado += (saida - entrada)
+                
+                # Calcular jornada esperada
+                try:
+                    def to_delta(t): return datetime.timedelta(hours=t.hour, minutes=t.minute)
+                    h_ent = to_delta(jornada['horario_entrada'])
+                    h_sai_int = to_delta(jornada['horario_saida_intervalo']) if jornada['horario_saida_intervalo'] else None
+                    h_ret_int = to_delta(jornada['horario_retorno_intervalo']) if jornada['horario_retorno_intervalo'] else None
+                    h_sai = to_delta(jornada['horario_saida'])
+                    
+                    if h_sai_int and h_ret_int:
+                        total_esperado = (h_sai_int - h_ent) + (h_sai - h_ret_int)
+                    else:
+                        total_esperado = h_sai - h_ent
+                    
+                    # Se trabalhou menos que o esperado (tolerância de 5 min)
+                    if total_trabalhado < (total_esperado - datetime.timedelta(minutes=5)):
+                        pendencias.append({
+                            'data': current_date.isoformat(),
+                            'tipo': 'Jornada Incompleta',
+                            'descricao': f'Carga horária insuficiente. Trabalhado: {str(total_trabalhado).split(".")[0]}, Esperado: {str(total_esperado)}.'
+                        })
+                except Exception as e:
+                    pass # Evita que erros de cálculo de jornada quebrem a lista
+
         current_date += datetime.timedelta(days=1)
 
-    return jsonify({'faltas': faltas})
+    return jsonify(pendencias)
+
+
+@app.route('/funcionarios/<int:id_funcionario>/faltas', methods=['GET'])
+def get_faltas_funcionario(id_funcionario):
 
 
 @app.route('/db-status')

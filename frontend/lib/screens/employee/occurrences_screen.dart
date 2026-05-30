@@ -51,19 +51,41 @@ class _OccurrencesScreenState extends State<OccurrencesScreen> {
 
   Future<void> _fetchOccurrences() async {
     try {
-      final response = await http.get(
+      // 1. Fetch dynamic pendencies (excluding absences)
+      final pendenciasResponse = await http.get(
+        Uri.parse('${ApiConfig.baseUrl}/funcionarios/$_resolvedIdFuncionario/pendencias'),
+      );
+
+      // 2. Fetch already registered occurrences in DB
+      final dbOccurrencesResponse = await http.get(
         Uri.parse('${ApiConfig.baseUrl}/ocorrencias/funcionario/$_resolvedIdFuncionario'),
       );
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        setState(() {
-          _occurrences = data;
-          _isLoading = false;
-        });
-      } else {
-        setState(() => _isLoading = false);
+      List<dynamic> combined = [];
+
+      if (pendenciasResponse.statusCode == 200) {
+        final List<dynamic> pendencias = jsonDecode(pendenciasResponse.body);
+        // Map pendencies to match occurrence format for display
+        combined.addAll(pendencias.where((p) => p['tipo'] != 'Falta').map((p) => {
+          'data_ocorrencia': p['data'],
+          'tipo': p['tipo'],
+          'descricao': p['descricao'],
+          'status': 'Pendente (Ação Requerida)',
+        }));
       }
+
+      if (dbOccurrencesResponse.statusCode == 200) {
+        final List<dynamic> dbOccs = jsonDecode(dbOccurrencesResponse.body);
+        combined.addAll(dbOccs);
+      }
+
+      // Sort by date descending
+      combined.sort((a, b) => b['data_ocorrencia'].compareTo(a['data_ocorrencia']));
+
+      setState(() {
+        _occurrences = combined;
+        _isLoading = false;
+      });
     } catch (e) {
       setState(() => _isLoading = false);
     }

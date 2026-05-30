@@ -98,23 +98,11 @@ def main():
         
         # --- SEMANA 1: Falta (sem marcação de ponto) ---
         dt_s1 = datas_semanas[0]
-        # Limpar pontos e ocorrências da data
+        # Limpar pontos e ocorrências da data para permitir que o sistema detecte a falta
         cur.execute("DELETE FROM pontos WHERE id_funcionario = %s AND CAST(criado_em AS DATE) = %s", (id_funcionario, dt_s1))
         cur.execute("DELETE FROM ocorrencias WHERE id_funcionario = %s AND data_ocorrencia = %s", (id_funcionario, dt_s1))
         
-        # Inserir ocorrência de Falta
-        cur.execute("""
-            INSERT INTO ocorrencias (id_funcionario, id_empresa, data_ocorrencia, tipo, descricao, status)
-            VALUES (%s, %s, %s, %s, %s, %s)
-        """, (
-            id_funcionario,
-            id_empresa,
-            dt_s1,
-            'Falta',
-            'Ausência injustificada - Nenhum registro de ponto encontrado para este dia de trabalho.',
-            'Pendente'
-        ))
-        print(f"✅ Semana 1 ({dt_s1}): Falta gerada (0 marcações e registro de ocorrência inserido).")
+        print(f"✅ Semana 1 ({dt_s1}): Simulação de FALTA preparada (0 marcações de ponto).")
 
         # --- SEMANA 2: Jornada com 2 horas a menos (4 marcações) ---
         dt_s2 = datas_semanas[1]
@@ -134,19 +122,7 @@ def main():
                 VALUES (%s, -20.5, -47.3, %s)
             """, (id_funcionario, hr))
             
-        # Inserir ocorrência correspondente
-        cur.execute("""
-            INSERT INTO ocorrencias (id_funcionario, id_empresa, data_ocorrencia, tipo, descricao, status)
-            VALUES (%s, %s, %s, %s, %s, %s)
-        """, (
-            id_funcionario,
-            id_empresa,
-            dt_s2,
-            'Jornada Incompleta',
-            'Jornada diária com 2 horas a menos do que o esperado (total trabalhado: 6 horas).',
-            'Pendente'
-        ))
-        print(f"✅ Semana 2 ({dt_s2}): Jornada de 6h gerada (4 marcações e ocorrência de jornada incompleta inserida).")
+        print(f"✅ Semana 2 ({dt_s2}): Simulação de JORNADA INCOMPLETA preparada (6 horas trabalhadas).")
 
         # --- SEMANA 3: Sem registro de saída (apenas 3 marcações) ---
         dt_s3 = datas_semanas[2]
@@ -165,19 +141,7 @@ def main():
                 VALUES (%s, -20.5, -47.3, %s)
             """, (id_funcionario, hr))
             
-        # Inserir ocorrência correspondente
-        cur.execute("""
-            INSERT INTO ocorrencias (id_funcionario, id_empresa, data_ocorrencia, tipo, descricao, status)
-            VALUES (%s, %s, %s, %s, %s, %s)
-        """, (
-            id_funcionario,
-            id_empresa,
-            dt_s3,
-            'Ponto Incompleto',
-            'Jornada sem registro de saída (apenas 3 marcações realizadas).',
-            'Pendente'
-        ))
-        print(f"✅ Semana 3 ({dt_s3}): Ponto incompleto gerado (3 marcações e ocorrência inserida).")
+        print(f"✅ Semana 3 ({dt_s3}): Simulação de PONTO INCOMPLETO preparada (3 marcações).")
 
         # --- SEMANA 4: Mais de 6 marcações (7 marcações no total) ---
         dt_s4 = datas_semanas[3]
@@ -200,22 +164,10 @@ def main():
                 VALUES (%s, -20.5, -47.3, %s)
             """, (id_funcionario, hr))
             
-        # Inserir ocorrência correspondente
-        cur.execute("""
-            INSERT INTO ocorrencias (id_funcionario, id_empresa, data_ocorrencia, tipo, descricao, status)
-            VALUES (%s, %s, %s, %s, %s, %s)
-        """, (
-            id_funcionario,
-            id_empresa,
-            dt_s4,
-            'Excesso de Marcações',
-            'Registro de ponto inconsistente com mais de 6 marcações (total de 7 marcações).',
-            'Pendente'
-        ))
-        print(f"✅ Semana 4 ({dt_s4}): Excesso de marcações gerado (7 marcações e ocorrência inserida).")
+        print(f"✅ Semana 4 ({dt_s4}): Simulação de EXCESSO DE MARCAÇÕES preparada (7 marcações).")
         
         conn.commit()
-        print("\n🎉 Todas as ocorrências de teste foram geradas e salvas com sucesso!")
+        print("\n🎉 O estado do banco de dados foi preparado para os testes de detecção!")
         
     except Exception as e:
         print(f"\n❌ Erro durante a geração das ocorrências: {e}")

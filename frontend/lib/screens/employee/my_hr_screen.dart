@@ -32,43 +32,26 @@ class _MyHrScreenState extends State<MyHrScreen> with SearchMixin<MyHrScreen>, R
   int _selectedShortcutIndex = 1; // 0: Bater Ponto, 1: Meu RH, 2: Holerite
   int _absenceCount = 0;
   int _occurrenceCount = 0;
+  List<dynamic> _allPendencias = [];
 
   @override
   void initState() {
     super.initState();
-    _fetchAbsenceCount();
-    _fetchOccurrenceCount();
+    _fetchPendencias();
   }
 
-  Future<void> _fetchAbsenceCount() async {
+  Future<void> _fetchPendencias() async {
     try {
       final response = await http.get(
-        Uri.parse('${ApiConfig.baseUrl}/funcionarios/${widget.colaborador.id_funcionario}/faltas'),
+        Uri.parse('${ApiConfig.baseUrl}/funcionarios/${widget.colaborador.id_funcionario}/pendencias'),
       );
 
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
+        final List<dynamic> data = jsonDecode(response.body);
         setState(() {
-          _absenceCount = List<String>.from(data['faltas']).length;
-        });
-      } else {
-        // Handle error, maybe show a toast or a default value
-      }
-    } catch (e) {
-      // Handle error
-    }
-  }
-
-  Future<void> _fetchOccurrenceCount() async {
-    try {
-      final response = await http.get(
-        Uri.parse('${ApiConfig.baseUrl}/ocorrencias/funcionario/${widget.colaborador.id_funcionario}'),
-      );
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body) as List;
-        setState(() {
-          _occurrenceCount = data.length;
+          _allPendencias = data;
+          _absenceCount = data.where((p) => p['tipo'] == 'Falta').length;
+          _occurrenceCount = data.where((p) => p['tipo'] != 'Falta').length;
         });
       }
     } catch (e) {

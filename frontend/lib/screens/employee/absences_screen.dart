@@ -27,26 +27,23 @@ class _AbsencesScreenState extends State<AbsencesScreen> {
   Future<void> _fetchAbsences() async {
     try {
       final response = await http.get(
-        Uri.parse('${ApiConfig.baseUrl}/funcionarios/${widget.idFuncionario}/faltas'),
+        Uri.parse('${ApiConfig.baseUrl}/funcionarios/${widget.idFuncionario}/pendencias'),
       );
 
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
+        final List<dynamic> data = jsonDecode(response.body);
         setState(() {
-          _absences = List<String>.from(data['faltas']);
+          _absences = data
+              .where((p) => p['tipo'] == 'Falta')
+              .map((p) => p['data'] as String)
+              .toList();
           _isLoading = false;
         });
       } else {
-        // Handle error
-        setState(() {
-          _isLoading = false;
-        });
+        setState(() => _isLoading = false);
       }
     } catch (e) {
-      // Handle error
-      setState(() {
-        _isLoading = false;
-      });
+      setState(() => _isLoading = false);
     }
   }
 
