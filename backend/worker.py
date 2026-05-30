@@ -21,8 +21,10 @@ def callback(ch, method, properties, body):
         print(f"     -> Notificando empregador da empresa {message.get('id_empresa')}...")
         
     elif action == 'STATUS_UPDATED':
-        print(f" [√] Ocorrência ID {message.get('id_ocorrencia')} atualizada para: {message.get('status')}")
-        print(f"     -> Notificando funcionário sobre a decisão...")
+        status = message.get('status')
+        id_occ = message.get('id_ocorrencia')
+        print(f" [√] AÇÃO DO EMPREGADOR: Ocorrência ID {id_occ} foi {status.upper()}.")
+        print(f" [x] Mensagem removida da fila de pendências. Notificando funcionário...")
 
     print(" [x] Processamento concluído.\n")
     ch.basic_ack(delivery_tag=method.delivery_tag)
