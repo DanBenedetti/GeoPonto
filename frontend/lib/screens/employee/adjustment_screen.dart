@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'dart:async';
 import 'package:geoponto/config/api_config.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
@@ -8,8 +7,16 @@ import 'package:intl/intl.dart';
 class AdjustmentScreen extends StatefulWidget {
   final int? idFuncionario;
   final DateTime? dataOcorrencia;
+  final List<TimeOfDay>? initialRecords;
+  final String? shiftInfo;
 
-  const AdjustmentScreen({super.key, this.idFuncionario, this.dataOcorrencia});
+  const AdjustmentScreen({
+    super.key,
+    this.idFuncionario,
+    this.dataOcorrencia,
+    this.initialRecords,
+    this.shiftInfo,
+  });
 
   @override
   State<AdjustmentScreen> createState() => _AdjustmentScreenState();
@@ -20,12 +27,7 @@ class _AdjustmentScreenState extends State<AdjustmentScreen> {
   final _formKey = GlobalKey<FormState>();
   bool _isSending = false;
   
-  final List<TimeOfDay> _records = [
-    const TimeOfDay(hour: 8, minute: 1),
-    const TimeOfDay(hour: 12, minute: 5),
-    const TimeOfDay(hour: 13, minute: 3),
-    const TimeOfDay(hour: 17, minute: 30),
-  ];
+  List<TimeOfDay> _records = [];
 
   Duration _workedHours = Duration.zero;
   Duration _missingHours = Duration.zero;
@@ -35,6 +37,11 @@ class _AdjustmentScreenState extends State<AdjustmentScreen> {
   @override
   void initState() {
     super.initState();
+    if (widget.initialRecords != null) {
+      _records = List.from(widget.initialRecords!);
+    } else {
+      _records = [];
+    }
     _calculateHours();
   }
 
@@ -60,6 +67,11 @@ class _AdjustmentScreenState extends State<AdjustmentScreen> {
           ? DateFormat('yyyy-MM-dd').format(widget.dataOcorrencia!)
           : DateFormat('yyyy-MM-dd').format(DateTime.now());
 
+      // Prepara as marcações propostas em formato legível de texto para incluir na justificativa se necessário,
+      // ou você pode salvar no backend se a API de ocorrências suportar.
+      final marcasTexto = _records.map((r) => '${r.hour.toString().padLeft(2, '0')}:${r.minute.toString().padLeft(2, '0')}').join(', ');
+      final justificativaFinal = 'Ajuste de ponto proposto: [$marcasTexto]. Justificativa: ${_justificationController.text}';
+
       final response = await http.post(
         Uri.parse('${ApiConfig.baseUrl}/ocorrencias'),
         headers: {'Content-Type': 'application/json; charset=UTF-8'},
@@ -67,14 +79,14 @@ class _AdjustmentScreenState extends State<AdjustmentScreen> {
           'id_funcionario': widget.idFuncionario,
           'data_ocorrencia': dataFormatada,
           'tipo': 'Ajuste de Ponto / Justificativa de Falta',
-          'descricao': _justificationController.text,
-          'anexo_url': null, // TODO: Implementar upload de arquivo se necessário
+          'descricao': justificativaFinal,
+          'anexo_url': null,
         }),
       );
 
       if (response.statusCode == 201) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Ocorrência enviada com sucesso!')),
+          const SnackBar(content: Text('Solicitação de ajuste enviada com sucesso!')),
         );
         Navigator.pop(context);
       } else {
@@ -118,7 +130,7 @@ class _AdjustmentScreenState extends State<AdjustmentScreen> {
 
   void _addRecord(int index) {
     setState(() {
-      _records.insert(index, TimeOfDay.now());
+      _records.insert(index, const TimeOfDay(hour: 8, minute: 0));
     });
     _calculateHours();
   }
@@ -151,6 +163,11 @@ class _AdjustmentScreenState extends State<AdjustmentScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final String dataFormatada = widget.dataOcorrencia != null
+        ? DateFormat('dd/MM/yyyy | EEEE', 'pt_BR').format(widget.dataOcorrencia!)
+        : 'Data não informada';
+    final String turno = widget.shiftInfo ?? '08:00 às 12:00 | 13:00 às 17:30';
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Solicitação de ajuste'),
@@ -165,9 +182,9 @@ class _AdjustmentScreenState extends State<AdjustmentScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildInfo('Data:', '20/08/2025 | quarta-feira'),
+              _buildInfo('Data:', dataFormatada),
               const SizedBox(height: 8),
-              _buildInfo('Turno:', '08:00 às 12:00 | 13:00 às 17:30'),
+              _buildInfo('Turno:', turno),
               const SizedBox(height: 16),
               
               TextButton.icon(
@@ -239,6 +256,17 @@ class _AdjustmentScreenState extends State<AdjustmentScreen> {
   }
 
   List<Widget> _buildRecordList() {
+    if (_records.isEmpty) {
+      return [
+        const Padding(
+          padding: EdgeInsets.symmetric(vertical: 8.0),
+          child: Text(
+            'Nenhuma marcação registrada para este dia.',
+            style: TextStyle(color: Colors.grey, fontStyle: FontStyle.italic),
+          ),
+        )
+      ];
+    }
     return List.generate(_records.length, (index) {
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: 4.0),

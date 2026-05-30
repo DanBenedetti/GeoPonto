@@ -1,7 +1,47 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:geoponto/config/api_config.dart';
+import 'package:geoponto/screens/employee/point_details_screen.dart';
+import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
 
-class OccurrencesScreen extends StatelessWidget {
-  const OccurrencesScreen({super.key});
+class OccurrencesScreen extends StatefulWidget {
+  final int idFuncionario;
+  const OccurrencesScreen({super.key, required this.idFuncionario});
+
+  @override
+  State<OccurrencesScreen> createState() => _OccurrencesScreenState();
+}
+
+class _OccurrencesScreenState extends State<OccurrencesScreen> {
+  List<dynamic> _occurrences = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchOccurrences();
+  }
+
+  Future<void> _fetchOccurrences() async {
+    try {
+      final response = await http.get(
+        Uri.parse('${ApiConfig.baseUrl}/ocorrencias/funcionario/${widget.idFuncionario}'),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        setState(() {
+          _occurrences = data;
+          _isLoading = false;
+        });
+      } else {
+        setState(() => _isLoading = false);
+      }
+    } catch (e) {
+      setState(() => _isLoading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -12,22 +52,39 @@ class OccurrencesScreen extends StatelessWidget {
         elevation: 0,
         foregroundColor: Colors.black,
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(16.0),
-        children: [
-          _buildOccurrenceItem(
-            context,
-            date: '21/08/2025 | quinta-feira',
-            description: '2ª saída sem registro',
-          ),
-        ],
-      ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _occurrences.isEmpty
+              ? const Center(child: Text('Nenhuma ocorrência encontrada.'))
+              : ListView.builder(
+                  padding: const EdgeInsets.all(16.0),
+                  itemCount: _occurrences.length,
+                  itemBuilder: (context, index) {
+                    final occurrence = _occurrences[index];
+                    final occurrenceDate = DateTime.parse(occurrence['data_ocorrencia']);
+                    final formattedDate = DateFormat('dd/MM/yyyy').format(occurrenceDate);
+                    final dayOfWeek = DateFormat('EEEE', 'pt_BR').format(occurrenceDate);
+                    
+                    return _buildOccurrenceItem(
+                      context,
+                      date: '$formattedDate | $dayOfWeek',
+                      description: '${occurrence['tipo']}: ${occurrence['descricao'] ?? ''}',
+                      occurrenceDate: occurrenceDate,
+                    );
+                  },
+                ),
     );
   }
 
-  Widget _buildOccurrenceItem(BuildContext context, {required String date, required String description}) {
+  Widget _buildOccurrenceItem(
+    BuildContext context, {
+    required String date,
+    required String description,
+    required DateTime occurrenceDate,
+  }) {
     return Card(
       elevation: 0,
+      margin: const EdgeInsets.only(bottom: 8.0),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(10.0),
       ),
@@ -37,7 +94,16 @@ class OccurrencesScreen extends StatelessWidget {
         subtitle: Text(description),
         trailing: const Icon(Icons.arrow_forward_ios, size: 16),
         onTap: () {
-          // TODO: Implementar a navegação para a tela de detalhes do ponto, passando o id do funcionário e a data.
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => PointDetailsScreen(
+                idFuncionario: widget.idFuncionario,
+                absenceDate: occurrenceDate,
+              ),
+              settings: const RouteSettings(name: '/employee/point-details'),
+            ),
+          );
         },
         contentPadding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 16.0),
       ),
