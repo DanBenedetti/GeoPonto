@@ -703,8 +703,8 @@ def get_pendencias_funcionario(id_funcionario):
                     else:
                         total_esperado = h_sai - h_ent
                     
-                    # Se trabalhou menos que o esperado (tolerância de 5 min)
-                    if total_trabalhado < (total_esperado - datetime.timedelta(minutes=5)):
+                    # Se trabalhou menos que o esperado (tolerância de 10 min conforme solicitação do usuário)
+                    if total_trabalhado < (total_esperado - datetime.timedelta(minutes=10)):
                         pendencias.append({
                             'data': current_date.isoformat(),
                             'tipo': 'Jornada Incompleta',
