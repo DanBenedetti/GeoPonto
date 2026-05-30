@@ -114,12 +114,14 @@ class _OccurrencesScreenState extends State<OccurrencesScreen> {
                         final occurrenceDate = DateTime.parse(occurrence['data_ocorrencia']);
                         final formattedDate = DateFormat('dd/MM/yyyy').format(occurrenceDate);
                         final dayOfWeek = DateFormat('EEEE', 'pt_BR').format(occurrenceDate);
+                        final status = occurrence['status'] ?? 'Pendente';
                         
                         return _buildOccurrenceItem(
                           context,
                           date: '$formattedDate | $dayOfWeek',
                           description: '${occurrence['tipo']}: ${occurrence['descricao'] ?? ''}',
                           occurrenceDate: occurrenceDate,
+                          status: status,
                         );
                       },
                     ),
@@ -131,17 +133,51 @@ class _OccurrencesScreenState extends State<OccurrencesScreen> {
     required String date,
     required String description,
     required DateTime occurrenceDate,
+    required String status,
   }) {
+    Color statusColor = Colors.orange;
+    IconData statusIcon = Icons.warning_amber_rounded;
+
+    if (status == 'Rejeitado') {
+      statusColor = Colors.red;
+      statusIcon = Icons.error_outline;
+    } else if (status.contains('Ação Requerida')) {
+      statusColor = Colors.blue;
+      statusIcon = Icons.info_outline;
+    }
+
     return Card(
       elevation: 0,
       margin: const EdgeInsets.only(bottom: 8.0),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(10.0),
+        side: status == 'Rejeitado' ? const BorderSide(color: Colors.red, width: 0.5) : BorderSide.none,
       ),
       child: ListTile(
-        leading: const Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 32),
+        leading: Icon(statusIcon, color: statusColor, size: 32),
         title: Text(date, style: const TextStyle(fontWeight: FontWeight.bold)),
-        subtitle: Text(description),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(description),
+            const SizedBox(height: 4),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: statusColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(5),
+              ),
+              child: Text(
+                status.toUpperCase(),
+                style: TextStyle(
+                  color: statusColor,
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        ),
         trailing: const Icon(Icons.arrow_forward_ios, size: 16),
         onTap: () {
           if (_resolvedIdFuncionario != null) {

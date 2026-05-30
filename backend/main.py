@@ -898,6 +898,13 @@ def create_ocorrencia():
     
     id_empresa = empresa_data[0]
 
+    # OPCÃO 1: Limpeza automática de ocorrências anteriores para a mesma data
+    # Isso evita duplicidade caso o funcionário esteja re-enviando uma justificativa rejeitada
+    cur.execute(
+        'DELETE FROM ocorrencias WHERE id_funcionario = %s AND data_ocorrencia = %s',
+        (data['id_funcionario'], data['data_ocorrencia'])
+    )
+
     cur.execute(
         'INSERT INTO ocorrencias (id_funcionario, id_empresa, data_ocorrencia, tipo, descricao, anexo_url) VALUES (%s, %s, %s, %s, %s, %s) RETURNING id_ocorrencia',
         (data['id_funcionario'], id_empresa, data['data_ocorrencia'], data['tipo'], data.get('descricao'), data.get('anexo_url'))
@@ -953,7 +960,7 @@ def get_ocorrencias_funcionario(id_funcionario):
         SELECT * 
         FROM ocorrencias
         WHERE id_funcionario = %s 
-          AND status = 'Pendente'
+          AND status IN ('Pendente', 'Rejeitado')
           AND tipo != 'Ajuste de Ponto / Justificativa de Falta'
         ORDER BY data_ocorrencia DESC
     """, (id_funcionario,))
