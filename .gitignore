@@ -8,3 +8,6 @@ GEMINI_CONTEXT.md
 
 # Ignore Flutter/Dart generated files
 frontend/.dart_tool/
+
+# Antigravity CLI
+.antigravitycli/
