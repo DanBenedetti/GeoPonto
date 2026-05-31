@@ -100,7 +100,7 @@
                 <td class="px-6 py-4 text-right">
                   <div v-if="occ.status === 'Pendente'" class="flex justify-end space-x-2">
                     <button @click="updateStatus(occ.id_ocorrencia, 'Aprovado')" class="bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded text-xs transition-colors">Aprovar</button>
-                    <button @click="updateStatus(occ.id_ocorrencia, 'Reprovado')" class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-xs transition-colors">Reprovar</button>
+                    <button @click="updateStatus(occ.id_ocorrencia, 'Rejeitado')" class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-xs transition-colors">Reprovar</button>
                   </div>
                   <span v-else class="text-gray-400 text-xs italic">Finalizado</span>
                 </td>

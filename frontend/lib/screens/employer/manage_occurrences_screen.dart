@@ -99,7 +99,7 @@ class _ManageOccurrencesScreenState extends State<ManageOccurrencesScreen> {
     
     Color statusColor = Colors.orange;
     if (oc.status == 'Aprovado') statusColor = Colors.green;
-    if (oc.status == 'Reprovado') statusColor = Colors.red;
+    if (oc.status == 'Rejeitado') statusColor = Colors.red;
 
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
@@ -140,7 +140,7 @@ class _ManageOccurrencesScreenState extends State<ManageOccurrencesScreen> {
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   TextButton(
-                    onPressed: () => _updateStatus(oc.id_ocorrencia!, 'Reprovado'),
+                    onPressed: () => _updateStatus(oc.id_ocorrencia!, 'Rejeitado'),
                     style: TextButton.styleFrom(foregroundColor: Colors.red),
                     child: const Text('Reprovar'),
                   ),

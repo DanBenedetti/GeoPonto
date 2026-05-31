@@ -1145,6 +1145,10 @@ def update_ocorrencia_status(id_ocorrencia):
     if not status:
         return jsonify({'message': 'Status é obrigatório'}), 400
 
+    # Garantir que o status seja um dos esperados
+    if status not in ['Aprovado', 'Rejeitado', 'Pendente']:
+        return jsonify({'message': 'Status inválido'}), 400
+
     conn = get_db_connection()
     cur = conn.cursor()
     cur.execute(
@@ -1163,7 +1167,7 @@ def update_ocorrencia_status(id_ocorrencia):
 
     cur.close()
     conn.close()
-    return jsonify({'message': f'Ocorrência {status} com sucesso'})
+    return jsonify({'message': f'Ocorrência {status} com sucesso', 'status': status})
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
