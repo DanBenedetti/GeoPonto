@@ -118,11 +118,12 @@ import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useDarkMode } from '../composables/useDarkMode'
 import { authService } from '../services/authService'
+import API_BASE_URL from '../services/apiConfig'
 import axios from 'axios'
 
 const router = useRouter()
 const userName = ref(localStorage.getItem('userName') || 'Empregador')
-const idEmpresa = ref(localStorage.getItem('idEmpresa'))
+const idEmpresa = ref(localStorage.getItem('id_empresa'))
 const { isDarkMode, toggleDarkMode, initTheme } = useDarkMode()
 
 const occurrences = ref([])
@@ -131,7 +132,7 @@ const isLoading = ref(true)
 const fetchOccurrences = async () => {
   isLoading.value = true
   try {
-    const response = await axios.get(`http://localhost:5000/ocorrencias/empresa/${idEmpresa.value}`)
+    const response = await axios.get(`${API_BASE_URL}/ocorrencias/empresa/${idEmpresa.value}`)
     occurrences.value = response.data.map(occ => ({
       ...occ,
       name: `${occ.nome} ${occ.sobrenome}`,
@@ -152,7 +153,7 @@ const fetchOccurrences = async () => {
 
 const updateStatus = async (id, status) => {
   try {
-    await axios.put(`http://localhost:5000/ocorrencias/${id}/status`, { status })
+    await axios.put(`${API_BASE_URL}/ocorrencias/${id}/status`, { status })
     await fetchOccurrences()
   } catch (error) {
     console.error('Erro ao atualizar status:', error)
@@ -162,6 +163,8 @@ const updateStatus = async (id, status) => {
 const pendingCount = computed(() => occurrences.value.filter(o => o.status === 'Pendente').length)
 const resolvedCount = computed(() => occurrences.value.filter(o => o.status !== 'Pendente').length)
 
+let pollInterval = null
+
 onMounted(() => {
   initTheme()
   if (!localStorage.getItem('isLoggedIn')) {
@@ -169,5 +172,13 @@ onMounted(() => {
     return
   }
   fetchOccurrences()
+  
+  // Polling a cada 10 segundos para "tempo real"
+  pollInterval = setInterval(fetchOccurrences, 10000)
+})
+
+import { onUnmounted } from 'vue'
+onUnmounted(() => {
+  if (pollInterval) clearInterval(pollInterval)
 })
 </script>

@@ -866,6 +866,7 @@ def get_analytics_metrics():
 
 def send_to_queue(message):
     try:
+        print(f" [>] Tentando enviar mensagem para a fila: {message.get('action')}")
         url = os.environ.get('CLOUDAMQP_URL', 'amqp://guest:guest@localhost/%2f')
         params = pika.URLParameters(url)
         connection = pika.BlockingConnection(params)
@@ -879,8 +880,9 @@ def send_to_queue(message):
                 delivery_mode=2,  # make message persistent
             ))
         connection.close()
+        print(f" [v] Mensagem enviada com sucesso para a fila.")
     except Exception as e:
-        print(f"Erro ao enviar para a fila: {e}")
+        print(f" [!] Erro ao enviar para a fila: {e}")
 
 @app.route('/ocorrencias', methods=['POST'])
 def create_ocorrencia():
@@ -961,7 +963,6 @@ def get_ocorrencias_funcionario(id_funcionario):
         FROM ocorrencias
         WHERE id_funcionario = %s 
           AND status IN ('Pendente', 'Rejeitado')
-          AND tipo != 'Ajuste de Ponto / Justificativa de Falta'
         ORDER BY data_ocorrencia DESC
     """, (id_funcionario,))
 
