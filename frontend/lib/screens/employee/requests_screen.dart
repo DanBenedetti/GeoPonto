@@ -159,7 +159,7 @@ class _RequestsScreenState extends State<RequestsScreen> {
       statusText = 'Aprovada';
       statusColor = Colors.green;
       icon = Icons.check_circle_outline;
-    } else if (status == 'Rejeitado') {
+    } else if (status == 'Rejeitado' || status == 'Reprovado' || status == 'Indeferida') {
       statusText = 'Indeferida';
       statusColor = Colors.red;
       icon = Icons.error_outline;

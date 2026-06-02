@@ -42,18 +42,36 @@ class _MyHrScreenState extends State<MyHrScreen> with SearchMixin<MyHrScreen>, R
 
   Future<void> _fetchPendencias() async {
     try {
-      final response = await http.get(
+      // 1. Buscar pendências dinâmicas (pontos incompletos, faltas, etc)
+      final pendenciasResponse = await http.get(
         Uri.parse('${ApiConfig.baseUrl}/funcionarios/${widget.colaborador.id_funcionario}/pendencias'),
       );
 
-      if (response.statusCode == 200) {
-        final List<dynamic> data = jsonDecode(response.body);
-        setState(() {
-          _allPendencias = data;
-          _absenceCount = data.where((p) => p['tipo'] == 'Falta').length;
-          _occurrenceCount = data.where((p) => p['tipo'] != 'Falta').length;
-        });
+      // 2. Buscar ocorrências já registradas que ainda estão pendentes ou foram rejeitadas/reprovadas
+      final dbOccurrencesResponse = await http.get(
+        Uri.parse('${ApiConfig.baseUrl}/ocorrencias/funcionario/${widget.colaborador.id_funcionario}'),
+      );
+
+      int dynamicOccurrencesCount = 0;
+      int dbOccurrencesCount = 0;
+      int absenceCount = 0;
+
+      if (pendenciasResponse.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(pendenciasResponse.body);
+        _allPendencias = data;
+        absenceCount = data.where((p) => p['tipo'] == 'Falta').length;
+        dynamicOccurrencesCount = data.where((p) => p['tipo'] != 'Falta').length;
       }
+
+      if (dbOccurrencesResponse.statusCode == 200) {
+        final List<dynamic> dbOccs = jsonDecode(dbOccurrencesResponse.body);
+        dbOccurrencesCount = dbOccs.length;
+      }
+
+      setState(() {
+        _absenceCount = absenceCount;
+        _occurrenceCount = dynamicOccurrencesCount + dbOccurrencesCount;
+      });
     } catch (e) {
       // Handle error
     }

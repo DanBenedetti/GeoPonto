@@ -138,7 +138,7 @@ class _OccurrencesScreenState extends State<OccurrencesScreen> {
     Color statusColor = Colors.orange;
     IconData statusIcon = Icons.warning_amber_rounded;
 
-    if (status == 'Rejeitado') {
+    if (status == 'Rejeitado' || status == 'Reprovado' || status == 'Indeferida') {
       statusColor = Colors.red;
       statusIcon = Icons.error_outline;
     } else if (status.contains('Ação Requerida')) {
@@ -151,7 +151,7 @@ class _OccurrencesScreenState extends State<OccurrencesScreen> {
       margin: const EdgeInsets.only(bottom: 8.0),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(10.0),
-        side: status == 'Rejeitado' ? const BorderSide(color: Colors.red, width: 0.5) : BorderSide.none,
+        side: (status == 'Rejeitado' || status == 'Reprovado' || status == 'Indeferida') ? const BorderSide(color: Colors.red, width: 0.5) : BorderSide.none,
       ),
       child: ListTile(
         leading: Icon(statusIcon, color: statusColor, size: 32),

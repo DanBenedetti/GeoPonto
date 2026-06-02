@@ -962,7 +962,7 @@ def get_ocorrencias_funcionario(id_funcionario):
         SELECT * 
         FROM ocorrencias
         WHERE id_funcionario = %s 
-          AND status IN ('Pendente', 'Rejeitado')
+          AND status IN ('Pendente', 'Rejeitado', 'Reprovado', 'Indeferida')
         ORDER BY data_ocorrencia DESC
     """, (id_funcionario,))
 
