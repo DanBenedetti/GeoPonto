@@ -304,7 +304,11 @@
                   <label class="block text-xs text-gray-500 uppercase font-semibold">Raio em metros</label>
                   <input v-model="jornadaForm.radius" type="number" class="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white" />
                 </div>
-                <button type="button" class="w-full py-2 flex items-center justify-center text-gray-700 dark:text-gray-300 bg-gray-200 dark:bg-gray-800 rounded-lg text-sm font-medium hover:bg-gray-300 dark:hover:bg-gray-700 transition-colors">
+                <button 
+                  type="button" 
+                  @click="openMapModal"
+                  class="w-full py-2 flex items-center justify-center text-gray-700 dark:text-gray-300 bg-gray-200 dark:bg-gray-800 rounded-lg text-sm font-medium hover:bg-gray-300 dark:hover:bg-gray-700 transition-colors"
+                >
                   <span class="mr-2 text-base">🗺️</span> Selecionar no Mapa
                 </button>
               </div>
@@ -315,6 +319,63 @@
             </button>
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- Modal Selecionar no Mapa -->
+    <div v-if="showMapModal" class="fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-4">
+      <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col max-h-[90vh]">
+        <header class="p-4 bg-green-600 text-white flex justify-between items-center">
+          <h3 class="text-lg font-bold">Selecionar Localização</h3>
+          <button @click="closeMapModal" class="text-2xl hover:bg-green-700 w-8 h-8 rounded-full flex items-center justify-center transition-colors">&times;</button>
+        </header>
+
+        <div class="p-4 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+          <div class="flex gap-2">
+            <div class="relative flex-grow">
+              <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">🔍</span>
+              <input 
+                v-model="searchQuery" 
+                @keyup.enter="searchAddress"
+                type="text" 
+                placeholder="Buscar endereço (ex: Av. Paulista, 1000)" 
+                class="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 outline-none"
+              />
+            </div>
+            <button 
+              @click="searchAddress" 
+              :disabled="searching"
+              class="px-4 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors disabled:opacity-50"
+            >
+              {{ searching ? 'Buscando...' : 'Buscar' }}
+            </button>
+          </div>
+          <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">Você pode clicar no mapa ou arrastar o marcador para definir o local exato.</p>
+        </div>
+
+        <div class="relative flex-grow min-h-[400px]">
+          <div ref="mapContainer" class="absolute inset-0 z-0"></div>
+          
+          <!-- Botão Localização Atual -->
+          <button 
+            @click="getCurrentLocation"
+            class="absolute bottom-6 right-6 z-[400] bg-white dark:bg-gray-800 p-3 rounded-full shadow-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-xl"
+            title="Minha Localização"
+          >
+            📍
+          </button>
+        </div>
+
+        <footer class="p-4 bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center">
+          <div class="text-sm text-gray-600 dark:text-gray-400">
+            <span class="font-bold">Lat:</span> {{ Number(jornadaForm.latitude).toFixed(6) }} | 
+            <span class="font-bold">Lng:</span> {{ Number(jornadaForm.longitude).toFixed(6) }} |
+            <span class="font-bold">Raio:</span> {{ jornadaForm.radius }}m
+          </div>
+          <button @click="closeMapModal" class="px-8 py-2 bg-green-600 text-white rounded-lg font-bold hover:bg-green-700 transition-colors shadow-md">
+            Confirmar Localização
+          </button>
+        </footer>
       </div>
     </div>
 
@@ -345,22 +406,26 @@
               <thead class="bg-gray-50 dark:bg-gray-800/50">
                 <tr>
                   <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Data</th>
-                  <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider text-center">Entrada</th>
-                  <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider text-center">Saída Int.</th>
-                  <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider text-center">Retorno Int.</th>
-                  <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider text-center">Saída</th>
+                  <th class="px-6 py-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Horários Registrados</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
                 <tr v-for="record in pointRecords" :key="record.date" class="hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-colors">
-                  <td class="px-6 py-4 text-sm font-medium text-gray-900 dark:text-gray-100">{{ new Date(record.date).toLocaleDateString('pt-BR') }}</td>
-                  <td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-300 text-center">{{ record.entrance }}</td>
-                  <td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-300 text-center">{{ record.breakStart }}</td>
-                  <td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-300 text-center">{{ record.breakEnd }}</td>
-                  <td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-300 text-center">{{ record.exit }}</td>
+                  <td class="px-6 py-4 text-sm font-medium text-gray-900 dark:text-gray-100">
+                    {{ new Date(record.date + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric' }) }}
+                  </td>
+                  <td class="px-6 py-4">
+                    <div class="flex flex-wrap gap-2">
+                      <span v-for="(reg, index) in record.registros" :key="index" 
+                            class="px-3 py-1 bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 rounded-full text-xs font-bold border border-green-200 dark:border-green-800">
+                        {{ reg.time }}
+                      </span>
+                      <span v-if="!record.registros || record.registros.length === 0" class="text-gray-400 italic text-sm">Nenhum registro</span>
+                    </div>
+                  </td>
                 </tr>
                 <tr v-if="pointRecords.length === 0">
-                  <td colspan="5" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">Nenhum registro encontrado para este mês.</td>
+                  <td colspan="2" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">Nenhum registro encontrado para este mês.</td>
                 </tr>
               </tbody>
             </table>
@@ -378,13 +443,15 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed } from 'vue'
+import { ref, reactive, onMounted, computed, watch, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { useDarkMode } from '../composables/useDarkMode'
 import { employeeService } from '../services/employeeService'
 import { pointService } from '../services/pointService'
 import { authService } from '../services/authService'
 import { Employee } from '../models/Employee'
+import L from 'leaflet'
+import 'leaflet/dist/leaflet.css'
 
 const router = useRouter()
 const userName = ref(localStorage.getItem('userName') || 'Empregador')
@@ -396,7 +463,15 @@ const isEditing = ref(false)
 const selectedEmployeeId = ref(null)
 const showJornadaModal = ref(false)
 const showPointRecordsModal = ref(false)
+const showMapModal = ref(false)
+const mapContainer = ref(null)
+const searchQuery = ref('')
 const loading = ref(false)
+const searching = ref(false)
+
+let map = null
+let marker = null
+let circle = null
 
 const employees = ref([])
 
@@ -504,26 +579,23 @@ const openPointRecordsModal = async (employee) => {
   await fetchPointRecords()
 }
 
+watch(selectedMonth, () => {
+  fetchPointRecords()
+})
+
 const fetchPointRecords = async () => {
   if (!selectedEmployeeId.value) return
   const [year, month] = selectedMonth.value.split('-')
   try {
     const response = await pointService.getByEmployee(selectedEmployeeId.value, month, year)
-    // The API returns a list of days with registros
-    // We need to flatten it or adapt it for the table
-    pointRecords.value = response.map(day => {
-      const entrance = day.registros[0]?.time || '--:--'
-      const breakStart = day.registros[1]?.time || '--:--'
-      const breakEnd = day.registros[2]?.time || '--:--'
-      const exit = day.registros[3]?.time || '--:--'
-      return {
-        date: day.data,
-        entrance,
-        breakStart,
-        breakEnd,
-        exit
-      }
-    })
+    
+    // Suporta resposta como array direto ou objeto { "pontos": [...] }
+    const data = Array.isArray(response) ? response : (response.pontos || response.registros || [])
+    
+    pointRecords.value = data.map(day => ({
+      date: day.data,
+      registros: day.registros || []
+    }))
   } catch (err) {
     console.error('Erro ao buscar registros de ponto:', err)
     pointRecords.value = []
@@ -577,5 +649,125 @@ const handleDeleteEmployee = async (id) => {
       alert(err.message || 'Erro ao excluir funcionário')
     }
   }
+}
+
+// Map Logic
+const openMapModal = async () => {
+  showMapModal.value = true
+  await nextTick()
+  initMap()
+}
+
+const closeMapModal = () => {
+  showMapModal.value = false
+  if (map) {
+    map.remove()
+    map = null
+  }
+}
+
+const initMap = () => {
+  const lat = parseFloat(jornadaForm.latitude) || -23.55052
+  const lng = parseFloat(jornadaForm.longitude) || -46.633308
+  const radius = parseInt(jornadaForm.radius) || 100
+
+  if (map) {
+    map.remove()
+  }
+
+  map = L.map(mapContainer.value).setView([lat, lng], 15)
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+  }).addTo(map)
+
+  // Fix for Leaflet default icons in Vite
+  const defaultIcon = L.icon({
+    iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+    shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+    iconSize: [25, 41],
+    iconAnchor: [12, 41]
+  })
+
+  marker = L.marker([lat, lng], { draggable: true, icon: defaultIcon }).addTo(map)
+  circle = L.circle([lat, lng], {
+    color: '#16a34a',
+    fillColor: '#22c55e',
+    fillOpacity: 0.2,
+    radius: radius
+  }).addTo(map)
+
+  marker.on('drag', (e) => {
+    const { lat, lng } = e.target.getLatLng()
+    jornadaForm.latitude = lat.toString()
+    jornadaForm.longitude = lng.toString()
+    circle.setLatLng(e.target.getLatLng())
+  })
+
+  map.on('click', (e) => {
+    const { lat, lng } = e.latlng
+    jornadaForm.latitude = lat.toString()
+    jornadaForm.longitude = lng.toString()
+    marker.setLatLng(e.latlng)
+    circle.setLatLng(e.latlng)
+  })
+}
+
+// Watch radius for circle updates
+watch(() => jornadaForm.radius, (newRadius) => {
+  if (circle && map) {
+    circle.setRadius(newRadius || 0)
+  }
+})
+
+const searchAddress = async () => {
+  if (!searchQuery.value) return
+  searching.value = true
+  try {
+    const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery.value)}`)
+    const data = await response.json()
+    if (data && data.length > 0) {
+      const { lat, lon } = data[0]
+      const newLat = parseFloat(lat)
+      const newLng = parseFloat(lon)
+      
+      jornadaForm.latitude = newLat.toString()
+      jornadaForm.longitude = newLng.toString()
+      
+      map.setView([newLat, newLng], 16)
+      marker.setLatLng([newLat, newLng])
+      circle.setLatLng([newLat, newLng])
+    } else {
+      alert('Endereço não encontrado')
+    }
+  } catch (err) {
+    console.error('Erro na busca:', err)
+    alert('Erro ao buscar endereço')
+  } finally {
+    searching.value = false
+  }
+}
+
+const getCurrentLocation = () => {
+  if (!navigator.geolocation) {
+    alert('Geolocalização não suportada pelo seu navegador')
+    return
+  }
+
+  navigator.geolocation.getCurrentPosition((position) => {
+    const { latitude, longitude } = position.coords
+    jornadaForm.latitude = latitude.toString()
+    jornadaForm.longitude = longitude.toString()
+    
+    if (map) {
+      map.setView([latitude, longitude], 16)
+      marker.setLatLng([latitude, longitude])
+      circle.setLatLng([latitude, longitude])
+    }
+  }, (err) => {
+    let msg = 'Erro ao obter localização'
+    if (err.code === 1) msg = 'Permissão de localização negada'
+    alert(msg)
+  })
 }
 </script>
