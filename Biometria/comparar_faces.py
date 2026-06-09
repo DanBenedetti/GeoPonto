@@ -5,7 +5,7 @@ import sys
 
 # 1. Carregar o Modelo Extrator V8.3.1 (Ajuste Cirúrgico Final)
 MODEL_PATH = 'geoponto_extractor_v8_3_1.keras'
-THRESHOLD = 1.80 # Calibrado para fotos da vida real (Danilo/Gabriel/Rangel)
+THRESHOLD = 1.65 # Calibrado para fotos da vida real (Danilo/Gabriel/Rangel) - Ajustado para reduzir falsos positivos
 
 try:
     model = tf.keras.models.load_model(MODEL_PATH)

@@ -5,7 +5,7 @@ import 'package:image/image.dart' as img;
 
 class BiometricImplementation {
   Interpreter? _interpreter;
-  final double threshold = 1.80;
+  final double threshold = 1.65; // Ajustado para reduzir falsos positivos
 
   BiometricImplementation() {
     _loadModel();
