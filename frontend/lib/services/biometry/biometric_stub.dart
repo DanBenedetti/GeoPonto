@@ -5,7 +5,7 @@ import 'package:geoponto/config/api_config.dart';
 import 'dart:math';
 
 class BiometricImplementation {
-  final double threshold = 0.75; // Threshold mais rigoroso para validação via servidor (treino PC)
+  final double threshold = 0.70; // Threshold mais rigoroso para validação via servidor (treino PC)
 
   BiometricImplementation() {
     print('Biometria Web: Usando processamento remoto via Uint8List.');
